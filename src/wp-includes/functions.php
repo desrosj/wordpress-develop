@@ -443,8 +443,15 @@ function get_weekstartend( $mysqlstring, $start_of_week = '' ) {
  */
 function maybe_unserialize( $original ) {
 	if ( is_serialized( $original ) ) { // don't attempt to unserialize data that wasn't serialized going in
-		return @unserialize( $original );
+		try {
+			$unserialize_result = @unserialize( $original );
+			return $unserialize_result ? $unserialize_result : $original;
+		} catch ( Exception $e ) {
+			// If an exception is raised when unserializing, just return the original data
+			return $original;
+		}
 	}
+
 	return $original;
 }
 
