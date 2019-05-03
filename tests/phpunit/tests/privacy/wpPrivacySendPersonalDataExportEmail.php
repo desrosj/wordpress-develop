@@ -35,11 +35,29 @@ class Tests_Privacy_WpPrivacySendPersonalDataExportEmail extends WP_UnitTestCase
 	protected static $requester_email;
 
 	/**
+	 * Request user.
+	 *
+	 * @since 5.2.0
+	 *
+	 * @var WP_User $request_user
+	 */
+	protected static $request_user;
+
+	/**
+	 * Test administrator user.
+	 *
+	 * @since 5.2.0
+	 *
+	 * @var WP_User $admin_user
+	 */
+	protected static $admin_user;
+
+	/**
 	 * Reset the mocked phpmailer instance before each test method.
 	 *
 	 * @since 4.9.6
 	 */
-	function setUp() {
+	public function setUp() {
 		parent::setUp();
 		reset_phpmailer_instance();
 	}
@@ -49,8 +67,9 @@ class Tests_Privacy_WpPrivacySendPersonalDataExportEmail extends WP_UnitTestCase
 	 *
 	 * @since 4.9.6
 	 */
-	function tearDown() {
+	public function tearDown() {
 		reset_phpmailer_instance();
+		restore_previous_locale();
 		parent::tearDown();
 	}
 
@@ -63,7 +82,20 @@ class Tests_Privacy_WpPrivacySendPersonalDataExportEmail extends WP_UnitTestCase
 	 */
 	public static function wpSetUpBeforeClass( $factory ) {
 		self::$requester_email = 'requester@example.com';
-		self::$request_id      = wp_create_user_request( self::$requester_email, 'export_personal_data' );
+		self::$request_user    = $factory->user->create_and_get(
+			array(
+				'user_email' => self::$requester_email,
+				'role'       => 'subscriber',
+			)
+		);
+		self::$admin_user      = $factory->user->create_and_get(
+			array(
+				'user_email' => 'admin@local.dev',
+				'role'       => 'administrator',
+			)
+		);
+
+		self::$request_id = wp_create_user_request( self::$requester_email, 'export_personal_data' );
 
 		_wp_privacy_account_request_confirmed( self::$request_id );
 	}
@@ -95,12 +127,12 @@ class Tests_Privacy_WpPrivacySendPersonalDataExportEmail extends WP_UnitTestCase
 		$request_id = 0;
 		$email_sent = wp_privacy_send_personal_data_export_email( $request_id );
 		$this->assertWPError( $email_sent );
-		$this->assertSame( 'invalid', $email_sent->get_error_code() );
+		$this->assertSame( 'invalid_request', $email_sent->get_error_code() );
 
 		$request_id = PHP_INT_MAX;
 		$email_sent = wp_privacy_send_personal_data_export_email( $request_id );
 		$this->assertWPError( $email_sent );
-		$this->assertSame( 'invalid', $email_sent->get_error_code() );
+		$this->assertSame( 'invalid_request', $email_sent->get_error_code() );
 	}
 
 	/**
@@ -111,10 +143,9 @@ class Tests_Privacy_WpPrivacySendPersonalDataExportEmail extends WP_UnitTestCase
 	public function test_return_wp_error_when_send_fails() {
 		add_filter( 'wp_mail_from', '__return_empty_string' ); // Cause `wp_mail()` to return false.
 		$email_sent = wp_privacy_send_personal_data_export_email( self::$request_id );
-		remove_filter( 'wp_mail_from', '__return_empty_string' );
 
 		$this->assertWPError( $email_sent );
-		$this->assertSame( 'error', $email_sent->get_error_code() );
+		$this->assertSame( 'privacy_email_error', $email_sent->get_error_code() );
 	}
 
 	/**
@@ -125,7 +156,6 @@ class Tests_Privacy_WpPrivacySendPersonalDataExportEmail extends WP_UnitTestCase
 	public function test_export_expiration_should_be_filterable() {
 		add_filter( 'wp_privacy_export_expiration', array( $this, 'modify_export_expiration' ) );
 		wp_privacy_send_personal_data_export_email( self::$request_id );
-		remove_filter( 'wp_privacy_export_expiration', array( $this, 'modify_export_expiration' ) );
 
 		$mailer = tests_retrieve_phpmailer_instance();
 		$this->assertContains( 'we will automatically delete the file on December 18, 2017,', $mailer->get_sent()->body );
@@ -152,7 +182,6 @@ class Tests_Privacy_WpPrivacySendPersonalDataExportEmail extends WP_UnitTestCase
 	public function test_email_content_should_be_filterable() {
 		add_filter( 'wp_privacy_personal_data_email_content', array( $this, 'modify_email_content' ), 10, 2 );
 		wp_privacy_send_personal_data_export_email( self::$request_id );
-		remove_filter( 'wp_privacy_personal_data_email_content', array( $this, 'modify_email_content' ) );
 
 		$mailer = tests_retrieve_phpmailer_instance();
 		$this->assertContains( 'Custom content for request ID: ' . self::$request_id, $mailer->get_sent()->body );
@@ -169,5 +198,137 @@ class Tests_Privacy_WpPrivacySendPersonalDataExportEmail extends WP_UnitTestCase
 	 */
 	public function modify_email_content( $email_text, $request_id ) {
 		return 'Custom content for request ID: ' . $request_id;
+	}
+
+	/**
+	 * The function should respect the user locale settings when the site uses the default locale.
+	 *
+	 * @since 5.2.0
+	 * @ticket 46056
+	 * @group l10n
+	 */
+	public function test_should_send_personal_data_export_email_in_user_locale() {
+		update_user_meta( self::$request_user->ID, 'locale', 'es_ES' );
+
+		wp_privacy_send_personal_data_export_email( self::$request_id );
+
+		$mailer = tests_retrieve_phpmailer_instance();
+
+		$this->assertContains( 'Exportación de datos personales', $mailer->get_sent()->subject );
+	}
+
+	/**
+	 * The function should respect the user locale settings when the site does not use en_US, the administrator
+	 * uses the site's default locale, and the user has a different locale.
+	 *
+	 * @since 5.2.0
+	 * @ticket 46056
+	 * @group l10n
+	 */
+	public function test_should_send_personal_data_export_email_in_user_locale_when_site_is_not_en_us() {
+		update_option( 'WPLANG', 'es_ES' );
+		switch_to_locale( 'es_ES' );
+
+		update_user_meta( self::$request_user->ID, 'locale', 'de_DE' );
+		wp_set_current_user( self::$admin_user->ID );
+
+		wp_privacy_send_personal_data_export_email( self::$request_id );
+
+		$mailer = tests_retrieve_phpmailer_instance();
+
+		$this->assertContains( 'Export personenbezogener Daten', $mailer->get_sent()->subject );
+	}
+
+	/**
+	 * The function should respect the user locale settings when the site is not en_US, the administrator
+	 * has a different selected locale, and the user uses the site's default locale.
+	 *
+	 * @since 5.2.0
+	 * @ticket 46056
+	 * @group l10n
+	 */
+	public function test_should_send_personal_data_export_email_in_user_locale_when_admin_and_site_have_different_locales() {
+		update_option( 'WPLANG', 'es_ES' );
+		switch_to_locale( 'es_ES' );
+
+		update_user_meta( self::$admin_user->ID, 'locale', 'de_DE' );
+		wp_set_current_user( self::$admin_user->ID );
+
+		wp_privacy_send_personal_data_export_email( self::$request_id );
+
+		$mailer = tests_retrieve_phpmailer_instance();
+
+		$this->assertContains( 'Exportación de datos personales', $mailer->get_sent()->subject );
+	}
+
+	/**
+	 * The function should respect the user locale settings when the site is not en_US and both the
+	 * administrator and the user use different locales.
+	 *
+	 * @since 5.2.0
+	 * @ticket 46056
+	 * @group l10n
+	 */
+	public function test_should_send_personal_data_export_email_in_user_locale_when_both_have_different_locales_than_site() {
+		update_option( 'WPLANG', 'es_ES' );
+		switch_to_locale( 'es_ES' );
+
+		update_user_meta( self::$admin_user->ID, 'locale', 'en_US' );
+		update_user_meta( self::$request_user->ID, 'locale', 'de_DE' );
+
+		wp_set_current_user( self::$admin_user->ID );
+
+		wp_privacy_send_personal_data_export_email( self::$request_id );
+
+		$mailer = tests_retrieve_phpmailer_instance();
+
+		$this->assertContains( 'Export personenbezogener Daten', $mailer->get_sent()->subject );
+	}
+
+	/**
+	 * The function should respect the site's locale when the request is for an unregistered user and the
+	 * administrator does not use the site's locale.
+	 *
+	 * @since 5.2.0
+	 * @ticket 46056
+	 * @group l10n
+	 */
+	public function test_should_send_personal_data_export_email_in_site_locale() {
+		update_user_meta( self::$admin_user->ID, 'locale', 'es_ES' );
+		wp_set_current_user( self::$admin_user->ID );
+
+		$request_id = wp_create_user_request( 'export-user-not-registered@example.com', 'export_personal_data' );
+
+		_wp_privacy_account_request_confirmed( self::$request_id );
+		wp_privacy_send_personal_data_export_email( $request_id );
+
+		$mailer = tests_retrieve_phpmailer_instance();
+
+		$this->assertContains( 'Personal Data Export', $mailer->get_sent()->subject );
+	}
+
+	/**
+	 * The function should respect the site's locale when it is not en_US, the request is for an
+	 * unregistered user, and the administrator does not use the site's default locale.
+	 *
+	 * @since 5.2.0
+	 * @ticket 46056
+	 * @group l10n
+	 */
+	public function test_should_send_personal_data_export_email_in_site_locale_when_not_en_us_and_admin_has_different_locale() {
+		update_option( 'WPLANG', 'es_ES' );
+		switch_to_locale( 'es_ES' );
+
+		update_user_meta( self::$admin_user->ID, 'locale', 'de_DE' );
+		wp_set_current_user( self::$admin_user->ID );
+
+		$request_id = wp_create_user_request( 'export-user-not-registered@example.com', 'export_personal_data' );
+
+		_wp_privacy_account_request_confirmed( self::$request_id );
+		wp_privacy_send_personal_data_export_email( $request_id );
+
+		$mailer = tests_retrieve_phpmailer_instance();
+
+		$this->assertContains( 'Exportación de datos personales', $mailer->get_sent()->subject );
 	}
 }

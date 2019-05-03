@@ -36,6 +36,7 @@ $wp_file_descriptions = array(
 	'single.php'            => __( 'Single Post' ),
 	'page.php'              => __( 'Single Page' ),
 	'front-page.php'        => __( 'Homepage' ),
+	'privacy-policy.php'    => __( 'Privacy Policy Page' ),
 	// Attachments
 	'attachment.php'        => __( 'Attachment Template' ),
 	'image.php'             => __( 'Image Attachment Template' ),
@@ -890,11 +891,13 @@ function _wp_handle_upload( &$file, $overrides, $time, $action ) {
 	 * @param string $context The type of upload action. Values include 'upload' or 'sideload'.
 	 */
 	return apply_filters(
-		'wp_handle_upload', array(
+		'wp_handle_upload',
+		array(
 			'file' => $new_file,
 			'url'  => $url,
 			'type' => $type,
-		), 'wp_handle_sideload' === $action ? 'sideload' : 'upload'
+		),
+		'wp_handle_sideload' === $action ? 'sideload' : 'upload'
 	);
 }
 
@@ -963,12 +966,14 @@ function wp_handle_sideload( &$file, $overrides = false, $time = null ) {
  * Please note that the calling function must unlink() the file.
  *
  * @since 2.5.0
+ * @since 5.2.0 Signature Verification with SoftFail was added.
  *
- * @param string $url  The URL of the file to download.
- * @param int $timeout The timeout for the request to download the file. Default 300 seconds.
+ * @param string $url                    The URL of the file to download.
+ * @param int    $timeout                The timeout for the request to download the file. Default 300 seconds.
+ * @param bool   $signature_verification Whether to perform Signature Verification. Default false.
  * @return string|WP_Error Filename on success, WP_Error on failure.
  */
-function download_url( $url, $timeout = 300 ) {
+function download_url( $url, $timeout = 300, $signature_verification = false ) {
 	//WARNING: The file is not automatically deleted, The script must unlink() the file.
 	if ( ! $url ) {
 		return new WP_Error( 'http_no_url', __( 'Invalid URL Provided.' ) );
@@ -982,7 +987,8 @@ function download_url( $url, $timeout = 300 ) {
 	}
 
 	$response = wp_safe_remote_get(
-		$url, array(
+		$url,
+		array(
 			'timeout'  => $timeout,
 			'stream'   => true,
 			'filename' => $tmpfname,
@@ -1007,7 +1013,7 @@ function download_url( $url, $timeout = 300 ) {
 			/**
 			 * Filters the maximum error response body size in `download_url()`.
 			 *
-			 * @since 5.0.0
+			 * @since 5.1.0
 			 *
 			 * @see download_url()
 			 *
@@ -1029,6 +1035,83 @@ function download_url( $url, $timeout = 300 ) {
 			unlink( $tmpfname );
 			return $md5_check;
 		}
+	}
+
+	// If the caller expects signature verification to occur, check to see if this URL supports it.
+	if ( $signature_verification ) {
+		/**
+		 * Filters the list of hosts which should have Signature Verification attempteds on.
+		 *
+		 * @since 5.2.0
+		 *
+		 * @param array List of hostnames.
+		 */
+		$signed_hostnames       = apply_filters( 'wp_signature_hosts', array( 'wordpress.org', 'downloads.wordpress.org', 's.w.org' ) );
+		$signature_verification = in_array( parse_url( $url, PHP_URL_HOST ), $signed_hostnames, true );
+	}
+
+	// Perform signature valiation if supported.
+	if ( $signature_verification ) {
+		$signature = wp_remote_retrieve_header( $response, 'x-content-signature' );
+		if ( ! $signature ) {
+			// Retrieve signatures from a file if the header wasn't included.
+			// WordPress.org stores signatures at $package_url.sig
+
+			$signature_url = false;
+			$url_path      = parse_url( $url, PHP_URL_PATH );
+			if ( substr( $url_path, -4 ) == '.zip' || substr( $url_path, -7 ) == '.tar.gz' ) {
+				$signature_url = str_replace( $url_path, $url_path . '.sig', $url );
+			}
+
+			/**
+			 * Filter the URL where the signature for a file is located.
+			 *
+			 * @since 5.2.0
+			 *
+			 * @param false|string $signature_url The URL where signatures can be found for a file, or false if none are known.
+			 * @param string $url                 The URL being verified.
+			 */
+			$signature_url = apply_filters( 'wp_signature_url', $signature_url, $url );
+
+			if ( $signature_url ) {
+				$signature_request = wp_safe_remote_get(
+					$signature_url,
+					array(
+						'limit_response_size' => 10 * 1024, // 10KB should be large enough for quite a few signatures.
+					)
+				);
+
+				if ( ! is_wp_error( $signature_request ) && 200 === wp_remote_retrieve_response_code( $signature_request ) ) {
+					$signature = explode( "\n", wp_remote_retrieve_body( $signature_request ) );
+				}
+			}
+		}
+
+		// Perform the checks.
+		$signature_verification = verify_file_signature( $tmpfname, $signature, basename( parse_url( $url, PHP_URL_PATH ) ) );
+	}
+
+	if ( is_wp_error( $signature_verification ) ) {
+		if (
+			/**
+			 * Filters whether Signature Verification failures should be allowed to soft fail.
+			 *
+			 * WARNING: This may be removed from a future release.
+			 *
+			 * @since 5.2.0
+			 *
+			 * @param bool   $signature_softfail If a softfail is allowed.
+			 * @param string $url                The url being accessed.
+			 */
+			apply_filters( 'wp_signature_softfail', true, $url )
+		) {
+			$signature_verification->add_data( $tmpfname, 'softfail-filename' );
+		} else {
+			// Hard-fail.
+			unlink( $tmpfname );
+		}
+
+		return $signature_verification;
 	}
 
 	return $tmpfname;
@@ -1064,6 +1147,155 @@ function verify_file_md5( $filename, $expected_md5 ) {
 }
 
 /**
+ * Verifies the contents of a file against its ED25519 signature.
+ *
+ * @since 5.2.0
+ *
+ * @param string       $filename            The file to validate.
+ * @param string|array $signatures          A Signature provided for the file.
+ * @param string       $filename_for_errors A friendly filename for errors. Optional.
+ *
+ * @return bool|WP_Error true on success, false if verificaiton not attempted, or WP_Error describing an error condition.
+ */
+function verify_file_signature( $filename, $signatures, $filename_for_errors = false ) {
+	if ( ! $filename_for_errors ) {
+		$filename_for_errors = wp_basename( $filename );
+	}
+
+	// Check we can process signatures.
+	if ( ! function_exists( 'sodium_crypto_sign_verify_detached' ) || ! in_array( 'sha384', array_map( 'strtolower', hash_algos() ) ) ) {
+		return new WP_Error(
+			'signature_verification_unsupported',
+			sprintf(
+				/* translators: %s: The filename of the package. */
+				__( 'The authenticity of %s could not be verified as signature verification is unavailable on this system.' ),
+				'<span class="code">' . esc_html( $filename_for_errors ) . '</span>'
+			),
+			( ! function_exists( 'sodium_crypto_sign_verify_detached' ) ? 'sodium_crypto_sign_verify_detached' : 'sha384' )
+		);
+	}
+
+	// Check for a edge-case affecting PHP Maths abilities
+	if (
+		! extension_loaded( 'sodium' ) &&
+		in_array( PHP_VERSION_ID, [ 70200, 70201, 70202 ], true ) &&
+		extension_loaded( 'opcache' )
+	) {
+		// Sodium_Compat isn't compatible with PHP 7.2.0~7.2.2 due to a bug in the PHP Opcache extension, bail early as it'll fail.
+		// https://bugs.php.net/bug.php?id=75938
+
+		return new WP_Error(
+			'signature_verification_unsupported',
+			sprintf(
+				/* translators: 1: The filename of the package. */
+				__( 'The authenticity of %1$s could not be verified as signature verification is unavailable on this system.' ),
+				'<span class="code">' . esc_html( $filename_for_errors ) . '</span>'
+			),
+			array(
+				'php'    => phpversion(),
+				'sodium' => defined( 'SODIUM_LIBRARY_VERSION' ) ? SODIUM_LIBRARY_VERSION : ( defined( 'ParagonIE_Sodium_Compat::VERSION_STRING' ) ? ParagonIE_Sodium_Compat::VERSION_STRING : false ),
+			)
+		);
+
+	}
+
+	if ( ! $signatures ) {
+		return new WP_Error(
+			'signature_verification_no_signature',
+			sprintf(
+				/* translators: %s: The filename of the package. */
+				__( 'The authenticity of %s could not be verified as no signature was found.' ),
+				'<span class="code">' . esc_html( $filename_for_errors ) . '</span>'
+			),
+			array(
+				'filename' => $filename_for_errors,
+			)
+		);
+	}
+
+	$trusted_keys = wp_trusted_keys();
+	$file_hash    = hash_file( 'sha384', $filename, true );
+
+	mbstring_binary_safe_encoding();
+
+	$skipped_key = $skipped_signature = 0;
+
+	foreach ( (array) $signatures as $signature ) {
+		$signature_raw = base64_decode( $signature );
+
+		// Ensure only valid-length signatures are considered.
+		if ( SODIUM_CRYPTO_SIGN_BYTES !== strlen( $signature_raw ) ) {
+			$skipped_signature++;
+			continue;
+		}
+
+		foreach ( (array) $trusted_keys as $key ) {
+			$key_raw = base64_decode( $key );
+
+			// Only pass valid public keys through.
+			if ( SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES !== strlen( $key_raw ) ) {
+				$skipped_key++;
+				continue;
+			}
+
+			if ( sodium_crypto_sign_verify_detached( $signature_raw, $file_hash, $key_raw ) ) {
+				reset_mbstring_encoding();
+				return true;
+			}
+		}
+	}
+
+	reset_mbstring_encoding();
+
+	return new WP_Error(
+		'signature_verification_failed',
+		sprintf(
+			/* translators: %s: The filename of the package. */
+			__( 'The authenticity of %s could not be verified.' ),
+			'<span class="code">' . esc_html( $filename_for_errors ) . '</span>'
+		),
+		// Error data helpful for debugging:
+		array(
+			'filename'    => $filename_for_errors,
+			'keys'        => $trusted_keys,
+			'signatures'  => $signatures,
+			'hash'        => bin2hex( $file_hash ),
+			'skipped_key' => $skipped_key,
+			'skipped_sig' => $skipped_signature,
+			'php'         => phpversion(),
+			'sodium'      => defined( 'SODIUM_LIBRARY_VERSION' ) ? SODIUM_LIBRARY_VERSION : ( defined( 'ParagonIE_Sodium_Compat::VERSION_STRING' ) ? ParagonIE_Sodium_Compat::VERSION_STRING : false ),
+		)
+	);
+}
+
+/**
+ * Retrieve the list of signing keys trusted by WordPress.
+ *
+ * @since 5.2.0
+ *
+ * @return array List of base64-encoded Signing keys.
+ */
+function wp_trusted_keys() {
+	$trusted_keys = array();
+
+	if ( time() < 1617235200 ) {
+		// WordPress.org Key #1 - This key is only valid before April 1st, 2021.
+		$trusted_keys[] = 'fRPyrxb/MvVLbdsYi+OOEv4xc+Eqpsj+kkAS6gNOkI0=';
+	}
+
+	// TODO: Add key #2 with longer expiration.
+
+	/**
+	 * Filter the valid Signing keys used to verify the contents of files.
+	 *
+	 * @since 5.2.0
+	 *
+	 * @param array $trusted_keys The trusted keys that may sign packages.
+	 */
+	return apply_filters( 'wp_trusted_keys', $trusted_keys );
+}
+
+/**
  * Unzips a specified ZIP file to a location on the filesystem via the WordPress
  * Filesystem Abstraction.
  *
@@ -1094,8 +1326,8 @@ function unzip_file( $file, $to ) {
 	$needed_dirs = array();
 	$to          = trailingslashit( $to );
 
-	// Determine any parent dir's needed (of the upgrade directory)
-	if ( ! $wp_filesystem->is_dir( $to ) ) { //Only do parents if no children exist
+	// Determine any parent directories needed (of the upgrade directory).
+	if ( ! $wp_filesystem->is_dir( $to ) ) { // Only do parents if no children exist.
 		$path = preg_split( '![/\\\]!', untrailingslashit( $to ) );
 		for ( $i = count( $path ); $i >= 0; $i-- ) {
 			if ( empty( $path[ $i ] ) ) {
@@ -1110,7 +1342,7 @@ function unzip_file( $file, $to ) {
 			if ( ! $wp_filesystem->is_dir( $dir ) ) {
 				$needed_dirs[] = $dir;
 			} else {
-				break; // A folder exists, therefor, we dont need the check the levels below this
+				break; // A folder exists, therefore we don't need to check the levels below this.
 			}
 		}
 	}
@@ -1679,7 +1911,8 @@ function request_filesystem_credentials( $form_post, $type = '', $error = false,
 	}
 
 	$credentials = get_option(
-		'ftp_credentials', array(
+		'ftp_credentials',
+		array(
 			'hostname' => '',
 			'username' => '',
 		)
@@ -1786,52 +2019,51 @@ function request_filesystem_credentials( $form_post, $type = '', $error = false,
 	 */
 	$types = apply_filters( 'fs_ftp_connection_types', $types, $credentials, $type, $error, $context );
 
-?>
+	?>
 <form action="<?php echo esc_url( $form_post ); ?>" method="post">
 <div id="request-filesystem-credentials-form" class="request-filesystem-credentials-form">
-<?php
-// Print a H1 heading in the FTP credentials modal dialog, default is a H2.
-$heading_tag = 'h2';
-if ( 'plugins.php' === $pagenow || 'plugin-install.php' === $pagenow ) {
-	$heading_tag = 'h1';
-}
-echo "<$heading_tag id='request-filesystem-credentials-title'>" . __( 'Connection Information' ) . "</$heading_tag>";
-?>
+	<?php
+	// Print a H1 heading in the FTP credentials modal dialog, default is a H2.
+	$heading_tag = 'h2';
+	if ( 'plugins.php' === $pagenow || 'plugin-install.php' === $pagenow ) {
+		$heading_tag = 'h1';
+	}
+	echo "<$heading_tag id='request-filesystem-credentials-title'>" . __( 'Connection Information' ) . "</$heading_tag>";
+	?>
 <p id="request-filesystem-credentials-desc">
-<?php
+	<?php
 	$label_user = __( 'Username' );
 	$label_pass = __( 'Password' );
 	_e( 'To perform the requested action, WordPress needs to access your web server.' );
 	echo ' ';
-if ( ( isset( $types['ftp'] ) || isset( $types['ftps'] ) ) ) {
-	if ( isset( $types['ssh'] ) ) {
-		_e( 'Please enter your FTP or SSH credentials to proceed.' );
-		$label_user = __( 'FTP/SSH Username' );
-		$label_pass = __( 'FTP/SSH Password' );
-	} else {
-		_e( 'Please enter your FTP credentials to proceed.' );
-		$label_user = __( 'FTP Username' );
-		$label_pass = __( 'FTP Password' );
+	if ( ( isset( $types['ftp'] ) || isset( $types['ftps'] ) ) ) {
+		if ( isset( $types['ssh'] ) ) {
+			_e( 'Please enter your FTP or SSH credentials to proceed.' );
+			$label_user = __( 'FTP/SSH Username' );
+			$label_pass = __( 'FTP/SSH Password' );
+		} else {
+			_e( 'Please enter your FTP credentials to proceed.' );
+			$label_user = __( 'FTP Username' );
+			$label_pass = __( 'FTP Password' );
+		}
+		echo ' ';
 	}
-	echo ' ';
-}
 	_e( 'If you do not remember your credentials, you should contact your web host.' );
 
+	$hostname_value = esc_attr( $hostname );
+	if ( ! empty( $port ) ) {
+		$hostname_value .= ":$port";
+	}
+
 	$password_value = '';
-if ( defined( 'FTP_PASS' ) ) {
-	$password_value = '*****';
-}
-?>
+	if ( defined( 'FTP_PASS' ) ) {
+		$password_value = '*****';
+	}
+	?>
 </p>
 <label for="hostname">
 	<span class="field-title"><?php _e( 'Hostname' ); ?></span>
-	<input name="hostname" type="text" id="hostname" aria-describedby="request-filesystem-credentials-desc" class="code" placeholder="<?php esc_attr_e( 'example: www.wordpress.org' ); ?>" value="
-																																						<?php
-																																						echo esc_attr( $hostname );
-																																						if ( ! empty( $port ) ) {
-																																							echo ":$port";}
-?>
-"<?php disabled( defined( 'FTP_HOST' ) ); ?> />
+	<input name="hostname" type="text" id="hostname" aria-describedby="request-filesystem-credentials-desc" class="code" placeholder="<?php esc_attr_e( 'example: www.wordpress.org' ); ?>" value="<?php echo $hostname_value; ?>"<?php disabled( defined( 'FTP_HOST' ) ); ?> />
 </label>
 <div class="ftp-username">
 	<label for="username">
@@ -1847,36 +2079,31 @@ if ( defined( 'FTP_PASS' ) ) {
 		<?php
 		if ( ! defined( 'FTP_PASS' ) ) {
 			_e( 'This password will not be stored on the server.' );}
-?>
+		?>
 </em>
 	</label>
 </div>
 <fieldset>
 <legend><?php _e( 'Connection Type' ); ?></legend>
-<?php
+	<?php
 	$disabled = disabled( ( defined( 'FTP_SSL' ) && FTP_SSL ) || ( defined( 'FTP_SSH' ) && FTP_SSH ), true, false );
-foreach ( $types as $name => $text ) :
-	?>
+	foreach ( $types as $name => $text ) :
+		?>
 	<label for="<?php echo esc_attr( $name ); ?>">
-		<input type="radio" name="connection_type" id="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>"
-																	<?php
-																	checked( $name, $connection_type );
-																	echo $disabled;
-?>
- />
+		<input type="radio" name="connection_type" id="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>" <?php checked( $name, $connection_type ); ?> <?php echo $disabled; ?> />
 		<?php echo $text; ?>
 	</label>
-<?php
+		<?php
 	endforeach;
-?>
+	?>
 </fieldset>
-<?php
-if ( isset( $types['ssh'] ) ) {
-	$hidden_class = '';
-	if ( 'ssh' != $connection_type || empty( $connection_type ) ) {
-		$hidden_class = ' class="hidden"';
-	}
-?>
+	<?php
+	if ( isset( $types['ssh'] ) ) {
+		$hidden_class = '';
+		if ( 'ssh' != $connection_type || empty( $connection_type ) ) {
+			$hidden_class = ' class="hidden"';
+		}
+		?>
 <fieldset id="ssh-keys"<?php echo $hidden_class; ?>>
 <legend><?php _e( 'Authentication Keys' ); ?></legend>
 <label for="public_key">
@@ -1889,15 +2116,15 @@ if ( isset( $types['ssh'] ) ) {
 </label>
 <p id="auth-keys-desc"><?php _e( 'Enter the location on the server where the public and private keys are located. If a passphrase is needed, enter that in the password field above.' ); ?></p>
 </fieldset>
-<?php
-}
-
-foreach ( (array) $extra_fields as $field ) {
-	if ( isset( $submitted_form[ $field ] ) ) {
-		echo '<input type="hidden" name="' . esc_attr( $field ) . '" value="' . esc_attr( $submitted_form[ $field ] ) . '" />';
+		<?php
 	}
-}
-?>
+
+	foreach ( (array) $extra_fields as $field ) {
+		if ( isset( $submitted_form[ $field ] ) ) {
+			echo '<input type="hidden" name="' . esc_attr( $field ) . '" value="' . esc_attr( $submitted_form[ $field ] ) . '" />';
+		}
+	}
+	?>
 	<p class="request-filesystem-credentials-action-buttons">
 		<?php wp_nonce_field( 'filesystem-credentials', '_fs_nonce', false, true ); ?>
 		<button class="button cancel-button" data-js-action="close" type="button"><?php _e( 'Cancel' ); ?></button>
@@ -1905,7 +2132,7 @@ foreach ( (array) $extra_fields as $field ) {
 	</p>
 </div>
 </form>
-<?php
+	<?php
 	return false;
 }
 
@@ -1958,17 +2185,7 @@ function wp_print_request_filesystem_credentials_modal() {
  * @return string The HTML for this group and its items.
  */
 function wp_privacy_generate_personal_data_export_group_html( $group_data ) {
-	$allowed_tags      = array(
-		'a' => array(
-			'href'   => array(),
-			'target' => array()
-		),
-		'br' => array()
-	);
-	$allowed_protocols = array( 'http', 'https' );
-	$group_html        = '';
-
-	$group_html .= '<h2>' . esc_html( $group_data['group_label'] ) . '</h2>';
+	$group_html  = '<h2>' . esc_html( $group_data['group_label'] ) . '</h2>';
 	$group_html .= '<div>';
 
 	foreach ( (array) $group_data['items'] as $group_item_id => $group_item_data ) {
@@ -1977,14 +2194,14 @@ function wp_privacy_generate_personal_data_export_group_html( $group_data ) {
 
 		foreach ( (array) $group_item_data as $group_item_datum ) {
 			$value = $group_item_datum['value'];
-			// If it looks like a link, make it a link
+			// If it looks like a link, make it a link.
 			if ( false === strpos( $value, ' ' ) && ( 0 === strpos( $value, 'http://' ) || 0 === strpos( $value, 'https://' ) ) ) {
 				$value = '<a href="' . esc_url( $value ) . '">' . esc_html( $value ) . '</a>';
 			}
 
 			$group_html .= '<tr>';
 			$group_html .= '<th>' . esc_html( $group_item_datum['name'] ) . '</th>';
-			$group_html .= '<td>' . wp_kses( $value, $allowed_tags, $allowed_protocols ) . '</td>';
+			$group_html .= '<td>' . wp_kses( $value, 'personal_data_export' ) . '</td>';
 			$group_html .= '</tr>';
 		}
 
@@ -2047,13 +2264,13 @@ function wp_privacy_generate_personal_data_export_file( $request_id ) {
 	$file_basename        = 'wp-personal-data-file-' . $stripped_email . '-' . $obscura;
 	$html_report_filename = $file_basename . '.html';
 	$html_report_pathname = wp_normalize_path( $exports_dir . $html_report_filename );
-	$file = fopen( $html_report_pathname, 'w' );
+	$file                 = fopen( $html_report_pathname, 'w' );
 	if ( false === $file ) {
 		wp_send_json_error( __( 'Unable to open export file (HTML report) for writing.' ) );
 	}
 
 	$title = sprintf(
-		/* translators: %s: user's e-mail address */
+		/* translators: %s: user's email address */
 		__( 'Personal Data Export for %s' ),
 		$email_address
 	);
@@ -2066,29 +2283,30 @@ function wp_privacy_generate_personal_data_export_file( $request_id ) {
 	fwrite( $file, "<head>\n" );
 	fwrite( $file, "<meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />\n" );
 	fwrite( $file, "<style type='text/css'>" );
-	fwrite( $file, "body { color: black; font-family: Arial, sans-serif; font-size: 11pt; margin: 15px auto; width: 860px; }" );
-	fwrite( $file, "table { background: #f0f0f0; border: 1px solid #ddd; margin-bottom: 20px; width: 100%; }" );
-	fwrite( $file, "th { padding: 5px; text-align: left; width: 20%; }" );
-	fwrite( $file, "td { padding: 5px; }" );
-	fwrite( $file, "tr:nth-child(odd) { background-color: #fafafa; }" );
-	fwrite( $file, "</style>" );
-	fwrite( $file, "<title>" );
+	fwrite( $file, 'body { color: black; font-family: Arial, sans-serif; font-size: 11pt; margin: 15px auto; width: 860px; }' );
+	fwrite( $file, 'table { background: #f0f0f0; border: 1px solid #ddd; margin-bottom: 20px; width: 100%; }' );
+	fwrite( $file, 'th { padding: 5px; text-align: left; width: 20%; }' );
+	fwrite( $file, 'td { padding: 5px; }' );
+	fwrite( $file, 'tr:nth-child(odd) { background-color: #fafafa; }' );
+	fwrite( $file, '</style>' );
+	fwrite( $file, '<title>' );
 	fwrite( $file, esc_html( $title ) );
-	fwrite( $file, "</title>" );
+	fwrite( $file, '</title>' );
 	fwrite( $file, "</head>\n" );
 
 	// Body.
 	fwrite( $file, "<body>\n" );
 
 	// Heading.
-	fwrite( $file, "<h1>" . esc_html__( 'Personal Data Export' ) . "</h1>" );
+	fwrite( $file, '<h1>' . esc_html__( 'Personal Data Export' ) . '</h1>' );
 
 	// And now, all the Groups.
 	$groups = get_post_meta( $request_id, '_export_data_grouped', true );
 
 	// First, build an "About" group on the fly for this report.
 	$about_group = array(
-		'group_label' => __( 'About' ),
+		/* translators: Header for the About section in a personal data export. */
+		'group_label' => _x( 'About', 'personal data group label' ),
 		'items'       => array(
 			'about-1' => array(
 				array(
@@ -2195,16 +2413,25 @@ function wp_privacy_send_personal_data_export_email( $request_id ) {
 	$request = wp_get_user_request_data( $request_id );
 
 	if ( ! $request || 'export_personal_data' !== $request->action_name ) {
-		return new WP_Error( 'invalid', __( 'Invalid request ID when sending personal data export email.' ) );
+		return new WP_Error( 'invalid_request', __( 'Invalid request ID when sending personal data export email.' ) );
 	}
+
+	// Localize message content for user; fallback to site default for visitors.
+	if ( ! empty( $request->user_id ) ) {
+		$locale = get_user_locale( $request->user_id );
+	} else {
+		$locale = get_locale();
+	}
+
+	$switched_locale = switch_to_locale( $locale );
 
 	/** This filter is documented in wp-includes/functions.php */
 	$expiration      = apply_filters( 'wp_privacy_export_expiration', 3 * DAY_IN_SECONDS );
 	$expiration_date = date_i18n( get_option( 'date_format' ), time() + $expiration );
 
-/* translators: Do not translate EXPIRATION, LINK, SITENAME, SITEURL: those are placeholders. */
-$email_text = __(
-'Howdy,
+	/* translators: Do not translate EXPIRATION, LINK, SITENAME, SITEURL: those are placeholders. */
+	$email_text = __(
+		'Howdy,
 
 Your request for an export of personal data has been completed. You may
 download your personal data by clicking on the link below. For privacy
@@ -2216,7 +2443,7 @@ so please download it before then.
 Regards,
 All at ###SITENAME###
 ###SITEURL###'
-);
+	);
 
 	/**
 	 * Filters the text of the email sent with a personal data export file.
@@ -2234,10 +2461,10 @@ All at ###SITENAME###
 	 */
 	$content = apply_filters( 'wp_privacy_personal_data_email_content', $email_text, $request_id );
 
-	$email_address = $request->email;
+	$email_address   = $request->email;
 	$export_file_url = get_post_meta( $request_id, '_export_file_url', true );
-	$site_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-	$site_url = home_url();
+	$site_name       = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+	$site_url        = home_url();
 
 	$content = str_replace( '###EXPIRATION###', $expiration_date, $content );
 	$content = str_replace( '###LINK###', esc_url_raw( $export_file_url ), $content );
@@ -2248,14 +2475,19 @@ All at ###SITENAME###
 	$mail_success = wp_mail(
 		$email_address,
 		sprintf(
+			/* translators: Personal data export notification email subject. %s: Site title */
 			__( '[%s] Personal Data Export' ),
 			$site_name
 		),
 		$content
 	);
 
+	if ( $switched_locale ) {
+		restore_previous_locale();
+	}
+
 	if ( ! $mail_success ) {
-		return new WP_Error( 'error', __( 'Unable to send personal data export email.' ) );
+		return new WP_Error( 'privacy_email_error', __( 'Unable to send personal data export email.' ) );
 	}
 
 	return true;
@@ -2318,9 +2550,9 @@ function wp_privacy_process_personal_data_export_page( $response, $exporter_inde
 
 	// If we are not yet on the last page of the last exporter, return now.
 	/** This filter is documented in wp-admin/includes/ajax-actions.php */
-	$exporters = apply_filters( 'wp_privacy_personal_data_exporters', array() );
+	$exporters        = apply_filters( 'wp_privacy_personal_data_exporters', array() );
 	$is_last_exporter = $exporter_index === count( $exporters );
-	$exporter_done = $response['done'];
+	$exporter_done    = $response['done'];
 	if ( ! $is_last_exporter || ! $exporter_done ) {
 		return $response;
 	}
@@ -2344,8 +2576,8 @@ function wp_privacy_process_personal_data_export_page( $response, $exporter_inde
 			$groups[ $group_id ]['items'][ $item_id ] = array();
 		}
 
-		$old_item_data = $groups[ $group_id ]['items'][ $item_id ];
-		$merged_item_data = array_merge( $export_datum['data'], $old_item_data );
+		$old_item_data                            = $groups[ $group_id ]['items'][ $item_id ];
+		$merged_item_data                         = array_merge( $export_datum['data'], $old_item_data );
 		$groups[ $group_id ]['items'][ $item_id ] = $merged_item_data;
 	}
 
@@ -2371,6 +2603,9 @@ function wp_privacy_process_personal_data_export_page( $response, $exporter_inde
 		if ( is_wp_error( $mail_success ) ) {
 			wp_send_json_error( $mail_success->get_error_message() );
 		}
+
+		// Update the request to completed state when the export email is sent.
+		_wp_privacy_completed_request( $request_id );
 	} else {
 		// Modify the response to include the URL of the export file so the browser can fetch it.
 		$export_file_url = get_post_meta( $request_id, '_export_file_url', true );
@@ -2378,9 +2613,6 @@ function wp_privacy_process_personal_data_export_page( $response, $exporter_inde
 			$response['url'] = $export_file_url;
 		}
 	}
-
-	// Update the request to completed state.
-	_wp_privacy_completed_request( $request_id );
 
 	return $response;
 }

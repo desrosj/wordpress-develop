@@ -20,16 +20,16 @@ include( ABSPATH . 'wp-admin/admin-header.php' );
 
 <h1><?php printf( __( 'Welcome to WordPress %s' ), $display_version ); ?></h1>
 
-<p class="about-text"><?php printf( __( 'Thank you for updating to the latest version! WordPress %s will smooth your design workflow and keep you safe from coding errors.' ), $display_version ); ?></p>
+<p class="about-text"><?php printf( __( 'Thank you for updating to the latest version! WordPress %s introduces a robust new content creation experience.' ), $display_version ); ?></p>
 
 <div class="wp-badge"><?php printf( __( 'Version %s' ), $display_version ); ?></div>
 
-<h2 class="nav-tab-wrapper wp-clearfix">
+<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e( 'Secondary menu' ); ?>">
 	<a href="about.php" class="nav-tab"><?php _e( 'What&#8217;s New' ); ?></a>
 	<a href="credits.php" class="nav-tab nav-tab-active"><?php _e( 'Credits' ); ?></a>
 	<a href="freedoms.php" class="nav-tab"><?php _e( 'Freedoms' ); ?></a>
 	<a href="freedoms.php?privacy-notice" class="nav-tab"><?php _e( 'Privacy' ); ?></a>
-</h2>
+</nav>
 
 <div class="about-wrap-content">
 <?php
@@ -65,12 +65,14 @@ foreach ( $credits['groups'] as $group_slug => $group_data ) {
 			// Considered a special slug in the API response. (Also, will never be returned for en_US.)
 			$title = _x( 'Translators', 'Translate this to be the equivalent of English Translators in your language for the credits page Translators section' );
 		} elseif ( isset( $group_data['placeholders'] ) ) {
+			// phpcs:ignore WordPress.WP.I18n.LowLevelTranslationFunction,WordPress.WP.I18n.NonSingularStringLiteralText
 			$title = vsprintf( translate( $group_data['name'] ), $group_data['placeholders'] );
 		} else {
+			// phpcs:ignore WordPress.WP.I18n.LowLevelTranslationFunction,WordPress.WP.I18n.NonSingularStringLiteralText
 			$title = translate( $group_data['name'] );
 		}
 
-		echo '<h3 class="wp-people-group">' . esc_html( $title ) . "</h3>\n";
+		echo '<h2 class="wp-people-group">' . esc_html( $title ) . "</h2>\n";
 	}
 
 	if ( ! empty( $group_data['shuffle'] ) ) {
@@ -100,6 +102,7 @@ foreach ( $credits['groups'] as $group_slug => $group_data ) {
 				echo '<img src="' . esc_url( $data['url'] ) . '" srcset="' . esc_url( $data2x['url'] ) . ' 2x" class="gravatar" alt="" />' . "\n";
 				echo esc_html( $person_data[0] ) . "</a>\n\t";
 				if ( ! $compact ) {
+					// phpcs:ignore WordPress.WP.I18n.LowLevelTranslationFunction,WordPress.WP.I18n.NonSingularStringLiteralText
 					echo '<span class="title">' . translate( $person_data[3] ) . "</span>\n";
 				}
 				echo "</li>\n";

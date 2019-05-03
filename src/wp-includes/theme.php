@@ -725,7 +725,8 @@ function switch_theme( $stylesheet ) {
 
 	if ( is_array( $_sidebars_widgets ) ) {
 		set_theme_mod(
-			'sidebars_widgets', array(
+			'sidebars_widgets',
+			array(
 				'time' => time(),
 				'data' => $_sidebars_widgets,
 			)
@@ -742,6 +743,12 @@ function switch_theme( $stylesheet ) {
 	$old_theme = wp_get_theme();
 	$new_theme = wp_get_theme( $stylesheet );
 	$template  = $new_theme->get_template();
+
+	if ( wp_is_recovery_mode() ) {
+		$paused_themes = wp_paused_themes();
+		$paused_themes->delete( $old_theme->get_stylesheet() );
+		$paused_themes->delete( $old_theme->get_template() );
+	}
 
 	update_option( 'template', $template );
 	update_option( 'stylesheet', $stylesheet );
@@ -889,7 +896,7 @@ function get_theme_mods() {
  *
  * @param string      $name    Theme modification name.
  * @param bool|string $default
- * @return string
+ * @return mixed
  */
 function get_theme_mod( $name, $default = false ) {
 	$mods = get_theme_mods();
@@ -1677,11 +1684,11 @@ function _custom_background_cb() {
 
 		$style .= $image . $position . $size . $repeat . $attachment;
 	}
-?>
+	?>
 <style type="text/css" id="custom-background-css">
 body.custom-background { <?php echo trim( $style ); ?> }
 </style>
-<?php
+	<?php
 }
 
 /**
@@ -1692,11 +1699,11 @@ body.custom-background { <?php echo trim( $style ); ?> }
 function wp_custom_css_cb() {
 	$styles = wp_get_custom_css();
 	if ( $styles || is_customize_preview() ) :
-	?>
+		?>
 		<style type="text/css" id="wp-custom-css">
 			<?php echo strip_tags( $styles ); // Note that esc_html() cannot be used because `div &gt; span` is not interpreted properly. ?>
 		</style>
-	<?php
+		<?php
 	endif;
 }
 
@@ -1802,7 +1809,8 @@ function wp_get_custom_css( $stylesheet = '' ) {
  */
 function wp_update_custom_css_post( $css, $args = array() ) {
 	$args = wp_parse_args(
-		$args, array(
+		$args,
+		array(
 			'preprocessed' => '',
 			'stylesheet'   => get_stylesheet(),
 		)
@@ -2021,7 +2029,8 @@ function get_theme_starter_content() {
 				array(
 					'title'  => _x( 'Find Us', 'Theme starter content' ),
 					'text'   => join(
-						'', array(
+						'',
+						array(
 							'<strong>' . _x( 'Address', 'Theme starter content' ) . "</strong>\n",
 							_x( '123 Main Street', 'Theme starter content' ) . "\n" . _x( 'New York, NY 10001', 'Theme starter content' ) . "\n\n",
 							'<strong>' . _x( 'Hours', 'Theme starter content' ) . "</strong>\n",
@@ -2315,12 +2324,16 @@ function get_theme_starter_content() {
  * @since 4.1.0 The `title-tag` feature was added
  * @since 4.5.0 The `customize-selective-refresh-widgets` feature was added
  * @since 4.7.0 The `starter-content` feature was added
+ * @since 5.0.0 The `responsive-embeds`, `align-wide`, `dark-editor-style`, `disable-custom-colors`,
+ *              `disable-custom-font-sizes`, `editor-color-pallete`, `editor-font-sizes`,
+ *              `editor-styles`, and `wp-block-styles` features were added.
  *
  * @global array $_wp_theme_features
  *
  * @param string $feature  The feature being added. Likely core values include 'post-formats',
  *                         'post-thumbnails', 'html5', 'custom-logo', 'custom-header-uploads',
- *                         'custom-header', 'custom-background', 'title-tag', 'starter-content', etc.
+ *                         'custom-header', 'custom-background', 'title-tag', 'starter-content',
+ *                         'responsive-embeds', etc.
  * @param mixed  $args,... Optional extra arguments to pass along with certain features.
  * @return void|bool False on failure, void otherwise.
  */
@@ -2539,10 +2552,13 @@ function add_theme_support( $feature ) {
 			if ( did_action( 'wp_loaded' ) ) {
 				/* translators: 1: title-tag, 2: wp_loaded */
 				_doing_it_wrong(
-					"add_theme_support( 'title-tag' )", sprintf(
+					"add_theme_support( 'title-tag' )",
+					sprintf(
 						__( 'Theme support for %1$s should be registered before the %2$s hook.' ),
-						'<code>title-tag</code>', '<code>wp_loaded</code>'
-					), '4.1.0'
+						'<code>title-tag</code>',
+						'<code>wp_loaded</code>'
+					),
+					'4.1.0'
 				);
 
 				return false;
@@ -2613,7 +2629,7 @@ function _custom_logo_header_styles() {
 				clip: rect(1px, 1px, 1px, 1px);
 			}
 		</style>
-	<?php
+		<?php
 	}
 }
 
@@ -2624,7 +2640,7 @@ function _custom_logo_header_styles() {
  *
  * @global array $_wp_theme_features
  *
- * @param string $feature the feature to check
+ * @param string $feature The feature to check.
  * @return mixed The array of extra arguments or the value for the registered feature.
  */
 function get_theme_support( $feature ) {
@@ -2660,7 +2676,7 @@ function get_theme_support( $feature ) {
  *
  * @since 3.0.0
  * @see add_theme_support()
- * @param string $feature the feature being added
+ * @param string $feature The feature being removed.
  * @return bool|void Whether feature was removed.
  */
 function remove_theme_support( $feature ) {
@@ -2720,7 +2736,9 @@ function _remove_theme_support( $feature ) {
 				break;
 			}
 			$support = get_theme_support( 'custom-background' );
-			remove_action( 'wp_head', $support[0]['wp-head-callback'] );
+			if ( isset( $support[0]['wp-head-callback'] ) ) {
+				remove_action( 'wp_head', $support[0]['wp-head-callback'] );
+			}
 			remove_action( 'admin_menu', array( $GLOBALS['custom_background'], 'init' ) );
 			unset( $GLOBALS['custom_background'] );
 			break;
@@ -2731,14 +2749,14 @@ function _remove_theme_support( $feature ) {
 }
 
 /**
- * Checks a theme's support for a given feature
+ * Checks a theme's support for a given feature.
  *
  * @since 2.9.0
  *
  * @global array $_wp_theme_features
  *
- * @param string $feature the feature being checked
- * @return bool
+ * @param string $feature The feature being checked.
+ * @return bool True if the current theme supports the feature, false otherwise.
  */
 function current_theme_supports( $feature ) {
 	global $_wp_theme_features;
@@ -3047,7 +3065,7 @@ function _wp_customize_publish_changeset( $new_status, $old_status, $changeset_p
 	 * Trash the changeset post if revisions are not enabled. Unpublished
 	 * changesets by default get garbage collected due to the auto-draft status.
 	 * When a changeset post is published, however, it would no longer get cleaned
-	 * out. Ths is a problem when the changeset posts are never displayed anywhere,
+	 * out. This is a problem when the changeset posts are never displayed anywhere,
 	 * since they would just be endlessly piling up. So here we use the revisions
 	 * feature to indicate whether or not a published changeset should get trashed
 	 * and thus garbage collected.
@@ -3267,7 +3285,7 @@ function _wp_keep_alive_customize_changeset_dependent_auto_drafts( $new_status, 
 		 * it is now a persistent changeset, a long-lived draft, and so any
 		 * associated auto-draft posts should likewise transition into having a draft
 		 * status. These drafts will be treated differently than regular drafts in
-		 * that they will be tied to the given changeset. The publish metabox is
+		 * that they will be tied to the given changeset. The publish meta box is
 		 * replaced with a notice about how the post is part of a set of customized changes
 		 * which will be published when the changeset is published.
 		 */

@@ -132,10 +132,10 @@ function wp_dashboard_setup() {
 		exit;
 	}
 
-	/** This action is documented in wp-admin/edit-form-advanced.php */
+	/** This action is documented in wp-admin/includes/meta-boxes.php */
 	do_action( 'do_meta_boxes', $screen->id, 'normal', '' );
 
-	/** This action is documented in wp-admin/edit-form-advanced.php */
+	/** This action is documented in wp-admin/includes/meta-boxes.php */
 	do_action( 'do_meta_boxes', $screen->id, 'side', '' );
 }
 
@@ -226,7 +226,7 @@ function wp_dashboard() {
 		$columns_css = " columns-$columns";
 	}
 
-?>
+	?>
 <div id="dashboard-widgets" class="metabox-holder<?php echo $columns_css; ?>">
 	<div id="postbox-container-1" class="postbox-container">
 	<?php do_meta_boxes( $screen->id, 'normal', '' ); ?>
@@ -242,7 +242,7 @@ function wp_dashboard() {
 	</div>
 </div>
 
-<?php
+	<?php
 	wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
 	wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
 
@@ -260,7 +260,7 @@ function wp_dashboard() {
  * @since 2.7.0
  */
 function wp_dashboard_right_now() {
-?>
+	?>
 	<div class="main">
 	<ul>
 	<?php
@@ -291,9 +291,7 @@ function wp_dashboard_right_now() {
 		<?php
 		$moderated_comments_count_i18n = number_format_i18n( $num_comm->moderated );
 		/* translators: %s: number of comments in moderation */
-		$text = sprintf( _nx( '%s in moderation', '%s in moderation', $num_comm->moderated, 'comments' ), $moderated_comments_count_i18n );
-		/* translators: %s: number of comments in moderation */
-		$aria_label = sprintf( _nx( '%s comment in moderation', '%s comments in moderation', $num_comm->moderated, 'comments' ), $moderated_comments_count_i18n );
+		$text = sprintf( _n( '%s Comment in moderation', '%s Comments in moderation', $num_comm->moderated ), $moderated_comments_count_i18n );
 		?>
 		<li class="comment-mod-count
 		<?php
@@ -301,7 +299,7 @@ function wp_dashboard_right_now() {
 			echo ' hidden';
 		}
 		?>
-		"><a href="edit-comments.php?comment_status=moderated" aria-label="<?php echo esc_attr( $aria_label ); ?>"><?php echo $text; ?></a></li>
+		"><a href="edit-comments.php?comment_status=moderated" class="comments-in-moderation-text"><?php echo $text; ?></a></li>
 		<?php
 	}
 
@@ -388,11 +386,11 @@ function wp_dashboard_right_now() {
 	$actions = ob_get_clean();
 
 	if ( ! empty( $actions ) ) :
-	?>
+		?>
 	<div class="sub">
 		<?php echo $actions; ?>
 	</div>
-	<?php
+		<?php
 	endif;
 }
 
@@ -427,7 +425,7 @@ function wp_network_dashboard_right_now() {
 		echo implode( " |</li>\n", $actions ) . "</li>\n";
 		echo '</ul>';
 	}
-?>
+	?>
 	<br class="clear" />
 
 	<p class="youhave"><?php echo $sentence; ?></p>
@@ -458,7 +456,7 @@ function wp_network_dashboard_right_now() {
 			<?php submit_button( __( 'Search Sites' ), '', false, false, array( 'id' => 'submit_sites' ) ); ?>
 		</p>
 	</form>
-<?php
+	<?php
 	/**
 	 * Fires at the end of the 'Right Now' widget in the Network Admin dashboard.
 	 *
@@ -510,7 +508,7 @@ function wp_dashboard_quick_press( $error_msg = false ) {
 	}
 
 	$post_ID = (int) $post->ID;
-?>
+	?>
 
 	<form name="post" action="<?php echo esc_url( admin_url( 'post.php' ) ); ?>" method="post" id="quick-press" class="initial-form hide-if-no-js">
 
@@ -519,8 +517,7 @@ function wp_dashboard_quick_press( $error_msg = false ) {
 		<?php endif; ?>
 
 		<div class="input-text-wrap" id="title-wrap">
-			<label class="screen-reader-text prompt" for="title" id="title-prompt-text">
-
+			<label for="title">
 				<?php
 				/** This filter is documented in wp-admin/edit-form-advanced.php */
 				echo apply_filters( 'enter_title_here', __( 'Title' ), $post );
@@ -530,8 +527,8 @@ function wp_dashboard_quick_press( $error_msg = false ) {
 		</div>
 
 		<div class="textarea-wrap" id="description-wrap">
-			<label class="screen-reader-text prompt" for="content" id="content-prompt-text"><?php _e( 'What&#8217;s on your mind?' ); ?></label>
-			<textarea name="content" id="content" class="mceEditor" rows="3" cols="15" autocomplete="off"></textarea>
+			<label for="content"><?php _e( 'Content' ); ?></label>
+			<textarea name="content" id="content" placeholder="<?php esc_attr_e( 'What&#8217;s on your mind?' ); ?>" class="mceEditor" rows="3" cols="15" autocomplete="off"></textarea>
 		</div>
 
 		<p class="submit">
@@ -649,16 +646,16 @@ function _wp_dashboard_recent_comments_row( &$comment, $show_date = true ) {
 		$trash_url     = esc_url( "comment.php?action=trashcomment&p=$comment->comment_post_ID&c=$comment->comment_ID&$del_nonce" );
 		$delete_url    = esc_url( "comment.php?action=deletecomment&p=$comment->comment_post_ID&c=$comment->comment_ID&$del_nonce" );
 
-		$actions['approve']   = "<a href='$approve_url' data-wp-lists='dim:the-comment-list:comment-$comment->comment_ID:unapproved:e7e7d3:e7e7d3:new=approved' class='vim-a' aria-label='" . esc_attr__( 'Approve this comment' ) . "'>" . __( 'Approve' ) . '</a>';
-		$actions['unapprove'] = "<a href='$unapprove_url' data-wp-lists='dim:the-comment-list:comment-$comment->comment_ID:unapproved:e7e7d3:e7e7d3:new=unapproved' class='vim-u' aria-label='" . esc_attr__( 'Unapprove this comment' ) . "'>" . __( 'Unapprove' ) . '</a>';
+		$actions['approve']   = "<a href='$approve_url' data-wp-lists='dim:the-comment-list:comment-$comment->comment_ID:unapproved:e7e7d3:e7e7d3:new=approved' class='vim-a aria-button-if-js' aria-label='" . esc_attr__( 'Approve this comment' ) . "'>" . __( 'Approve' ) . '</a>';
+		$actions['unapprove'] = "<a href='$unapprove_url' data-wp-lists='dim:the-comment-list:comment-$comment->comment_ID:unapproved:e7e7d3:e7e7d3:new=unapproved' class='vim-u aria-button-if-js' aria-label='" . esc_attr__( 'Unapprove this comment' ) . "'>" . __( 'Unapprove' ) . '</a>';
 		$actions['edit']      = "<a href='comment.php?action=editcomment&amp;c={$comment->comment_ID}' aria-label='" . esc_attr__( 'Edit this comment' ) . "'>" . __( 'Edit' ) . '</a>';
-		$actions['reply']     = '<a onclick="window.commentReply && commentReply.open(\'' . $comment->comment_ID . '\',\'' . $comment->comment_post_ID . '\');return false;" class="vim-r hide-if-no-js" aria-label="' . esc_attr__( 'Reply to this comment' ) . '" href="#">' . __( 'Reply' ) . '</a>';
-		$actions['spam']      = "<a href='$spam_url' data-wp-lists='delete:the-comment-list:comment-$comment->comment_ID::spam=1' class='vim-s vim-destructive' aria-label='" . esc_attr__( 'Mark this comment as spam' ) . "'>" . /* translators: mark as spam link */ _x( 'Spam', 'verb' ) . '</a>';
+		$actions['reply']     = '<button type="button" onclick="window.commentReply && commentReply.open(\'' . $comment->comment_ID . '\',\'' . $comment->comment_post_ID . '\');" class="vim-r button-link hide-if-no-js" aria-label="' . esc_attr__( 'Reply to this comment' ) . '">' . __( 'Reply' ) . '</button>';
+		$actions['spam']      = "<a href='$spam_url' data-wp-lists='delete:the-comment-list:comment-$comment->comment_ID::spam=1' class='vim-s vim-destructive aria-button-if-js' aria-label='" . esc_attr__( 'Mark this comment as spam' ) . "'>" . /* translators: mark as spam link */ _x( 'Spam', 'verb' ) . '</a>';
 
 		if ( ! EMPTY_TRASH_DAYS ) {
-			$actions['delete'] = "<a href='$delete_url' data-wp-lists='delete:the-comment-list:comment-$comment->comment_ID::trash=1' class='delete vim-d vim-destructive' aria-label='" . esc_attr__( 'Delete this comment permanently' ) . "'>" . __( 'Delete Permanently' ) . '</a>';
+			$actions['delete'] = "<a href='$delete_url' data-wp-lists='delete:the-comment-list:comment-$comment->comment_ID::trash=1' class='delete vim-d vim-destructive aria-button-if-js' aria-label='" . esc_attr__( 'Delete this comment permanently' ) . "'>" . __( 'Delete Permanently' ) . '</a>';
 		} else {
-			$actions['trash'] = "<a href='$trash_url' data-wp-lists='delete:the-comment-list:comment-$comment->comment_ID::trash=1' class='delete vim-d vim-destructive' aria-label='" . esc_attr__( 'Move this comment to the Trash' ) . "'>" . _x( 'Trash', 'verb' ) . '</a>';
+			$actions['trash'] = "<a href='$trash_url' data-wp-lists='delete:the-comment-list:comment-$comment->comment_ID::trash=1' class='delete vim-d vim-destructive aria-button-if-js' aria-label='" . esc_attr__( 'Move this comment to the Trash' ) . "'>" . _x( 'Trash', 'verb' ) . '</a>';
 		}
 
 		$actions['view'] = '<a class="comment-link" href="' . esc_url( get_comment_link( $comment ) ) . '" aria-label="' . esc_attr__( 'View this comment' ) . '">' . __( 'View' ) . '</a>';
@@ -692,7 +689,7 @@ function _wp_dashboard_recent_comments_row( &$comment, $show_date = true ) {
 			$actions_string .= "<span class='$action'>$sep$link</span>";
 		}
 	}
-?>
+	?>
 
 		<li id="comment-<?php echo $comment->comment_ID; ?>" <?php comment_class( array( 'comment-item', wp_get_comment_status( $comment ) ), $comment ); ?>>
 
@@ -702,28 +699,28 @@ function _wp_dashboard_recent_comments_row( &$comment, $show_date = true ) {
 
 			<div class="dashboard-comment-wrap has-row-actions">
 			<p class="comment-meta">
-			<?php
+				<?php
 				// Comments might not have a post they relate to, e.g. programmatically created ones.
-			if ( $comment_post_link ) {
-				printf(
-					/* translators: 1: comment author, 2: post link, 3: notification if the comment is pending */
-					__( 'From %1$s on %2$s %3$s' ),
-					'<cite class="comment-author">' . get_comment_author_link( $comment ) . '</cite>',
-					$comment_post_link,
-					'<span class="approve">' . __( '[Pending]' ) . '</span>'
-				);
-			} else {
-				printf(
-					/* translators: 1: comment author, 2: notification if the comment is pending */
-					__( 'From %1$s %2$s' ),
-					'<cite class="comment-author">' . get_comment_author_link( $comment ) . '</cite>',
-					'<span class="approve">' . __( '[Pending]' ) . '</span>'
-				);
-			}
-			?>
+				if ( $comment_post_link ) {
+					printf(
+						/* translators: 1: comment author, 2: post link, 3: notification if the comment is pending */
+						__( 'From %1$s on %2$s %3$s' ),
+						'<cite class="comment-author">' . get_comment_author_link( $comment ) . '</cite>',
+						$comment_post_link,
+						'<span class="approve">' . __( '[Pending]' ) . '</span>'
+					);
+				} else {
+					printf(
+						/* translators: 1: comment author, 2: notification if the comment is pending */
+						__( 'From %1$s %2$s' ),
+						'<cite class="comment-author">' . get_comment_author_link( $comment ) . '</cite>',
+						'<span class="approve">' . __( '[Pending]' ) . '</span>'
+					);
+				}
+				?>
 			</p>
 
-			<?php
+				<?php
 			else :
 				switch ( $comment->comment_type ) {
 					case 'pingback':
@@ -736,28 +733,28 @@ function _wp_dashboard_recent_comments_row( &$comment, $show_date = true ) {
 						$type = ucwords( $comment->comment_type );
 				}
 				$type = esc_html( $type );
-			?>
+				?>
 			<div class="dashboard-comment-wrap has-row-actions">
 			<p class="comment-meta">
-			<?php
+				<?php
 				// Pingbacks, Trackbacks or custom comment types might not have a post they relate to, e.g. programmatically created ones.
-			if ( $comment_post_link ) {
-				printf(
-					/* translators: 1: type of comment, 2: post link, 3: notification if the comment is pending */
-					_x( '%1$s on %2$s %3$s', 'dashboard' ),
-					"<strong>$type</strong>",
-					$comment_post_link,
-					'<span class="approve">' . __( '[Pending]' ) . '</span>'
-				);
-			} else {
-				printf(
-					/* translators: 1: type of comment, 2: notification if the comment is pending */
-					_x( '%1$s %2$s', 'dashboard' ),
-					"<strong>$type</strong>",
-					'<span class="approve">' . __( '[Pending]' ) . '</span>'
-				);
-			}
-			?>
+				if ( $comment_post_link ) {
+					printf(
+						/* translators: 1: type of comment, 2: post link, 3: notification if the comment is pending */
+						_x( '%1$s on %2$s %3$s', 'dashboard' ),
+						"<strong>$type</strong>",
+						$comment_post_link,
+						'<span class="approve">' . __( '[Pending]' ) . '</span>'
+					);
+				} else {
+					printf(
+						/* translators: 1: type of comment, 2: notification if the comment is pending */
+						_x( '%1$s %2$s', 'dashboard' ),
+						"<strong>$type</strong>",
+						'<span class="approve">' . __( '[Pending]' ) . '</span>'
+					);
+				}
+				?>
 			</p>
 			<p class="comment-author"><?php comment_author_link( $comment ); ?></p>
 
@@ -768,7 +765,7 @@ function _wp_dashboard_recent_comments_row( &$comment, $show_date = true ) {
 			<?php endif; ?>
 			</div>
 		</li>
-<?php
+	<?php
 	$GLOBALS['comment'] = null;
 }
 
@@ -858,8 +855,9 @@ function wp_dashboard_recent_posts( $args ) {
 
 		echo '<ul>';
 
-		$today    = date( 'Y-m-d', current_time( 'timestamp' ) );
-		$tomorrow = date( 'Y-m-d', strtotime( '+1 day', current_time( 'timestamp' ) ) );
+		$today    = current_time( 'Y-m-d' );
+		$tomorrow = gmdate( 'Y-m-d', strtotime( '+1 day', current_time( 'timestamp' ) ) );
+		$year     = current_time( 'Y' );
 
 		while ( $posts->have_posts() ) {
 			$posts->the_post();
@@ -869,7 +867,7 @@ function wp_dashboard_recent_posts( $args ) {
 				$relative = __( 'Today' );
 			} elseif ( date( 'Y-m-d', $time ) == $tomorrow ) {
 				$relative = __( 'Tomorrow' );
-			} elseif ( date( 'Y', $time ) !== date( 'Y', current_time( 'timestamp' ) ) ) {
+			} elseif ( date( 'Y', $time ) !== $year ) {
 				/* translators: date and time format for recent posts on the dashboard, from a different calendar year, see https://secure.php.net/date */
 				$relative = date_i18n( __( 'M jS Y' ), $time );
 			} else {
@@ -1049,7 +1047,9 @@ function wp_dashboard_trigger_widget_control( $widget_control_id = false ) {
 
 	if ( is_scalar( $widget_control_id ) && $widget_control_id && isset( $wp_dashboard_control_callbacks[ $widget_control_id ] ) && is_callable( $wp_dashboard_control_callbacks[ $widget_control_id ] ) ) {
 		call_user_func(
-			$wp_dashboard_control_callbacks[ $widget_control_id ], '', array(
+			$wp_dashboard_control_callbacks[ $widget_control_id ],
+			'',
+			array(
 				'id'       => $widget_control_id,
 				'callback' => $wp_dashboard_control_callbacks[ $widget_control_id ],
 			)
@@ -1607,9 +1607,9 @@ function wp_check_browser_version() {
 }
 
 /**
- * Displays the PHP upgrade nag.
+ * Displays the PHP update nag.
  *
- * @since 5.0.0
+ * @since 5.1.0
  */
 function wp_dashboard_php_nag() {
 	$response = wp_check_php_version();
@@ -1632,22 +1632,25 @@ function wp_dashboard_php_nag() {
 
 	<p class="button-container">
 		<?php
-			printf(
-				'<a class="button button-primary" href="%1$s" target="_blank" rel="noopener noreferrer">%2$s <span class="screen-reader-text">%3$s</span><span aria-hidden="true" class="dashicons dashicons-external"></span></a>',
-				esc_url( _x( 'https://wordpress.org/support/upgrade-php/', 'localized PHP upgrade information page' ) ),
-				__( 'Learn more about updating PHP' ),
-				/* translators: accessibility text */
-				__( '(opens in a new tab)' )
-			);
+		printf(
+			'<a class="button button-primary" href="%1$s" target="_blank" rel="noopener noreferrer">%2$s <span class="screen-reader-text">%3$s</span><span aria-hidden="true" class="dashicons dashicons-external"></span></a>',
+			esc_url( wp_get_update_php_url() ),
+			__( 'Learn more about updating PHP' ),
+			/* translators: accessibility text */
+			__( '(opens in a new tab)' )
+		);
 		?>
 	</p>
 	<?php
+
+	wp_update_php_annotation();
+	wp_direct_php_update_button();
 }
 
 /**
  * Adds an additional class to the PHP nag if the current version is insecure.
  *
- * @since 5.0.0
+ * @since 5.1.0
  *
  * @param array $classes Metabox classes.
  * @return array Modified metabox classes.
@@ -1660,51 +1663,6 @@ function dashboard_php_nag_class( $classes ) {
 	}
 
 	return $classes;
-}
-
-/**
- * Checks if the user needs to upgrade PHP.
- *
- * @since 5.0.0
- *
- * @return array|false $response Array of PHP version data. False on failure.
- */
-function wp_check_php_version() {
-	$version = phpversion();
-	$key     = md5( $version );
-
-	$response = get_site_transient( 'php_check_' . $key );
-	if ( false === $response ) {
-		$url = 'http://api.wordpress.org/core/serve-happy/1.0/';
-		if ( wp_http_supports( array( 'ssl' ) ) ) {
-			$url = set_url_scheme( $url, 'https' );
-		}
-
-		$url = add_query_arg( 'php_version', $version, $url );
-
-		$response = wp_remote_get( $url );
-
-		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return false;
-		}
-
-		/**
-		 * Response should be an array with:
-		 *  'recommended_version' - string - The PHP version recommended by WordPress.
-		 *  'is_supported' - boolean - Whether the PHP version is actively supported.
-		 *  'is_secure' - boolean - Whether the PHP version receives security updates.
-		 *  'is_acceptable' - boolean - Whether the PHP version is still acceptable for WordPress.
-		 */
-		$response = json_decode( wp_remote_retrieve_body( $response ), true );
-
-		if ( ! is_array( $response ) ) {
-			return false;
-		}
-
-		set_site_transient( 'php_check_' . $key, $response, WEEK_IN_SECONDS );
-	}
-
-	return $response;
 }
 
 /**
@@ -1747,6 +1705,7 @@ function wp_welcome_panel() {
 		<?php else : ?>
 			<li><?php printf( '<a href="%s" class="welcome-icon welcome-write-blog">' . __( 'Write your first blog post' ) . '</a>', admin_url( 'post-new.php' ) ); ?></li>
 			<li><?php printf( '<a href="%s" class="welcome-icon welcome-add-page">' . __( 'Add an About page' ) . '</a>', admin_url( 'post-new.php?post_type=page' ) ); ?></li>
+			<li><?php printf( '<a href="%s" class="welcome-icon welcome-setup-home">' . __( 'Set up your homepage' ) . '</a>', current_user_can( 'customize' ) ? add_query_arg( 'autofocus[section]', 'static_front_page', admin_url( 'customize.php' ) ) : admin_url( 'options-reading.php' ) ); ?></li>
 		<?php endif; ?>
 			<li><?php printf( '<a href="%s" class="welcome-icon welcome-view-site">' . __( 'View your site' ) . '</a>', home_url( '/' ) ); ?></li>
 		</ul>
@@ -1760,7 +1719,8 @@ function wp_welcome_panel() {
 			if ( current_theme_supports( 'widgets' ) && current_theme_supports( 'menus' ) ) {
 				printf(
 					__( 'Manage <a href="%1$s">widgets</a> or <a href="%2$s">menus</a>' ),
-					admin_url( 'widgets.php' ), admin_url( 'nav-menus.php' )
+					admin_url( 'widgets.php' ),
+					admin_url( 'nav-menus.php' )
 				);
 			} elseif ( current_theme_supports( 'widgets' ) ) {
 				echo '<a href="' . admin_url( 'widgets.php' ) . '">' . __( 'Manage widgets' ) . '</a>';

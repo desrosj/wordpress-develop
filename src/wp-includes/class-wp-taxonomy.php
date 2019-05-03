@@ -130,7 +130,7 @@ final class WP_Taxonomy {
 	/**
 	 * The callback function for sanitizing taxonomy data saved from a meta box.
 	 *
-	 * @since 5.0.0
+	 * @since 5.1.0
 	 * @var callable
 	 */
 	public $meta_box_sanitize_cb = null;
@@ -296,7 +296,8 @@ final class WP_Taxonomy {
 
 		if ( false !== $args['rewrite'] && ( is_admin() || '' != get_option( 'permalink_structure' ) ) ) {
 			$args['rewrite'] = wp_parse_args(
-				$args['rewrite'], array(
+				$args['rewrite'],
+				array(
 					'with_front'   => true,
 					'hierarchical' => false,
 					'ep_mask'      => EP_NONE,

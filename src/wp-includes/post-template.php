@@ -253,6 +253,7 @@ function the_content( $more_link_text = null, $strip_teaser = false ) {
  * Retrieve the post content.
  *
  * @since 0.71
+ * @since 5.2.0 Added the `$post` parameter.
  *
  * @global int   $page      Page number of a single post/page.
  * @global int   $more      Boolean indicator for whether single post/page is being viewed.
@@ -261,14 +262,25 @@ function the_content( $more_link_text = null, $strip_teaser = false ) {
  *                          part of the content separated by the `<!--nextpage-->` tag.
  * @global int   $multipage Boolean indicator for whether multiple pages are in play.
  *
- * @param string $more_link_text Optional. Content for when there is more text.
- * @param bool   $strip_teaser   Optional. Strip teaser content before the more text. Default is false.
+ * @param string             $more_link_text Optional. Content for when there is more text.
+ * @param bool               $strip_teaser   Optional. Strip teaser content before the more text. Default is false.
+ * @param WP_Post|object|int $post           Optional. WP_Post instance or Post ID/object. Default is null.
  * @return string
  */
-function get_the_content( $more_link_text = null, $strip_teaser = false ) {
+function get_the_content( $more_link_text = null, $strip_teaser = false, $post = null ) {
 	global $page, $more, $preview, $pages, $multipage;
 
-	$post = get_post();
+	$_post = get_post( $post );
+
+	if ( ! ( $_post instanceof WP_Post ) ) {
+		return '';
+	}
+
+	if ( null === $post ) {
+		$elements = compact( 'page', 'more', 'preview', 'pages', 'multipage' );
+	} else {
+		$elements = generate_postdata( $_post );
+	}
 
 	if ( null === $more_link_text ) {
 		$more_link_text = sprintf(
@@ -276,7 +288,12 @@ function get_the_content( $more_link_text = null, $strip_teaser = false ) {
 			sprintf(
 				/* translators: %s: Name of current post */
 				__( 'Continue reading %s' ),
-				the_title_attribute( array( 'echo' => false ) )
+				the_title_attribute(
+					array(
+						'echo' => false,
+						'post' => $_post,
+					)
+				)
 			),
 			__( '(more&hellip;)' )
 		);
@@ -286,17 +303,24 @@ function get_the_content( $more_link_text = null, $strip_teaser = false ) {
 	$has_teaser = false;
 
 	// If post password required and it doesn't match the cookie.
-	if ( post_password_required( $post ) ) {
-		return get_the_password_form( $post );
+	if ( post_password_required( $_post ) ) {
+		return get_the_password_form( $_post );
 	}
 
-	if ( $page > count( $pages ) ) { // if the requested page doesn't exist
-		$page = count( $pages ); // give them the highest numbered page that DOES exist
+	if ( $elements['page'] > count( $elements['pages'] ) ) { // if the requested page doesn't exist
+		$elements['page'] = count( $elements['pages'] ); // give them the highest numbered page that DOES exist
 	}
 
-	$content = $pages[ $page - 1 ];
+	$page_no = $elements['page'];
+	$content = $elements['pages'][ $page_no - 1 ];
 	if ( preg_match( '/<!--more(.*?)?-->/', $content, $matches ) ) {
+		if ( has_block( 'more', $content ) ) {
+			// Remove the core/more block delimiters. They will be left over after $content is split up.
+			$content = preg_replace( '/<!-- \/?wp:more(.*?) -->/', '', $content );
+		}
+
 		$content = explode( $matches[0], $content, 2 );
+
 		if ( ! empty( $matches[1] ) && ! empty( $more_link_text ) ) {
 			$more_link_text = strip_tags( wp_kses_no_null( trim( $matches[1] ) ) );
 		}
@@ -306,21 +330,21 @@ function get_the_content( $more_link_text = null, $strip_teaser = false ) {
 		$content = array( $content );
 	}
 
-	if ( false !== strpos( $post->post_content, '<!--noteaser-->' ) && ( ! $multipage || $page == 1 ) ) {
+	if ( false !== strpos( $_post->post_content, '<!--noteaser-->' ) && ( ! $elements['multipage'] || $elements['page'] == 1 ) ) {
 		$strip_teaser = true;
 	}
 
 	$teaser = $content[0];
 
-	if ( $more && $strip_teaser && $has_teaser ) {
+	if ( $elements['more'] && $strip_teaser && $has_teaser ) {
 		$teaser = '';
 	}
 
 	$output .= $teaser;
 
 	if ( count( $content ) > 1 ) {
-		if ( $more ) {
-			$output .= '<span id="more-' . $post->ID . '"></span>' . $content[1];
+		if ( $elements['more'] ) {
+			$output .= '<span id="more-' . $_post->ID . '"></span>' . $content[1];
 		} else {
 			if ( ! empty( $more_link_text ) ) {
 
@@ -332,7 +356,7 @@ function get_the_content( $more_link_text = null, $strip_teaser = false ) {
 				 * @param string $more_link_element Read More link element.
 				 * @param string $more_link_text    Read More text.
 				 */
-				$output .= apply_filters( 'the_content_more_link', ' <a href="' . get_permalink() . "#more-{$post->ID}\" class=\"more-link\">$more_link_text</a>", $more_link_text );
+				$output .= apply_filters( 'the_content_more_link', ' <a href="' . get_permalink( $_post ) . "#more-{$_post->ID}\" class=\"more-link\">$more_link_text</a>", $more_link_text );
 			}
 			$output = force_balance_tags( $output );
 		}
@@ -603,6 +627,9 @@ function get_body_class( $class = '' ) {
 	if ( is_home() ) {
 		$classes[] = 'blog';
 	}
+	if ( is_privacy_policy() ) {
+		$classes[] = 'privacy-policy';
+	}
 	if ( is_archive() ) {
 		$classes[] = 'archive';
 	}
@@ -752,12 +779,17 @@ function get_body_class( $class = '' ) {
 		$classes[] = 'no-customize-support';
 	}
 
-	if ( get_background_color() !== get_theme_support( 'custom-background', 'default-color' ) || get_background_image() ) {
+	if ( current_theme_supports( 'custom-background' )
+		&& ( get_background_color() !== get_theme_support( 'custom-background', 'default-color' ) || get_background_image() ) ) {
 		$classes[] = 'custom-background';
 	}
 
 	if ( has_custom_logo() ) {
 		$classes[] = 'wp-custom-logo';
+	}
+
+	if ( current_theme_supports( 'responsive-embeds' ) ) {
+		$classes[] = 'wp-embed-responsive';
 	}
 
 	$page = $wp_query->get( 'page' );
@@ -867,7 +899,7 @@ function post_password_required( $post = null ) {
  * Quicktag one or more times). This tag must be within The Loop.
  *
  * @since 1.2.0
- * @since 5.0.0 Added the `aria_current` argument.
+ * @since 5.1.0 Added the `aria_current` argument.
  *
  * @global int $page
  * @global int $numpages
@@ -1323,7 +1355,7 @@ function wp_list_pages( $args = '' ) {
 /**
  * Displays or retrieves a list of pages with an optional home link.
  *
- * The arguments are listed below and part of the arguments are for wp_list_pages()} function.
+ * The arguments are listed below and part of the arguments are for wp_list_pages() function.
  * Check that function for more info on those arguments.
  *
  * @since 2.7.0
@@ -1598,6 +1630,7 @@ function wp_get_attachment_link( $id = 0, $size = 'thumbnail', $permalink = fals
 	 * Filters a retrieved attachment page link.
 	 *
 	 * @since 2.7.0
+	 * @since 5.1.0 Added the $attr parameter.
 	 *
 	 * @param string       $link_html The page link HTML output.
 	 * @param int          $id        Post ID.
@@ -1606,8 +1639,9 @@ function wp_get_attachment_link( $id = 0, $size = 'thumbnail', $permalink = fals
 	 * @param bool         $permalink Whether to add permalink to image. Default false.
 	 * @param bool         $icon      Whether to include an icon. Default false.
 	 * @param string|bool  $text      If string, will be link text. Default false.
+	 * @param array|string $attr      Array or string of attributes. Default empty.
 	 */
-	return apply_filters( 'wp_get_attachment_link', "<a href='" . esc_url( $url ) . "'>$link_text</a>", $id, $size, $permalink, $icon, $text );
+	return apply_filters( 'wp_get_attachment_link', "<a href='" . esc_url( $url ) . "'>$link_text</a>", $id, $size, $permalink, $icon, $text, $attr );
 }
 
 /**

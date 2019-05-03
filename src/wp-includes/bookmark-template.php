@@ -237,7 +237,8 @@ function wp_list_bookmarks( $args = '' ) {
 
 	if ( $r['categorize'] ) {
 		$cats = get_terms(
-			'link_category', array(
+			'link_category',
+			array(
 				'name__like'   => $r['category_name'],
 				'include'      => $r['category'],
 				'exclude'      => $r['exclude_category'],
@@ -265,11 +266,11 @@ function wp_list_bookmarks( $args = '' ) {
 				$r['category_before']
 			);
 			/**
-			 * Filters the bookmarks category name.
+			 * Filters the category name.
 			 *
 			 * @since 2.2.0
 			 *
-			 * @param string $cat_name The category name of bookmarks.
+			 * @param string $cat_name The category name.
 			 */
 			$catname = apply_filters( 'link_category', $cat->name );
 

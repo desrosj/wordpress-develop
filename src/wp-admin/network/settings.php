@@ -61,7 +61,7 @@ get_current_screen()->add_help_tab(
 get_current_screen()->set_help_sidebar(
 	'<p><strong>' . __( 'For more information:' ) . '</strong></p>' .
 	'<p>' . __( '<a href="https://codex.wordpress.org/Network_Admin_Settings_Screen">Documentation on Network Settings</a>' ) . '</p>' .
-	'<p>' . __( '<a href="https://wordpress.org/support/">Support Forums</a>' ) . '</p>'
+	'<p>' . __( '<a href="https://wordpress.org/support/">Support</a>' ) . '</p>'
 );
 
 if ( $_POST ) {
@@ -166,7 +166,7 @@ if ( isset( $_GET['updated'] ) ) {
 					<?php
 					$new_admin_email = get_site_option( 'new_admin_email' );
 					if ( $new_admin_email && $new_admin_email != get_site_option( 'admin_email' ) ) :
-					?>
+						?>
 						<div class="updated inline">
 						<p>
 						<?php
@@ -388,7 +388,7 @@ if ( isset( $_GET['updated'] ) ) {
 							__( '%s KB' ),
 							'<input name="fileupload_maxk" type="number" min="0" style="width: 100px" id="fileupload_maxk" aria-describedby="fileupload-maxk-desc" value="' . esc_attr( get_site_option( 'fileupload_maxk', 300 ) ) . '" />'
 						);
-					?>
+						?>
 					<p class="screen-reader-text" id="fileupload-maxk-desc">
 						<?php _e( 'Size in kilobytes' ); ?>
 					</p>

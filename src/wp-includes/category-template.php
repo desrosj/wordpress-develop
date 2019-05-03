@@ -353,7 +353,8 @@ function wp_dropdown_categories( $args = '' ) {
 	// Back compat.
 	if ( isset( $args['type'] ) && 'link' == $args['type'] ) {
 		_deprecated_argument(
-			__FUNCTION__, '3.0.0',
+			__FUNCTION__,
+			'3.0.0',
 			/* translators: 1: "type => link", 2: "taxonomy => link_category" */
 			sprintf(
 				__( '%1$s is deprecated. Use %2$s instead.' ),
@@ -698,8 +699,10 @@ function wp_tag_cloud( $args = '' ) {
 	$args     = wp_parse_args( $args, $defaults );
 
 	$tags = get_terms(
-		$args['taxonomy'], array_merge(
-			$args, array(
+		$args['taxonomy'],
+		array_merge(
+			$args,
+			array(
 				'orderby' => 'count',
 				'order'   => 'DESC',
 			)
@@ -839,6 +842,7 @@ function wp_generate_tag_cloud( $tags, $args = '' ) {
 		}
 	} elseif ( isset( $args['single_text'] ) && isset( $args['multiple_text'] ) ) {
 		// If no callback exists, look for the old-style single_text and multiple_text arguments.
+		// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralSingle,WordPress.WP.I18n.NonSingularStringLiteralPlural
 		$translate_nooped_plural = _n_noop( $args['single_text'], $args['multiple_text'] );
 	} else {
 		// This is the default for when no callback, plural, or argument is passed in.

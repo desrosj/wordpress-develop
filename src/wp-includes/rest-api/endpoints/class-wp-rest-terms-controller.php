@@ -74,7 +74,9 @@ class WP_REST_Terms_Controller extends WP_REST_Controller {
 	public function register_routes() {
 
 		register_rest_route(
-			$this->namespace, '/' . $this->rest_base, array(
+			$this->namespace,
+			'/' . $this->rest_base,
+			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_items' ),
@@ -92,7 +94,9 @@ class WP_REST_Terms_Controller extends WP_REST_Controller {
 		);
 
 		register_rest_route(
-			$this->namespace, '/' . $this->rest_base . '/(?P<id>[\d]+)', array(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)',
+			array(
 				'args'   => array(
 					'id' => array(
 						'description' => __( 'Unique identifier for the term.' ),
@@ -278,7 +282,7 @@ class WP_REST_Terms_Controller extends WP_REST_Controller {
 
 		$response->header( 'X-WP-TotalPages', (int) $max_pages );
 
-		$base = add_query_arg( $request->get_query_params(), rest_url( $this->namespace . '/' . $this->rest_base ) );
+		$base = add_query_arg( urlencode_deep( $request->get_query_params() ), rest_url( $this->namespace . '/' . $this->rest_base ) );
 		if ( $page > 1 ) {
 			$prev_page = $page - 1;
 
@@ -422,7 +426,12 @@ class WP_REST_Terms_Controller extends WP_REST_Controller {
 			if ( $term_id = $term->get_error_data( 'term_exists' ) ) {
 				$existing_term = get_term( $term_id, $this->taxonomy );
 				$term->add_data( $existing_term->term_id, 'term_exists' );
-				$term->add_data( array( 'status' => 400, 'term_id' => $term_id ) );
+				$term->add_data(
+					array(
+						'status'  => 400,
+						'term_id' => $term_id,
+					)
+				);
 			}
 
 			return $term;
@@ -445,7 +454,7 @@ class WP_REST_Terms_Controller extends WP_REST_Controller {
 
 		$schema = $this->get_item_schema();
 		if ( ! empty( $schema['properties']['meta'] ) && isset( $request['meta'] ) ) {
-			$meta_update = $this->meta->update_value( $request['meta'], (int) $request['id'] );
+			$meta_update = $this->meta->update_value( $request['meta'], $term->term_id );
 
 			if ( is_wp_error( $meta_update ) ) {
 				return $meta_update;
@@ -459,6 +468,19 @@ class WP_REST_Terms_Controller extends WP_REST_Controller {
 		}
 
 		$request->set_param( 'context', 'view' );
+
+		/**
+		 * Fires after a single term is completely created or updated via the REST API.
+		 *
+		 * The dynamic portion of the hook name, `$this->taxonomy`, refers to the taxonomy slug.
+		 *
+		 * @since 5.0.0
+		 *
+		 * @param WP_Term         $term     Inserted or updated term object.
+		 * @param WP_REST_Request $request  Request object.
+		 * @param bool            $creating True when creating a term, false when updating.
+		 */
+		do_action( "rest_after_insert_{$this->taxonomy}", $term, $request, true );
 
 		$response = $this->prepare_item_for_response( $term, $request );
 		$response = rest_ensure_response( $response );
@@ -548,6 +570,9 @@ class WP_REST_Terms_Controller extends WP_REST_Controller {
 		}
 
 		$request->set_param( 'context', 'view' );
+
+		/** This action is documented in wp-includes/rest-api/endpoints/class-wp-rest-terms-controller.php */
+		do_action( "rest_after_insert_{$this->taxonomy}", $term, $request, false );
 
 		$response = $this->prepare_item_for_response( $term, $request );
 
@@ -660,11 +685,15 @@ class WP_REST_Terms_Controller extends WP_REST_Controller {
 		}
 
 		if ( isset( $request['parent'] ) && ! empty( $schema['properties']['parent'] ) ) {
-			$parent_term_id = 0;
-			$parent_term    = get_term( (int) $request['parent'], $this->taxonomy );
+			$parent_term_id   = 0;
+			$requested_parent = (int) $request['parent'];
 
-			if ( $parent_term ) {
-				$parent_term_id = $parent_term->term_id;
+			if ( $requested_parent ) {
+				$parent_term = get_term( $requested_parent, $this->taxonomy );
+
+				if ( $parent_term instanceof WP_Term ) {
+					$parent_term_id = $parent_term->term_id;
+				}
 			}
 
 			$prepared_term->parent = $parent_term_id;

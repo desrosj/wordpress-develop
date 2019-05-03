@@ -464,6 +464,12 @@ function map_meta_cap( $cap, $user_id ) {
 				}
 			}
 			break;
+		case 'resume_plugin':
+			$caps[] = 'resume_plugins';
+			break;
+		case 'resume_theme':
+			$caps[] = 'resume_themes';
+			break;
 		case 'delete_user':
 		case 'delete_users':
 			// If multisite only super admins can delete users.
@@ -572,6 +578,23 @@ function map_meta_cap( $cap, $user_id ) {
 			if ( isset( $post_type_meta_caps[ $cap ] ) ) {
 				$args = array_merge( array( $post_type_meta_caps[ $cap ], $user_id ), $args );
 				return call_user_func_array( 'map_meta_cap', $args );
+			}
+
+			// Block capabilities map to their post equivalent.
+			$block_caps = array(
+				'edit_blocks',
+				'edit_others_blocks',
+				'publish_blocks',
+				'read_private_blocks',
+				'delete_blocks',
+				'delete_private_blocks',
+				'delete_published_blocks',
+				'delete_others_blocks',
+				'edit_private_blocks',
+				'edit_published_blocks',
+			);
+			if ( in_array( $cap, $block_caps, true ) ) {
+				$cap = str_replace( '_blocks', '_posts', $cap );
 			}
 
 			// If no meta caps match, return the original cap.
@@ -933,3 +956,39 @@ function wp_maybe_grant_install_languages_cap( $allcaps ) {
 
 	return $allcaps;
 }
+
+/**
+ * Filters the user capabilities to grant the 'resume_plugins' and 'resume_themes' capabilities as necessary.
+ *
+ * @since 5.2.0
+ *
+ * @param bool[] $allcaps An array of all the user's capabilities.
+ * @return bool[] Filtered array of the user's capabilities.
+ */
+function wp_maybe_grant_resume_extensions_caps( $allcaps ) {
+	// Even in a multisite, regular administrators should be able to resume plugins.
+	if ( ! empty( $allcaps['activate_plugins'] ) ) {
+		$allcaps['resume_plugins'] = true;
+	}
+
+	// Even in a multisite, regular administrators should be able to resume themes.
+	if ( ! empty( $allcaps['switch_themes'] ) ) {
+		$allcaps['resume_themes'] = true;
+	}
+
+	return $allcaps;
+}
+
+return;
+
+// Dummy gettext calls to get strings in the catalog.
+/* translators: user role for administrators  */
+_x( 'Administrator', 'User role' );
+/* translators: user role for editors */
+_x( 'Editor', 'User role' );
+/* translators: user role for authors */
+_x( 'Author', 'User role' );
+/* translators: user role for contributors */
+_x( 'Contributor', 'User role' );
+/* translators: user role for subscriber */
+_x( 'Subscriber', 'User role' );

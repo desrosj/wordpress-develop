@@ -121,7 +121,26 @@ class Core_Upgrader extends WP_Upgrader {
 			return new WP_Error( 'locked', $this->strings['locked'] );
 		}
 
-		$download = $this->download_package( $current->packages->$to_download );
+		$download = $this->download_package( $current->packages->$to_download, true );
+
+		// Allow for signature soft-fail.
+		// WARNING: This may be removed in the future.
+		if ( is_wp_error( $download ) && $download->get_error_data( 'softfail-filename' ) ) {
+			// Outout the failure error as a normal feedback, and not as an error:
+			apply_filters( 'update_feedback', $download->get_error_message() );
+
+			// Report this failure back to WordPress.org for debugging purposes.
+			wp_version_check(
+				array(
+					'signature_failure_code' => $download->get_error_code(),
+					'signature_failure_data' => $download->get_error_data(),
+				)
+			);
+
+			// Pretend this error didn't happen.
+			$download = $download->get_error_data( 'softfail-filename' );
+		}
+
 		if ( is_wp_error( $download ) ) {
 			WP_Upgrader::release_lock( 'core_updater' );
 			return $download;
@@ -180,7 +199,9 @@ class Core_Upgrader extends WP_Upgrader {
 
 				$original_result = $result;
 				$result          = new WP_Error(
-					'rollback_was_required', $this->strings['rollback_was_required'], (object) array(
+					'rollback_was_required',
+					$this->strings['rollback_was_required'],
+					(object) array(
 						'update'   => $original_result,
 						'rollback' => $rollback_result,
 					)
@@ -189,10 +210,14 @@ class Core_Upgrader extends WP_Upgrader {
 		}
 
 		/** This action is documented in wp-admin/includes/class-wp-upgrader.php */
-		do_action( 'upgrader_process_complete', $this, array(
-			'action' => 'update',
-			'type'   => 'core',
-		) );
+		do_action(
+			'upgrader_process_complete',
+			$this,
+			array(
+				'action' => 'update',
+				'type'   => 'core',
+			)
+		);
 
 		// Clear the current updates
 		delete_site_transient( 'update_core' );

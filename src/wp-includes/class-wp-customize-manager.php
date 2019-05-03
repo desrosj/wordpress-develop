@@ -317,7 +317,7 @@ final class WP_Customize_Manager {
 		require_once( ABSPATH . WPINC . '/customize/class-wp-customize-nav-menu-name-control.php' );
 		require_once( ABSPATH . WPINC . '/customize/class-wp-customize-nav-menu-locations-control.php' );
 		require_once( ABSPATH . WPINC . '/customize/class-wp-customize-nav-menu-auto-add-control.php' );
-		require_once( ABSPATH . WPINC . '/customize/class-wp-customize-new-menu-control.php' ); // @todo Remove in 5.0. See #42364.
+		require_once( ABSPATH . WPINC . '/customize/class-wp-customize-new-menu-control.php' ); // @todo Remove in a future release. See #42364.
 
 		require_once( ABSPATH . WPINC . '/customize/class-wp-customize-nav-menus-panel.php' );
 
@@ -325,7 +325,7 @@ final class WP_Customize_Manager {
 		require_once( ABSPATH . WPINC . '/customize/class-wp-customize-themes-section.php' );
 		require_once( ABSPATH . WPINC . '/customize/class-wp-customize-sidebar-section.php' );
 		require_once( ABSPATH . WPINC . '/customize/class-wp-customize-nav-menu-section.php' );
-		require_once( ABSPATH . WPINC . '/customize/class-wp-customize-new-menu-section.php' ); // @todo Remove in 5.0. See #42364.
+		require_once( ABSPATH . WPINC . '/customize/class-wp-customize-new-menu-section.php' ); // @todo Remove in a future release. See #42364.
 
 		require_once( ABSPATH . WPINC . '/customize/class-wp-customize-custom-css-setting.php' );
 		require_once( ABSPATH . WPINC . '/customize/class-wp-customize-filter-setting.php' );
@@ -402,7 +402,7 @@ final class WP_Customize_Manager {
 
 		// Add theme update notices.
 		if ( current_user_can( 'install_themes' ) || current_user_can( 'update_themes' ) ) {
-			require_once ABSPATH . '/wp-admin/includes/update.php';
+			require_once ABSPATH . 'wp-admin/includes/update.php';
 			add_action( 'customize_controls_print_footer_scripts', 'wp_print_admin_notice_templates' );
 		}
 	}
@@ -1360,7 +1360,7 @@ final class WP_Customize_Manager {
 				if ( ! $attachment_id ) {
 
 					// Copy file to temp location so that original file won't get deleted from theme after sideloading.
-					$temp_file_name = wp_tempnam( basename( $file_path ) );
+					$temp_file_name = wp_tempnam( wp_basename( $file_path ) );
 					if ( $temp_file_name && copy( $file_path, $temp_file_name ) ) {
 						$file_array['tmp_name'] = $temp_file_name;
 					}
@@ -1478,7 +1478,8 @@ final class WP_Customize_Manager {
 			}
 
 			$this->set_post_value(
-				$nav_menu_setting_id, array(
+				$nav_menu_setting_id,
+				array(
 					'name' => isset( $nav_menu['name'] ) ? $nav_menu['name'] : $nav_menu_location,
 				)
 			);
@@ -1620,7 +1621,7 @@ final class WP_Customize_Manager {
 			} else {
 				continue;
 			}
-			$file_name = basename( $attachment['file'] );
+			$file_name = wp_basename( $attachment['file'] );
 
 			// Skip file types that are not recognized.
 			$checked_filetype = wp_check_filetype( $file_name );
@@ -1895,9 +1896,8 @@ final class WP_Customize_Manager {
 	 * @return array Headers.
 	 */
 	public function filter_iframe_security_headers( $headers ) {
-		$customize_url                      = admin_url( 'customize.php' );
-		$headers['X-Frame-Options']         = 'ALLOW-FROM ' . $customize_url;
-		$headers['Content-Security-Policy'] = 'frame-ancestors ' . preg_replace( '#^(\w+://[^/]+).+?$#', '$1', $customize_url );
+		$headers['X-Frame-Options']         = 'SAMEORIGIN';
+		$headers['Content-Security-Policy'] = "frame-ancestors 'self'";
 		return $headers;
 	}
 
@@ -2276,7 +2276,8 @@ final class WP_Customize_Manager {
 	 */
 	public function validate_setting_values( $setting_values, $options = array() ) {
 		$options = wp_parse_args(
-			$options, array(
+			$options,
+			array(
 				'validate_capability' => false,
 				'validate_existence'  => false,
 			)
@@ -2302,7 +2303,7 @@ final class WP_Customize_Manager {
 			if ( ! is_wp_error( $validity ) ) {
 				/** This filter is documented in wp-includes/class-wp-customize-setting.php */
 				$late_validity = apply_filters( "customize_validate_{$setting->id}", new WP_Error(), $unsanitized_value, $setting );
-				if ( $late_validity->has_errors() ) {
+				if ( is_wp_error( $late_validity ) && $late_validity->has_errors() ) {
 					$validity = $late_validity;
 				}
 			}
@@ -2713,7 +2714,8 @@ final class WP_Customize_Manager {
 			$post_values
 		);
 		$setting_validities    = $this->validate_setting_values(
-			$validated_values, array(
+			$validated_values,
+			array(
 				'validate_capability' => true,
 				'validate_existence'  => true,
 			)
@@ -2883,10 +2885,20 @@ final class WP_Customize_Manager {
 		$this->store_changeset_revision = $allow_revision;
 		add_filter( 'wp_save_post_revision_post_has_changed', array( $this, '_filter_revision_post_has_changed' ), 5, 3 );
 
-		// Update the changeset post. The publish_customize_changeset action will cause the settings in the changeset to be saved via WP_Customize_Setting::save().
+		/*
+		 * Update the changeset post. The publish_customize_changeset action
+		 * will cause the settings in the changeset to be saved via
+		 * WP_Customize_Setting::save().
+		 */
+
+		// Prevent content filters from corrupting JSON in post_content.
 		$has_kses = ( false !== has_filter( 'content_save_pre', 'wp_filter_post_kses' ) );
 		if ( $has_kses ) {
-			kses_remove_filters(); // Prevent KSES from corrupting JSON in post_content.
+			kses_remove_filters();
+		}
+		$has_targeted_link_rel_filters = ( false !== has_filter( 'content_save_pre', 'wp_targeted_link_rel' ) );
+		if ( $has_targeted_link_rel_filters ) {
+			wp_remove_targeted_link_rel_filters();
 		}
 
 		// Note that updating a post with publish status will trigger WP_Customize_Manager::publish_changeset_values().
@@ -2916,9 +2928,15 @@ final class WP_Customize_Manager {
 				$this->_changeset_post_id = $r; // Update cached post ID for the loaded changeset.
 			}
 		}
+
+		// Restore removed content filters.
 		if ( $has_kses ) {
 			kses_init_filters();
 		}
+		if ( $has_targeted_link_rel_filters ) {
+			wp_init_targeted_link_rel_filters();
+		}
+
 		$this->_changeset_data = null; // Reset so WP_Customize_Manager::changeset_data() will re-populate with updated contents.
 
 		remove_filter( 'wp_save_post_revision_post_has_changed', array( $this, '_filter_revision_post_has_changed' ) );
@@ -2987,6 +3005,9 @@ final class WP_Customize_Manager {
 
 		$post->post_status = $new_status;
 		wp_transition_post_status( $new_status, $old_status, $post );
+
+		/** This action is documented in wp-includes/post.php */
+		do_action( "edit_post_{$post->post_type}", $post->ID, $post );
 
 		/** This action is documented in wp-includes/post.php */
 		do_action( 'edit_post', $post->ID, $post );
@@ -3626,7 +3647,7 @@ final class WP_Customize_Manager {
 	 *  @type string       $capability            Capability required for the setting. Default 'edit_theme_options'
 	 *  @type string|array $theme_supports        Theme features required to support the panel. Default is none.
 	 *  @type string       $default               Default value for the setting. Default is empty string.
-	 *  @type string       $transport             Options for rendering the live preview of changes in Theme Customizer.
+	 *  @type string       $transport             Options for rendering the live preview of changes in Customizer.
 	 *                                            Using 'refresh' makes the change visible by reloading the whole preview.
 	 *                                            Using 'postMessage' allows a custom JavaScript to handle live changes.
 	 * @link https://developer.wordpress.org/themes/customize-api
@@ -4011,14 +4032,14 @@ final class WP_Customize_Manager {
 		if ( $this->branching() ) {
 			$l10n = array(
 				/* translators: %s: User who is customizing the changeset in customizer. */
-				'locked' => __( '%s is already customizing this changeset. Please wait until they are done to try customizing. Your latest changes have been autosaved.' ),
+				'locked'                => __( '%s is already customizing this changeset. Please wait until they are done to try customizing. Your latest changes have been autosaved.' ),
 				/* translators: %s: User who is customizing the changeset in customizer. */
 				'locked_allow_override' => __( '%s is already customizing this changeset. Do you want to take over?' ),
 			);
 		} else {
 			$l10n = array(
 				/* translators: %s: User who is customizing the changeset in customizer. */
-				'locked' => __( '%s is already customizing this site. Please wait until they are done to try customizing. Your latest changes have been autosaved.' ),
+				'locked'                => __( '%s is already customizing this site. Please wait until they are done to try customizing. Your latest changes have been autosaved.' ),
 				/* translators: %s: User who is customizing the changeset in customizer. */
 				'locked_allow_override' => __( '%s is already customizing this site. Do you want to take over?' ),
 			);
@@ -4026,7 +4047,9 @@ final class WP_Customize_Manager {
 
 		foreach ( $this->registered_control_types as $control_type ) {
 			$control = new $control_type(
-				$this, 'temp', array(
+				$this,
+				'temp',
+				array(
 					'settings' => array(),
 				)
 			);
@@ -4303,10 +4326,13 @@ final class WP_Customize_Manager {
 
 		$controls       = array();
 		$this->controls = wp_list_sort(
-			$this->controls, array(
+			$this->controls,
+			array(
 				'priority'        => 'ASC',
 				'instance_number' => 'ASC',
-			), 'ASC', true
+			),
+			'ASC',
+			true
 		);
 
 		foreach ( $this->controls as $id => $control ) {
@@ -4321,10 +4347,13 @@ final class WP_Customize_Manager {
 
 		// Prepare sections.
 		$this->sections = wp_list_sort(
-			$this->sections, array(
+			$this->sections,
+			array(
 				'priority'        => 'ASC',
 				'instance_number' => 'ASC',
-			), 'ASC', true
+			),
+			'ASC',
+			true
 		);
 		$sections       = array();
 
@@ -4334,7 +4363,8 @@ final class WP_Customize_Manager {
 			}
 
 			$section->controls = wp_list_sort(
-				$section->controls, array(
+				$section->controls,
+				array(
 					'priority'        => 'ASC',
 					'instance_number' => 'ASC',
 				)
@@ -4354,10 +4384,13 @@ final class WP_Customize_Manager {
 
 		// Prepare panels.
 		$this->panels = wp_list_sort(
-			$this->panels, array(
+			$this->panels,
+			array(
 				'priority'        => 'ASC',
 				'instance_number' => 'ASC',
-			), 'ASC', true
+			),
+			'ASC',
+			true
 		);
 		$panels       = array();
 
@@ -4367,10 +4400,13 @@ final class WP_Customize_Manager {
 			}
 
 			$panel->sections      = wp_list_sort(
-				$panel->sections, array(
+				$panel->sections,
+				array(
 					'priority'        => 'ASC',
 					'instance_number' => 'ASC',
-				), 'ASC', true
+				),
+				'ASC',
+				true
 			);
 			$panels[ $panel->id ] = $panel;
 		}
@@ -4379,10 +4415,13 @@ final class WP_Customize_Manager {
 		// Sort panels and top-level sections together.
 		$this->containers = array_merge( $this->panels, $this->sections );
 		$this->containers = wp_list_sort(
-			$this->containers, array(
+			$this->containers,
+			array(
 				'priority'        => 'ASC',
 				'instance_number' => 'ASC',
-			), 'ASC', true
+			),
+			'ASC',
+			true
 		);
 	}
 
@@ -4399,7 +4438,9 @@ final class WP_Customize_Manager {
 		if ( ! is_multisite() && ( current_user_can( 'install_themes' ) || current_user_can( 'update_themes' ) || current_user_can( 'delete_themes' ) ) ) {
 			wp_enqueue_script( 'updates' );
 			wp_localize_script(
-				'updates', '_wpUpdatesItemCounts', array(
+				'updates',
+				'_wpUpdatesItemCounts',
+				array(
 					'totals' => wp_get_update_data(),
 				)
 			);
@@ -4553,7 +4594,7 @@ final class WP_Customize_Manager {
 
 		if ( $this->return_url ) {
 			$return_url = $this->return_url;
-		} elseif ( $referer && ! in_array( basename( parse_url( $referer, PHP_URL_PATH ) ), $excluded_referer_basenames, true ) ) {
+		} elseif ( $referer && ! in_array( wp_basename( parse_url( $referer, PHP_URL_PATH ) ), $excluded_referer_basenames, true ) ) {
 			$return_url = $referer;
 		} elseif ( $this->preview_url ) {
 			$return_url = $this->preview_url;
@@ -4639,7 +4680,8 @@ final class WP_Customize_Manager {
 			array(
 				'interim-login'   => 1,
 				'customize-login' => 1,
-			), wp_login_url()
+			),
+			wp_login_url()
 		);
 
 		// Ensure dirty flags are set for modified settings.
@@ -4837,7 +4879,7 @@ final class WP_Customize_Manager {
 				}
 			}
 			echo "})( _wpCustomizeSettings.controls );\n";
-		?>
+			?>
 		</script>
 		<?php
 	}
@@ -4888,7 +4930,9 @@ final class WP_Customize_Manager {
 
 		$this->add_panel(
 			new WP_Customize_Themes_Panel(
-				$this, 'themes', array(
+				$this,
+				'themes',
+				array(
 					'title'       => $this->theme()->display( 'Name' ),
 					'description' => (
 					'<p>' . __( 'Looking for a theme? You can search or browse the WordPress.org theme directory, install and preview themes, then activate them right here.' ) . '</p>' .
@@ -4902,7 +4946,9 @@ final class WP_Customize_Manager {
 
 		$this->add_section(
 			new WP_Customize_Themes_Section(
-				$this, 'installed_themes', array(
+				$this,
+				'installed_themes',
+				array(
 					'title'      => __( 'Installed themes' ),
 					'action'     => 'installed',
 					'capability' => 'switch_themes',
@@ -4915,7 +4961,9 @@ final class WP_Customize_Manager {
 		if ( ! is_multisite() ) {
 			$this->add_section(
 				new WP_Customize_Themes_Section(
-					$this, 'wporg_themes', array(
+					$this,
+					'wporg_themes',
+					array(
 						'title'       => __( 'WordPress.org themes' ),
 						'action'      => 'wporg',
 						'filter_type' => 'remote',
@@ -4930,7 +4978,9 @@ final class WP_Customize_Manager {
 		// Themes Setting (unused - the theme is considerably more fundamental to the Customizer experience).
 		$this->add_setting(
 			new WP_Customize_Filter_Setting(
-				$this, 'active_theme', array(
+				$this,
+				'active_theme',
+				array(
 					'capability' => 'switch_themes',
 				)
 			)
@@ -4939,14 +4989,16 @@ final class WP_Customize_Manager {
 		/* Site Identity */
 
 		$this->add_section(
-			'title_tagline', array(
+			'title_tagline',
+			array(
 				'title'    => __( 'Site Identity' ),
 				'priority' => 20,
 			)
 		);
 
 		$this->add_setting(
-			'blogname', array(
+			'blogname',
+			array(
 				'default'    => get_option( 'blogname' ),
 				'type'       => 'option',
 				'capability' => 'manage_options',
@@ -4954,14 +5006,16 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_control(
-			'blogname', array(
+			'blogname',
+			array(
 				'label'   => __( 'Site Title' ),
 				'section' => 'title_tagline',
 			)
 		);
 
 		$this->add_setting(
-			'blogdescription', array(
+			'blogdescription',
+			array(
 				'default'    => get_option( 'blogdescription' ),
 				'type'       => 'option',
 				'capability' => 'manage_options',
@@ -4969,7 +5023,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_control(
-			'blogdescription', array(
+			'blogdescription',
+			array(
 				'label'   => __( 'Tagline' ),
 				'section' => 'title_tagline',
 			)
@@ -4978,7 +5033,8 @@ final class WP_Customize_Manager {
 		// Add a setting to hide header text if the theme doesn't support custom headers.
 		if ( ! current_theme_supports( 'custom-header', 'header-text' ) ) {
 			$this->add_setting(
-				'header_text', array(
+				'header_text',
+				array(
 					'theme_supports'    => array( 'custom-logo', 'header-text' ),
 					'default'           => 1,
 					'sanitize_callback' => 'absint',
@@ -4986,7 +5042,8 @@ final class WP_Customize_Manager {
 			);
 
 			$this->add_control(
-				'header_text', array(
+				'header_text',
+				array(
 					'label'    => __( 'Display Site Title and Tagline' ),
 					'section'  => 'title_tagline',
 					'settings' => 'header_text',
@@ -4996,7 +5053,8 @@ final class WP_Customize_Manager {
 		}
 
 		$this->add_setting(
-			'site_icon', array(
+			'site_icon',
+			array(
 				'type'       => 'option',
 				'capability' => 'manage_options',
 				'transport'  => 'postMessage', // Previewed with JS in the Customizer controls window.
@@ -5005,7 +5063,9 @@ final class WP_Customize_Manager {
 
 		$this->add_control(
 			new WP_Customize_Site_Icon_Control(
-				$this, 'site_icon', array(
+				$this,
+				'site_icon',
+				array(
 					'label'       => __( 'Site Icon' ),
 					'description' => sprintf(
 						'<p>' . __( 'Site Icons are what you see in browser tabs, bookmark bars, and within the WordPress mobile apps. Upload one here!' ) . '</p>' .
@@ -5022,7 +5082,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_setting(
-			'custom_logo', array(
+			'custom_logo',
+			array(
 				'theme_supports' => array( 'custom-logo' ),
 				'transport'      => 'postMessage',
 			)
@@ -5031,7 +5092,9 @@ final class WP_Customize_Manager {
 		$custom_logo_args = get_theme_support( 'custom-logo' );
 		$this->add_control(
 			new WP_Customize_Cropped_Image_Control(
-				$this, 'custom_logo', array(
+				$this,
+				'custom_logo',
+				array(
 					'label'         => __( 'Logo' ),
 					'section'       => 'title_tagline',
 					'priority'      => 8,
@@ -5053,7 +5116,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->selective_refresh->add_partial(
-			'custom_logo', array(
+			'custom_logo',
+			array(
 				'settings'            => array( 'custom_logo' ),
 				'selector'            => '.custom-logo-link',
 				'render_callback'     => array( $this, '_render_custom_logo_partial' ),
@@ -5064,14 +5128,16 @@ final class WP_Customize_Manager {
 		/* Colors */
 
 		$this->add_section(
-			'colors', array(
+			'colors',
+			array(
 				'title'    => __( 'Colors' ),
 				'priority' => 40,
 			)
 		);
 
 		$this->add_setting(
-			'header_textcolor', array(
+			'header_textcolor',
+			array(
 				'theme_supports'       => array( 'custom-header', 'header-text' ),
 				'default'              => get_theme_support( 'custom-header', 'default-text-color' ),
 
@@ -5083,7 +5149,8 @@ final class WP_Customize_Manager {
 		// Input type: checkbox
 		// With custom value
 		$this->add_control(
-			'display_header_text', array(
+			'display_header_text',
+			array(
 				'settings' => 'header_textcolor',
 				'label'    => __( 'Display Site Title and Tagline' ),
 				'section'  => 'title_tagline',
@@ -5094,7 +5161,9 @@ final class WP_Customize_Manager {
 
 		$this->add_control(
 			new WP_Customize_Color_Control(
-				$this, 'header_textcolor', array(
+				$this,
+				'header_textcolor',
+				array(
 					'label'   => __( 'Header Text Color' ),
 					'section' => 'colors',
 				)
@@ -5104,7 +5173,8 @@ final class WP_Customize_Manager {
 		// Input type: Color
 		// With sanitize_callback
 		$this->add_setting(
-			'background_color', array(
+			'background_color',
+			array(
 				'default'              => get_theme_support( 'custom-background', 'default-color' ),
 				'theme_supports'       => 'custom-background',
 
@@ -5115,7 +5185,9 @@ final class WP_Customize_Manager {
 
 		$this->add_control(
 			new WP_Customize_Color_Control(
-				$this, 'background_color', array(
+				$this,
+				'background_color',
+				array(
 					'label'   => __( 'Background Color' ),
 					'section' => 'colors',
 				)
@@ -5159,7 +5231,8 @@ final class WP_Customize_Manager {
 		}
 
 		$this->add_section(
-			'header_image', array(
+			'header_image',
+			array(
 				'title'          => $title,
 				'description'    => $description,
 				'theme_supports' => 'custom-header',
@@ -5168,7 +5241,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_setting(
-			'header_video', array(
+			'header_video',
+			array(
 				'theme_supports'    => array( 'custom-header', 'video' ),
 				'transport'         => 'postMessage',
 				'sanitize_callback' => 'absint',
@@ -5177,7 +5251,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_setting(
-			'external_header_video', array(
+			'external_header_video',
+			array(
 				'theme_supports'    => array( 'custom-header', 'video' ),
 				'transport'         => 'postMessage',
 				'sanitize_callback' => array( $this, '_sanitize_external_header_video' ),
@@ -5187,7 +5262,9 @@ final class WP_Customize_Manager {
 
 		$this->add_setting(
 			new WP_Customize_Filter_Setting(
-				$this, 'header_image', array(
+				$this,
+				'header_image',
+				array(
 					'default'        => sprintf( get_theme_support( 'custom-header', 'default-image' ), get_template_directory_uri(), get_stylesheet_directory_uri() ),
 					'theme_supports' => 'custom-header',
 				)
@@ -5196,7 +5273,9 @@ final class WP_Customize_Manager {
 
 		$this->add_setting(
 			new WP_Customize_Header_Image_Setting(
-				$this, 'header_image_data', array(
+				$this,
+				'header_image_data',
+				array(
 					'theme_supports' => 'custom-header',
 				)
 			)
@@ -5214,7 +5293,9 @@ final class WP_Customize_Manager {
 
 		$this->add_control(
 			new WP_Customize_Media_Control(
-				$this, 'header_video', array(
+				$this,
+				'header_video',
+				array(
 					'theme_supports'  => array( 'custom-header', 'video' ),
 					'label'           => __( 'Header Video' ),
 					'description'     => $control_description,
@@ -5226,7 +5307,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_control(
-			'external_header_video', array(
+			'external_header_video',
+			array(
 				'theme_supports'  => array( 'custom-header', 'video' ),
 				'type'            => 'url',
 				'description'     => __( 'Or, enter a YouTube URL:' ),
@@ -5238,7 +5320,8 @@ final class WP_Customize_Manager {
 		$this->add_control( new WP_Customize_Header_Image_Control( $this ) );
 
 		$this->selective_refresh->add_partial(
-			'custom_header', array(
+			'custom_header',
+			array(
 				'selector'            => '#wp-custom-header',
 				'render_callback'     => 'the_custom_header_markup',
 				'settings'            => array( 'header_video', 'external_header_video', 'header_image' ), // The image is used as a video fallback here.
@@ -5249,7 +5332,8 @@ final class WP_Customize_Manager {
 		/* Custom Background */
 
 		$this->add_section(
-			'background_image', array(
+			'background_image',
+			array(
 				'title'          => __( 'Background Image' ),
 				'theme_supports' => 'custom-background',
 				'priority'       => 80,
@@ -5257,7 +5341,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_setting(
-			'background_image', array(
+			'background_image',
+			array(
 				'default'           => get_theme_support( 'custom-background', 'default-image' ),
 				'theme_supports'    => 'custom-background',
 				'sanitize_callback' => array( $this, '_sanitize_background_setting' ),
@@ -5266,7 +5351,9 @@ final class WP_Customize_Manager {
 
 		$this->add_setting(
 			new WP_Customize_Background_Image_Setting(
-				$this, 'background_image_thumb', array(
+				$this,
+				'background_image_thumb',
+				array(
 					'theme_supports'    => 'custom-background',
 					'sanitize_callback' => array( $this, '_sanitize_background_setting' ),
 				)
@@ -5276,7 +5363,8 @@ final class WP_Customize_Manager {
 		$this->add_control( new WP_Customize_Background_Image_Control( $this ) );
 
 		$this->add_setting(
-			'background_preset', array(
+			'background_preset',
+			array(
 				'default'           => get_theme_support( 'custom-background', 'default-preset' ),
 				'theme_supports'    => 'custom-background',
 				'sanitize_callback' => array( $this, '_sanitize_background_setting' ),
@@ -5284,7 +5372,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_control(
-			'background_preset', array(
+			'background_preset',
+			array(
 				'label'   => _x( 'Preset', 'Background Preset' ),
 				'section' => 'background_image',
 				'type'    => 'select',
@@ -5299,7 +5388,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_setting(
-			'background_position_x', array(
+			'background_position_x',
+			array(
 				'default'           => get_theme_support( 'custom-background', 'default-position-x' ),
 				'theme_supports'    => 'custom-background',
 				'sanitize_callback' => array( $this, '_sanitize_background_setting' ),
@@ -5307,7 +5397,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_setting(
-			'background_position_y', array(
+			'background_position_y',
+			array(
 				'default'           => get_theme_support( 'custom-background', 'default-position-y' ),
 				'theme_supports'    => 'custom-background',
 				'sanitize_callback' => array( $this, '_sanitize_background_setting' ),
@@ -5316,7 +5407,9 @@ final class WP_Customize_Manager {
 
 		$this->add_control(
 			new WP_Customize_Background_Position_Control(
-				$this, 'background_position', array(
+				$this,
+				'background_position',
+				array(
 					'label'    => __( 'Image Position' ),
 					'section'  => 'background_image',
 					'settings' => array(
@@ -5328,7 +5421,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_setting(
-			'background_size', array(
+			'background_size',
+			array(
 				'default'           => get_theme_support( 'custom-background', 'default-size' ),
 				'theme_supports'    => 'custom-background',
 				'sanitize_callback' => array( $this, '_sanitize_background_setting' ),
@@ -5336,7 +5430,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_control(
-			'background_size', array(
+			'background_size',
+			array(
 				'label'   => __( 'Image Size' ),
 				'section' => 'background_image',
 				'type'    => 'select',
@@ -5349,7 +5444,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_setting(
-			'background_repeat', array(
+			'background_repeat',
+			array(
 				'default'           => get_theme_support( 'custom-background', 'default-repeat' ),
 				'sanitize_callback' => array( $this, '_sanitize_background_setting' ),
 				'theme_supports'    => 'custom-background',
@@ -5357,7 +5453,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_control(
-			'background_repeat', array(
+			'background_repeat',
+			array(
 				'label'   => __( 'Repeat Background Image' ),
 				'section' => 'background_image',
 				'type'    => 'checkbox',
@@ -5365,7 +5462,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_setting(
-			'background_attachment', array(
+			'background_attachment',
+			array(
 				'default'           => get_theme_support( 'custom-background', 'default-attachment' ),
 				'sanitize_callback' => array( $this, '_sanitize_background_setting' ),
 				'theme_supports'    => 'custom-background',
@@ -5373,7 +5471,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_control(
-			'background_attachment', array(
+			'background_attachment',
+			array(
 				'label'   => __( 'Scroll with Page' ),
 				'section' => 'background_image',
 				'type'    => 'checkbox',
@@ -5395,7 +5494,8 @@ final class WP_Customize_Manager {
 		 */
 
 		$this->add_section(
-			'static_front_page', array(
+			'static_front_page',
+			array(
 				'title'           => __( 'Homepage Settings' ),
 				'priority'        => 120,
 				'description'     => __( 'You can choose what&#8217;s displayed on the homepage of your site. It can be posts in reverse chronological order (classic blog), or a fixed/static page. To set a static homepage, you first need to create two Pages. One will become the homepage, and the other will be where your posts are displayed.' ),
@@ -5404,7 +5504,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_setting(
-			'show_on_front', array(
+			'show_on_front',
+			array(
 				'default'    => get_option( 'show_on_front' ),
 				'capability' => 'manage_options',
 				'type'       => 'option',
@@ -5412,7 +5513,8 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_control(
-			'show_on_front', array(
+			'show_on_front',
+			array(
 				'label'   => __( 'Your homepage displays' ),
 				'section' => 'static_front_page',
 				'type'    => 'radio',
@@ -5424,14 +5526,16 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_setting(
-			'page_on_front', array(
+			'page_on_front',
+			array(
 				'type'       => 'option',
 				'capability' => 'manage_options',
 			)
 		);
 
 		$this->add_control(
-			'page_on_front', array(
+			'page_on_front',
+			array(
 				'label'          => __( 'Homepage' ),
 				'section'        => 'static_front_page',
 				'type'           => 'dropdown-pages',
@@ -5440,14 +5544,16 @@ final class WP_Customize_Manager {
 		);
 
 		$this->add_setting(
-			'page_for_posts', array(
+			'page_for_posts',
+			array(
 				'type'       => 'option',
 				'capability' => 'manage_options',
 			)
 		);
 
 		$this->add_control(
-			'page_for_posts', array(
+			'page_for_posts',
+			array(
 				'label'          => __( 'Posts page' ),
 				'section'        => 'static_front_page',
 				'type'           => 'dropdown-pages',
@@ -5495,7 +5601,8 @@ final class WP_Customize_Manager {
 		$section_description .= '</p>';
 
 		$this->add_section(
-			'custom_css', array(
+			'custom_css',
+			array(
 				'title'              => __( 'Additional CSS' ),
 				'priority'           => 200,
 				'description_hidden' => true,
@@ -5504,7 +5611,9 @@ final class WP_Customize_Manager {
 		);
 
 		$custom_css_setting = new WP_Customize_Custom_CSS_Setting(
-			$this, sprintf( 'custom_css[%s]', get_stylesheet() ), array(
+			$this,
+			sprintf( 'custom_css[%s]', get_stylesheet() ),
+			array(
 				'capability' => 'edit_css',
 				'default'    => '',
 			)
@@ -5513,7 +5622,9 @@ final class WP_Customize_Manager {
 
 		$this->add_control(
 			new WP_Customize_Code_Editor_Control(
-				$this, 'custom_css', array(
+				$this,
+				'custom_css',
+				array(
 					'label'       => __( 'CSS code' ),
 					'section'     => 'custom_css',
 					'settings'    => array( 'default' => $custom_css_setting->id ),
@@ -5618,6 +5729,9 @@ final class WP_Customize_Manager {
 			// Arguments for all queries.
 			$wporg_args = array(
 				'per_page' => 100,
+				'fields'   => array(
+					'reviews_url' => true, // Explicitly request the reviews URL to be linked from the customizer.
+				),
 			);
 
 			$args = array_merge( $wporg_args, $args );
@@ -5656,7 +5770,8 @@ final class WP_Customize_Manager {
 					array(
 						'theme'    => $theme->slug,
 						'_wpnonce' => wp_create_nonce( 'install-theme_' . $theme->slug ),
-					), $update_php
+					),
+					$update_php
 				);
 
 				$theme->name        = wp_kses( $theme->name, $themes_allowedtags );
@@ -5829,7 +5944,8 @@ final class WP_Customize_Manager {
 			}
 			if ( '.mp4' !== substr( $video, -4 ) && '.mov' !== substr( $video, -4 ) ) { // Check for .mp4 or .mov format, which (assuming h.264 encoding) are the only cross-browser-supported formats.
 				$validity->add(
-					'invalid_file_type', sprintf(
+					'invalid_file_type',
+					sprintf(
 						/* translators: 1: .mp4, 2: .mov */
 						__( 'Only %1$s or %2$s files may be used for header video. Please convert your video file and try again, or, upload your video to YouTube and link it with the option below.' ),
 						'<code>.mp4</code>',

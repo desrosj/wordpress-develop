@@ -2,8 +2,8 @@
  * @output wp-admin/js/dashboard.js
  */
 
-/* global pagenow, ajaxurl, postboxes, wpActiveEditor:true */
-var ajaxWidgets, ajaxPopulateWidgets, quickPressLoad;
+/* global pagenow, ajaxurl, postboxes, wpActiveEditor:true, ajaxWidgets */
+/* global ajaxPopulateWidgets, quickPressLoad,  */
 window.wp = window.wp || {};
 
 /**
@@ -61,7 +61,7 @@ jQuery(document).ready( function($) {
 	 *
 	 * @global
  	 */
-	ajaxWidgets = ['dashboard_primary'];
+	window.ajaxWidgets = ['dashboard_primary'];
 
 	/**
 	 * Triggers widget updates via AJAX.
@@ -74,7 +74,7 @@ jQuery(document).ready( function($) {
 	 *
 	 * @returns {void}
 	 */
-	ajaxPopulateWidgets = function(el) {
+	window.ajaxPopulateWidgets = function(el) {
 		/**
 		 * Fetch the latest representation of the widget via Ajax and show it.
 		 *
@@ -129,7 +129,7 @@ jQuery(document).ready( function($) {
 	 *
 	 * @returns {void}
 	 */
-	quickPressLoad = function() {
+	window.quickPressLoad = function() {
 		var act = $('#quickpost-action'), t;
 
 		// Enable the submit buttons.
@@ -173,44 +173,13 @@ jQuery(document).ready( function($) {
 		// Change the QuickPost action to the publish value.
 		$('#publish').click( function() { act.val( 'post-quickpress-publish' ); } );
 
-		/**
-		 * Adds accessibility context to inputs.
-		 *
-		 * Use the 'screen-reader-text' class to hide the label when entering a value.
-		 * Apply it when the input is not empty or the input has focus.
-		 *
-		 * @returns {void}
-		 */
-		$('#title, #tags-input, #content').each( function() {
-			var input = $(this), prompt = $('#' + this.id + '-prompt-text');
-
-			if ( '' === this.value ) {
-				prompt.removeClass('screen-reader-text');
-			}
-
-			prompt.click( function() {
-				$(this).addClass('screen-reader-text');
-				input.focus();
-			});
-
-			input.blur( function() {
-				if ( '' === this.value ) {
-					prompt.removeClass('screen-reader-text');
-				}
-			});
-
-			input.focus( function() {
-				prompt.addClass('screen-reader-text');
-			});
-		});
-
 		$('#quick-press').on( 'click focusin', function() {
 			wpActiveEditor = 'content';
 		});
 
 		autoResizeTextarea();
 	};
-	quickPressLoad();
+	window.quickPressLoad();
 
 	// Enable the dragging functionality of the widgets.
 	$( '.meta-box-sortables' ).sortable( 'option', 'containment', '#wpwrap' );

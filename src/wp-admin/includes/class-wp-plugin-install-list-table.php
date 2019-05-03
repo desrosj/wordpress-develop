@@ -93,7 +93,7 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 
 		$paged = $this->get_pagenum();
 
-		$per_page = 30;
+		$per_page = 36;
 
 		// These are the tabs which are shown on the page
 		$tabs = array();
@@ -143,10 +143,10 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 		$installed_plugins = $this->get_installed_plugins();
 
 		$args = array(
-			'page'              => $paged,
-			'per_page'          => $per_page,
+			'page'     => $paged,
+			'per_page' => $per_page,
 			// Send the locale to the API so it can provide context-sensitive results.
-			'locale'            => get_user_locale(),
+			'locale'   => get_user_locale(),
 		);
 
 		switch ( $tab ) {
@@ -184,7 +184,11 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 				$action = 'save_wporg_username_' . get_current_user_id();
 				if ( isset( $_GET['_wpnonce'] ) && wp_verify_nonce( wp_unslash( $_GET['_wpnonce'] ), $action ) ) {
 					$user = isset( $_GET['user'] ) ? wp_unslash( $_GET['user'] ) : get_user_option( 'wporg_favorites' );
-					update_user_meta( get_current_user_id(), 'wporg_favorites', $user );
+
+					// If the save url parameter is passed with a falsey value, don't save the favorite user.
+					if ( ! isset( $_GET['save'] ) || $_GET['save'] ) {
+						update_user_meta( get_current_user_id(), 'wporg_favorites', $user );
+					}
 				} else {
 					$user = get_user_option( 'wporg_favorites' );
 				}
@@ -256,7 +260,9 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 			}
 
 			wp_localize_script(
-				'updates', '_wpUpdatesItemCounts', array(
+				'updates',
+				'_wpUpdatesItemCounts',
+				array(
 					'plugins' => $js_plugins,
 					'totals'  => wp_get_update_data(),
 				)
@@ -273,8 +279,8 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 			</div>
 		<?php } else { ?>
 			<div class="no-plugin-results"><?php _e( 'No plugins found. Try a different search.' ); ?></div>
-		<?php
-}
+			<?php
+		}
 	}
 
 	/**
@@ -308,7 +314,7 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 		$views = apply_filters( "views_{$this->screen->id}", $views );
 
 		$this->screen->render_screen_reader_content( 'heading_views' );
-?>
+		?>
 <div class="wp-filter">
 	<ul class="filter-links">
 		<?php
@@ -321,9 +327,9 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 		?>
 	</ul>
 
-	<?php install_search_form(); ?>
+		<?php install_search_form(); ?>
 </div>
-<?php
+		<?php
 	}
 
 	/**
@@ -340,16 +346,16 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 
 		$this->display_tablenav( 'top' );
 
-?>
+		?>
 <div class="wp-list-table <?php echo implode( ' ', $this->get_table_classes() ); ?>">
-<?php
-	$this->screen->render_screen_reader_content( 'heading_list' );
-?>
+		<?php
+		$this->screen->render_screen_reader_content( 'heading_list' );
+		?>
 	<div id="the-list"<?php echo $data_attr; ?>>
 		<?php $this->display_rows_or_placeholder(); ?>
 	</div>
 </div>
-<?php
+		<?php
 		$this->display_tablenav( 'bottom' );
 	}
 
@@ -365,7 +371,7 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 
 		if ( 'top' === $which ) {
 			wp_referer_field();
-		?>
+			?>
 			<div class="tablenav top">
 				<div class="alignleft actions">
 					<?php
@@ -385,8 +391,8 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 				<?php $this->pagination( $which ); ?>
 				<br class="clear" />
 			</div>
-		<?php
-}
+			<?php
+		}
 	}
 
 	/**
@@ -496,11 +502,12 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 				$author = ' <cite>' . sprintf( __( 'By %s' ), $author ) . '</cite>';
 			}
 
-			$wp_version = get_bloginfo( 'version' );
+			$requires_php = isset( $plugin['requires_php'] ) ? $plugin['requires_php'] : null;
+			$requires_wp  = isset( $plugin['requires'] ) ? $plugin['requires'] : null;
 
-			$compatible_php = ( empty( $plugin['requires_php'] ) || version_compare( substr( phpversion(), 0, strlen( $plugin['requires_php'] ) ), $plugin['requires_php'], '>=' ) );
-			$tested_wp      = ( empty( $plugin['tested'] ) || version_compare( substr( $wp_version, 0, strlen( $plugin['tested'] ) ), $plugin['tested'], '<=' ) );
-			$compatible_wp  = ( empty( $plugin['requires'] ) || version_compare( substr( $wp_version, 0, strlen( $plugin['requires'] ) ), $plugin['requires'], '>=' ) );
+			$compatible_php = is_php_version_compatible( $requires_php );
+			$compatible_wp  = is_wp_version_compatible( $requires_wp );
+			$tested_wp      = ( empty( $plugin['tested'] ) || version_compare( get_bloginfo( 'version' ), $plugin['tested'], '<=' ) );
 
 			$action_links = array();
 
@@ -531,16 +538,23 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 
 					case 'update_available':
 						if ( $status['url'] ) {
-							$action_links[] = sprintf(
-								'<a class="update-now button aria-button-if-js" data-plugin="%s" data-slug="%s" href="%s" aria-label="%s" data-name="%s">%s</a>',
-								esc_attr( $status['file'] ),
-								esc_attr( $plugin['slug'] ),
-								esc_url( $status['url'] ),
-								/* translators: %s: plugin name and version */
-								esc_attr( sprintf( __( 'Update %s now' ), $name ) ),
-								esc_attr( $name ),
-								__( 'Update Now' )
-							);
+							if ( $compatible_php && $compatible_wp ) {
+								$action_links[] = sprintf(
+									'<a class="update-now button aria-button-if-js" data-plugin="%s" data-slug="%s" href="%s" aria-label="%s" data-name="%s">%s</a>',
+									esc_attr( $status['file'] ),
+									esc_attr( $plugin['slug'] ),
+									esc_url( $status['url'] ),
+									/* translators: %s: plugin name and version */
+									esc_attr( sprintf( __( 'Update %s now' ), $name ) ),
+									esc_attr( $name ),
+									__( 'Update Now' )
+								);
+							} else {
+								$action_links[] = sprintf(
+									'<button type="button" class="button button-disabled" disabled="disabled">%s</button>',
+									_x( 'Cannot Update', 'plugin' )
+								);
+							}
 						}
 						break;
 
@@ -560,7 +574,8 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 									'_wpnonce' => wp_create_nonce( 'activate-plugin_' . $status['file'] ),
 									'action'   => 'activate',
 									'plugin'   => $status['file'],
-								), network_admin_url( 'plugins.php' )
+								),
+								network_admin_url( 'plugins.php' )
 							);
 
 							if ( is_network_admin() ) {
@@ -621,43 +636,54 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 			$action_links = apply_filters( 'plugin_install_action_links', $action_links, $plugin );
 
 			$last_updated_timestamp = strtotime( $plugin['last_updated'] );
-		?>
+			?>
 		<div class="plugin-card plugin-card-<?php echo sanitize_html_class( $plugin['slug'] ); ?>">
 			<?php
 			if ( ! $compatible_php || ! $compatible_wp ) {
 				echo '<div class="notice inline notice-error notice-alt"><p>';
 				if ( ! $compatible_php && ! $compatible_wp ) {
-					_e( 'This plugin doesn&#8217;t work with your versions of WordPress and PHP. ' );
-					if ( current_user_can( 'update_core' ) ) {
+					_e( 'This plugin doesn&#8217;t work with your versions of WordPress and PHP.' );
+					if ( current_user_can( 'update_core' ) && current_user_can( 'update_php' ) ) {
 						printf(
-							/* translators: 1: "Update WordPress" screen URL, 2: "Updating PHP" page URL */
-							__( '<a href="%1$s">Please update WordPress</a>, and then <a href="%2$s">learn more about updating PHP</a>.' ),
+							/* translators: 1: "Update WordPress" screen URL, 2: "Update PHP" page URL */
+							' ' . __( '<a href="%1$s">Please update WordPress</a>, and then <a href="%2$s">learn more about updating PHP</a>.' ),
 							self_admin_url( 'update-core.php' ),
-							esc_url( __( 'https://wordpress.org/support/upgrade-php/' ) )
+							esc_url( wp_get_update_php_url() )
 						);
-					} else {
+						wp_update_php_annotation( '</p><p><em>', '</em>' );
+					} elseif ( current_user_can( 'update_core' ) ) {
 						printf(
-							/* translators: %s: "Updating PHP" page URL */
-							__( '<a href="%s">Learn more about updating PHP</a>.' ),
-							esc_url( __( 'https://wordpress.org/support/upgrade-php/' ) )
+							/* translators: %s: "Update WordPress" screen URL */
+							' ' . __( '<a href="%s">Please update WordPress</a>.' ),
+							self_admin_url( 'update-core.php' )
 						);
+					} elseif ( current_user_can( 'update_php' ) ) {
+						printf(
+							/* translators: %s: "Update PHP" page URL */
+							' ' . __( '<a href="%s">Learn more about updating PHP</a>.' ),
+							esc_url( wp_get_update_php_url() )
+						);
+						wp_update_php_annotation( '</p><p><em>', '</em>' );
 					}
 				} elseif ( ! $compatible_wp ) {
-					_e( 'This plugin doesn&#8217;t work with your version of WordPress. ' );
+					_e( 'This plugin doesn&#8217;t work with your version of WordPress.' );
 					if ( current_user_can( 'update_core' ) ) {
 						printf(
 							/* translators: %s: "Update WordPress" screen URL */
-							__( '<a href="%s">Please update WordPress</a>.' ),
+							' ' . __( '<a href="%s">Please update WordPress</a>.' ),
 							self_admin_url( 'update-core.php' )
 						);
 					}
-				} elseif ( ! $compatible_php  ) {
-					_e( 'This plugin doesn&#8217;t work with your version of PHP. ' );
-					printf(
-						/* translators: %s: "Updating PHP" page URL */
-						__( '<a href="%s">Learn more about updating PHP</a>.' ),
-						esc_url( __( 'https://wordpress.org/support/upgrade-php/' ) )
-					);
+				} elseif ( ! $compatible_php ) {
+					_e( 'This plugin doesn&#8217;t work with your version of PHP.' );
+					if ( current_user_can( 'update_php' ) ) {
+						printf(
+							/* translators: %s: "Update PHP" page URL */
+							' ' . __( '<a href="%s">Learn more about updating PHP</a>.' ),
+							esc_url( wp_get_update_php_url() )
+						);
+						wp_update_php_annotation( '</p><p><em>', '</em>' );
+					}
 				}
 				echo '</p></div>';
 			}
@@ -703,7 +729,7 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 					<?php
 					if ( $plugin['active_installs'] >= 1000000 ) {
 						$active_installs_millions = floor( $plugin['active_installs'] / 1000000 );
-						$active_installs_text = sprintf(
+						$active_installs_text     = sprintf(
 							_nx( '%s+ Million', '%s+ Million', $active_installs_millions, 'Active plugin installations' ),
 							number_format_i18n( $active_installs_millions )
 						);
@@ -728,7 +754,7 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 				</div>
 			</div>
 		</div>
-		<?php
+			<?php
 		}
 
 		// Close off the group divs of the last one

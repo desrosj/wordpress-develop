@@ -189,7 +189,8 @@ function wp_version_check( $extra_stats = array(), $force_check = false ) {
 			}
 		}
 		$offer = (object) array_intersect_key(
-			$offer, array_fill_keys(
+			$offer,
+			array_fill_keys(
 				array(
 					'response',
 					'download',
@@ -204,7 +205,8 @@ function wp_version_check( $extra_stats = array(), $force_check = false ) {
 					'notify_email',
 					'support_email',
 					'new_files',
-				), ''
+				),
+				''
 			)
 		);
 	}
@@ -230,6 +232,11 @@ function wp_version_check( $extra_stats = array(), $force_check = false ) {
 
 	// Trigger background updates if running non-interactively, and we weren't called from the update handler.
 	if ( $doing_cron && ! doing_action( 'wp_maybe_auto_update' ) ) {
+		/**
+		 * Fires during wp_cron, starting the auto update process.
+		 *
+		 * @since 3.9.0
+		 */
 		do_action( 'wp_maybe_auto_update' );
 	}
 }
@@ -588,8 +595,8 @@ function wp_update_themes( $extra_stats = array() ) {
  * @since 3.7.0
  */
 function wp_maybe_auto_update() {
-	include_once( ABSPATH . '/wp-admin/includes/admin.php' );
-	include_once( ABSPATH . '/wp-admin/includes/class-wp-upgrader.php' );
+	include_once( ABSPATH . 'wp-admin/includes/admin.php' );
+	include_once( ABSPATH . 'wp-admin/includes/class-wp-upgrader.php' );
 
 	$upgrader = new WP_Automatic_Updater;
 	$upgrader->run();

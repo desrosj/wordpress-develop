@@ -19,19 +19,23 @@ class Tests_Post_Meta extends WP_UnitTestCase {
 	public static function wpSetUpBeforeClass( $factory ) {
 		self::$author = $factory->user->create_and_get( array( 'role' => 'editor' ) );
 
-		self::$post_id = $factory->post->create( array(
-			'post_author'  => self::$author->ID,
-			'post_status'  => 'publish',
-			'post_content' => rand_str(),
-			'post_title'   => rand_str(),
-		) );
+		self::$post_id = $factory->post->create(
+			array(
+				'post_author'  => self::$author->ID,
+				'post_status'  => 'publish',
+				'post_content' => rand_str(),
+				'post_title'   => rand_str(),
+			)
+		);
 
-		self::$post_id_2 = $factory->post->create( array(
-			'post_author'  => self::$author->ID,
-			'post_status'  => 'publish',
-			'post_content' => rand_str(),
-			'post_title'   => rand_str(),
-		) );
+		self::$post_id_2 = $factory->post->create(
+			array(
+				'post_author'  => self::$author->ID,
+				'post_status'  => 'publish',
+				'post_content' => rand_str(),
+				'post_title'   => rand_str(),
+			)
+		);
 	}
 
 	public static function wpTearDownAfterClass() {
@@ -304,5 +308,42 @@ class Tests_Post_Meta extends WP_UnitTestCase {
 			array( 'page', 'registered_key2' ),
 			array( '', 'registered_key3' ),
 		);
-  	}
+	}
+
+	/**
+	 * @ticket 44467
+	 */
+	public function test_add_metadata_sets_posts_last_changed() {
+		$post_id = self::factory()->post->create();
+
+		wp_cache_delete( 'last_changed', 'posts' );
+
+		$this->assertInternalType( 'integer', add_metadata( 'post', $post_id, 'foo', 'bar' ) );
+		$this->assertNotFalse( wp_cache_get_last_changed( 'posts' ) );
+	}
+
+	/**
+	 * @ticket 44467
+	 */
+	public function test_update_metadata_sets_posts_last_changed() {
+		$post_id = self::factory()->post->create();
+
+		wp_cache_delete( 'last_changed', 'posts' );
+
+		$this->assertInternalType( 'integer', update_metadata( 'post', $post_id, 'foo', 'bar' ) );
+		$this->assertNotFalse( wp_cache_get_last_changed( 'posts' ) );
+	}
+
+	/**
+	 * @ticket 44467
+	 */
+	public function test_delete_metadata_sets_posts_last_changed() {
+		$post_id = self::factory()->post->create();
+
+		update_metadata( 'post', $post_id, 'foo', 'bar' );
+		wp_cache_delete( 'last_changed', 'posts' );
+
+		$this->assertTrue( delete_metadata( 'post', $post_id, 'foo' ) );
+		$this->assertNotFalse( wp_cache_get_last_changed( 'posts' ) );
+	}
 }

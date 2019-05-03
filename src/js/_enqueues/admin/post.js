@@ -5,11 +5,11 @@
  */
 
  /* global postL10n, ajaxurl, wpAjax, setPostThumbnailL10n, postboxes, pagenow, tinymce, alert, deleteUserSetting */
- /* global theList:true, theExtraList:true, getUserSetting, setUserSetting, commentReply */
+ /* global theList:true, theExtraList:true, getUserSetting, setUserSetting, commentReply, commentsBox */
+ /* global WPSetThumbnailHTML, wptitlehint */
 
-var commentsBox, WPSetThumbnailHTML, WPSetThumbnailID, WPRemoveThumbnail, wptitlehint, makeSlugeditClickable, editPermalink;
 // Backwards compatibility: prevent fatal errors.
-makeSlugeditClickable = editPermalink = function(){};
+window.makeSlugeditClickable = window.editPermalink = function(){};
 
 // Make sure the wp object exists.
 window.wp = window.wp || {};
@@ -24,7 +24,7 @@ window.wp = window.wp || {};
 	 *
 	 * @namespace commentsBox
 	 */
-	commentsBox = {
+	window.commentsBox = {
 		// Comment offset to use when fetching new comments.
 		st : 0,
 
@@ -108,7 +108,7 @@ window.wp = window.wp || {};
 	 *
 	 * @global
 	 */
-	WPSetThumbnailHTML = function(html){
+	window.WPSetThumbnailHTML = function(html){
 		$('.inside', '#postimagediv').html(html);
 	};
 
@@ -119,7 +119,7 @@ window.wp = window.wp || {};
 	 *
 	 * @global
 	 */
-	WPSetThumbnailID = function(id){
+	window.WPSetThumbnailID = function(id){
 		var field = $('input[value="_thumbnail_id"]', '#list-table');
 		if ( field.length > 0 ) {
 			$('#meta\\[' + field.attr('id').match(/[0-9]+/) + '\\]\\[value\\]').text(id);
@@ -133,7 +133,7 @@ window.wp = window.wp || {};
 	 *
 	 * @global
 	 */
-	WPRemoveThumbnail = function(nonce){
+	window.WPRemoveThumbnail = function(nonce){
 		$.post(ajaxurl, {
 			action: 'set-post-thumbnail', post_id: $( '#post_ID' ).val(), thumbnail_id: -1, _ajax_nonce: nonce, cookie: encodeURIComponent( document.cookie )
 		},
@@ -1040,7 +1040,10 @@ jQuery(document).ready( function($) {
 	});
 
 	/**
-	 * Adds screen reader text to the title prompt when needed.
+	 * Adds screen reader text to the title label when needed.
+	 *
+	 * Use the 'screen-reader-text' class to emulate a placeholder attribute
+	 * and hide the label when entering a value.
 	 *
 	 * @param {string} id Optional. HTML ID to add the screen reader helper text to.
 	 *
@@ -1048,28 +1051,23 @@ jQuery(document).ready( function($) {
 	 *
 	 * @returns void
 	 */
-	wptitlehint = function(id) {
+	window.wptitlehint = function( id ) {
 		id = id || 'title';
 
-		var title = $('#' + id), titleprompt = $('#' + id + '-prompt-text');
+		var title = $( '#' + id ), titleprompt = $( '#' + id + '-prompt-text' );
 
-		if ( '' === title.val() )
-			titleprompt.removeClass('screen-reader-text');
+		if ( '' === title.val() ) {
+			titleprompt.removeClass( 'screen-reader-text' );
+		}
 
-		titleprompt.click(function(){
-			$(this).addClass('screen-reader-text');
-			title.focus();
-		});
+		title.on( 'input', function() {
+			if ( '' === this.value ) {
+				titleprompt.removeClass( 'screen-reader-text' );
+				return;
+			}
 
-		title.blur(function(){
-			if ( '' === this.value )
-				titleprompt.removeClass('screen-reader-text');
-		}).focus(function(){
-			titleprompt.addClass('screen-reader-text');
-		}).keydown(function(e){
-			titleprompt.addClass('screen-reader-text');
-			$(this).unbind(e);
-		});
+			titleprompt.addClass( 'screen-reader-text' );
+		} );
 	};
 
 	wptitlehint();

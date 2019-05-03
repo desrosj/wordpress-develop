@@ -13,7 +13,7 @@
 abstract class WP_HTTP_UnitTestCase extends WP_UnitTestCase {
 	// You can use your own version of data/WPHTTP-testcase-redirection-script.php here.
 	var $redirection_script = 'http://api.wordpress.org/core/tests/1.0/redirection.php';
-	var $fileStreamUrl      = 'http://s.w.org/screenshots/3.9/dashboard.png';
+	var $file_stream_url    = 'http://s.w.org/screenshots/3.9/dashboard.png';
 
 	protected $http_request_args;
 
@@ -39,6 +39,7 @@ abstract class WP_HTTP_UnitTestCase extends WP_UnitTestCase {
 	}
 
 	function setUp() {
+		parent::setUp();
 
 		if ( is_callable( array( 'WP_Http', '_getTransport' ) ) ) {
 			$this->markTestSkipped( 'The WP_Http tests require a class-http.php file of r17550 or later.' );
@@ -137,7 +138,8 @@ abstract class WP_HTTP_UnitTestCase extends WP_UnitTestCase {
 	function test_redirect_on_head() {
 		// Redirections on HEAD request when Requested
 		$res = wp_remote_request(
-			$this->redirection_script . '?rt=' . 5, array(
+			$this->redirection_script . '?rt=' . 5,
+			array(
 				'redirection' => 5,
 				'method'      => 'HEAD',
 			)
@@ -208,7 +210,8 @@ abstract class WP_HTTP_UnitTestCase extends WP_UnitTestCase {
 
 		// Test 301 - POST to POST
 		$res = wp_remote_request(
-			$url, array(
+			$url,
+			array(
 				'method'  => 'PUT',
 				'timeout' => 30,
 			)
@@ -223,7 +226,7 @@ abstract class WP_HTTP_UnitTestCase extends WP_UnitTestCase {
 	 * @ticket 11888
 	 */
 	function test_send_headers() {
-		// Test that the headers sent are recieved by the server
+		// Test that the headers sent are received by the server
 		$headers = array(
 			'test1' => 'test',
 			'test2' => 0,
@@ -252,10 +255,11 @@ abstract class WP_HTTP_UnitTestCase extends WP_UnitTestCase {
 	}
 
 	function test_file_stream() {
-		$url  = $this->fileStreamUrl;
+		$url  = $this->file_stream_url;
 		$size = 153204;
 		$res  = wp_remote_request(
-			$url, array(
+			$url,
+			array(
 				'stream'  => true,
 				'timeout' => 30,
 			)
@@ -279,10 +283,11 @@ abstract class WP_HTTP_UnitTestCase extends WP_UnitTestCase {
 	 * @ticket 26726
 	 */
 	function test_file_stream_limited_size() {
-		$url  = $this->fileStreamUrl;
+		$url  = $this->file_stream_url;
 		$size = 10000;
 		$res  = wp_remote_request(
-			$url, array(
+			$url,
+			array(
 				'stream'              => true,
 				'timeout'             => 30,
 				'limit_response_size' => $size,
@@ -307,11 +312,12 @@ abstract class WP_HTTP_UnitTestCase extends WP_UnitTestCase {
 	 * @ticket 31172
 	 */
 	function test_request_limited_size() {
-		$url  = $this->fileStreamUrl;
+		$url  = $this->file_stream_url;
 		$size = 10000;
 
 		$res = wp_remote_request(
-			$url, array(
+			$url,
+			array(
 				'timeout'             => 30,
 				'limit_response_size' => $size,
 			)

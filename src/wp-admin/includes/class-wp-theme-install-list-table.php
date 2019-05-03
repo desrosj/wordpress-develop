@@ -190,7 +190,7 @@ class WP_Theme_Install_List_Table extends WP_Themes_List_Table {
 	 */
 	public function display() {
 		wp_nonce_field( 'fetch-list-' . get_class( $this ), '_ajax_fetch_list_nonce' );
-?>
+		?>
 		<div class="tablenav top themes">
 			<div class="alignleft actions">
 				<?php
@@ -219,13 +219,13 @@ class WP_Theme_Install_List_Table extends WP_Themes_List_Table {
 	public function display_rows() {
 		$themes = $this->items;
 		foreach ( $themes as $theme ) {
-				?>
+			?>
 				<div class="available-theme installable-theme">
 				<?php
 					$this->single_row( $theme );
 				?>
 				</div>
-		<?php
+			<?php
 		} // end foreach $theme_names
 
 		$this->theme_installer();
@@ -241,15 +241,15 @@ class WP_Theme_Install_List_Table extends WP_Themes_List_Table {
 	 * @param object $theme {
 	 *     An object that contains theme data returned by the WordPress.org API.
 	 *
-	 *     @type string $name           Theme name, e.g. 'Twenty Seventeen'.
-	 *     @type string $slug           Theme slug, e.g. 'twentyseventeen'.
+	 *     @type string $name           Theme name, e.g. 'Twenty Nineteen'.
+	 *     @type string $slug           Theme slug, e.g. 'twentynineteen'.
 	 *     @type string $version        Theme version, e.g. '1.1'.
 	 *     @type string $author         Theme author username, e.g. 'melchoyce'.
-	 *     @type string $preview_url    Preview URL, e.g. 'http://2017.wordpress.net/'.
-	 *     @type string $screenshot_url Screenshot URL, e.g. 'https://wordpress.org/themes/twentyseventeen/'.
+	 *     @type string $preview_url    Preview URL, e.g. 'http://2019.wordpress.net/'.
+	 *     @type string $screenshot_url Screenshot URL, e.g. 'https://wordpress.org/themes/twentynineteen/'.
 	 *     @type float  $rating         Rating score.
 	 *     @type int    $num_ratings    The number of ratings.
-	 *     @type string $homepage       Theme homepage, e.g. 'https://wordpress.org/themes/twentyseventeen/'.
+	 *     @type string $homepage       Theme homepage, e.g. 'https://wordpress.org/themes/twentynineteen/'.
 	 *     @type string $description    Theme description.
 	 *     @type string $download_link  Theme ZIP download URL.
 	 * }
@@ -270,7 +270,8 @@ class WP_Theme_Install_List_Table extends WP_Themes_List_Table {
 			array(
 				'tab'   => 'theme-information',
 				'theme' => $theme->slug,
-			), self_admin_url( 'theme-install.php' )
+			),
+			self_admin_url( 'theme-install.php' )
 		);
 
 		$actions = array();
@@ -279,14 +280,16 @@ class WP_Theme_Install_List_Table extends WP_Themes_List_Table {
 			array(
 				'action' => 'install-theme',
 				'theme'  => $theme->slug,
-			), self_admin_url( 'update.php' )
+			),
+			self_admin_url( 'update.php' )
 		);
 
 		$update_url = add_query_arg(
 			array(
 				'action' => 'upgrade-theme',
 				'theme'  => $theme->slug,
-			), self_admin_url( 'update.php' )
+			),
+			self_admin_url( 'update.php' )
 		);
 
 		$status = $this->_get_theme_status( $theme );
@@ -346,10 +349,12 @@ class WP_Theme_Install_List_Table extends WP_Themes_List_Table {
 		</a>
 
 		<h3><?php echo $name; ?></h3>
-		<div class="theme-author"><?php
+		<div class="theme-author">
+		<?php
 			/* translators: %s: theme author */
 			printf( __( 'By %s' ), $author );
-		?></div>
+		?>
+		</div>
 
 		<div class="action-links">
 			<ul>
@@ -430,14 +435,16 @@ class WP_Theme_Install_List_Table extends WP_Themes_List_Table {
 			array(
 				'action' => 'install-theme',
 				'theme'  => $theme->slug,
-			), self_admin_url( 'update.php' )
+			),
+			self_admin_url( 'update.php' )
 		);
 
 		$update_url = add_query_arg(
 			array(
 				'action' => 'upgrade-theme',
 				'theme'  => $theme->slug,
-			), self_admin_url( 'update.php' )
+			),
+			self_admin_url( 'update.php' )
 		);
 
 		$status = $this->_get_theme_status( $theme );
@@ -472,12 +479,14 @@ class WP_Theme_Install_List_Table extends WP_Themes_List_Table {
 				);
 				break;
 		}
-			?>
+		?>
 			<h3 class="theme-name"><?php echo $name; ?></h3>
-			<span class="theme-by"><?php
+			<span class="theme-by">
+			<?php
 				/* translators: %s: theme author */
 				printf( __( 'By %s' ), $author );
-			?></span>
+			?>
+			</span>
 			<?php if ( isset( $theme->screenshot_url ) ) : ?>
 				<img class="theme-screenshot" src="<?php echo esc_url( $theme->screenshot_url ); ?>" alt="" />
 			<?php endif; ?>
