@@ -210,10 +210,10 @@ if ( ! function_exists( 'wp_mail' ) ) :
 		global $phpmailer;
 
 		// (Re)create it, if it's gone missing
-		if ( ! ( $phpmailer instanceof PHPMailer ) ) {
+		if ( ! ( $phpmailer instanceof PHPMailer\PHPMailer\PHPMailer ) ) {
 			require_once ABSPATH . WPINC . '/class-phpmailer.php';
 			require_once ABSPATH . WPINC . '/class-smtp.php';
-			$phpmailer = new PHPMailer( true );
+			$phpmailer = new PHPMailer\PHPMailer\PHPMailer( true );
 		}
 
 		// Headers
