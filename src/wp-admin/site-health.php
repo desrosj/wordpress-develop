@@ -7,12 +7,12 @@
  */
 
 if ( isset( $_GET['tab'] ) && 'debug' === $_GET['tab'] ) {
-	require_once( dirname( __FILE__ ) . '/site-health-info.php' );
+	require_once( __DIR__ . '/site-health-info.php' );
 	return;
 }
 
 /** WordPress Administration Bootstrap */
-require_once( dirname( __FILE__ ) . '/admin.php' );
+require_once( __DIR__ . '/admin.php' );
 
 $title = __( 'Site Health Status' );
 

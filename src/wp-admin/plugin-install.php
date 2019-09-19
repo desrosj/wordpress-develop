@@ -13,7 +13,7 @@ if ( ! defined( 'IFRAME_REQUEST' ) && isset( $_GET['tab'] ) && ( 'plugin-informa
 /**
  * WordPress Administration Bootstrap.
  */
-require_once( dirname( __FILE__ ) . '/admin.php' );
+require_once( __DIR__ . '/admin.php' );
 
 if ( ! current_user_can( 'install_plugins' ) ) {
 	wp_die( __( 'Sorry, you are not allowed to install plugins on this site.' ) );

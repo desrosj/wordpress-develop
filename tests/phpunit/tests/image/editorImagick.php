@@ -7,7 +7,7 @@
  * @group media
  * @group wp-image-editor-imagick
  */
-require_once( dirname( __FILE__ ) . '/base.php' );
+require_once( __DIR__ . '/base.php' );
 
 class Tests_Image_Editor_Imagick extends WP_Image_UnitTestCase {
 

@@ -15,7 +15,7 @@
 define( 'WP_INSTALLING', true );
 
 /** Load WordPress Bootstrap */
-require( dirname( dirname( __FILE__ ) ) . '/wp-load.php' );
+require( dirname( __DIR__ ) . '/wp-load.php' );
 
 nocache_headers();
 

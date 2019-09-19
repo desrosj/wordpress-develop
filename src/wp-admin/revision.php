@@ -10,7 +10,7 @@
  */
 
 /** WordPress Administration Bootstrap */
-require_once( dirname( __FILE__ ) . '/admin.php' );
+require_once( __DIR__ . '/admin.php' );
 
 require ABSPATH . 'wp-admin/includes/revision.php';
 

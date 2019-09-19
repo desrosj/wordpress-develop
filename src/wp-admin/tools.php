@@ -19,7 +19,7 @@ if ( isset( $_GET['page'] ) && ! empty( $_POST ) ) {
 }
 
 /** WordPress Administration Bootstrap */
-require_once( dirname( __FILE__ ) . '/admin.php' );
+require_once( __DIR__ . '/admin.php' );
 
 // The privacy policy guide used to be outputted from here. Since WP 5.3 it is in wp-admin/privacy-policy-guide.php.
 if ( isset( $_GET['wp-privacy-policy-guide'] ) ) {

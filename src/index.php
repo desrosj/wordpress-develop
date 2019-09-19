@@ -8,7 +8,7 @@
 
 /** Define ABSPATH as this file's directory */
 if ( ! defined( 'ABSPATH' ) ) {
-	define( 'ABSPATH', dirname( __FILE__ ) . '/' );
+	define( 'ABSPATH', __DIR__ . '/' );
 }
 
 if ( file_exists( ABSPATH . 'wp-includes/js/dist/edit-post.js' ) ) {
