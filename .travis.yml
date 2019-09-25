@@ -80,7 +80,7 @@ before_script:
     npm ci
   fi
 - |
-  if [[ "$WP_TRAVISCI" == "test:e2e" ]] || [[ "$WP_TRAVISCI" == "test:php" ]]; then
+  if [[ "$WP_TRAVISCI" == "test:e2e" ]] || [[ "$WP_TRAVISCI" == "test:php" ]] || [[ "$WP_TRAVISCI" == "test:coverage" ]]; then
     npm run env:start
     npm run build
     docker-compose run --rm mysql mysql --version
