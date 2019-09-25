@@ -89,10 +89,6 @@ before_script:
     docker-compose run --rm phpunit phpunit --version
   fi
 - |
-  if [[ "$WP_TRAVISCI" == "test:coverage" ]]; then
-    ci_env="bash <(curl -s https://codecov.io/env)"
-  fi
-- |
   if [[ "$LOCAL_PHP_MEMCACHED" == "true" ]]; then
     cp tests/phpunit/includes/object-cache.php build/wp-content/object-cache.php
     # The memcached server needs to start after `npm run env:start`, which sets up the Docker network.
@@ -130,7 +126,8 @@ script:
       docker-compose run --rm php composer lint:errors &&
       docker-compose run --rm php composer lint tests
     elif [[ "$WP_TRAVISCI" == "test:coverage" ]]; then
-      npm run test:php -- -qrr --verbose -c phpunit.xml.dist --coverage-clover=coverage.xml $ci_env
+      npm run test:php -- -qrr --verbose -c phpunit.xml.dist --coverage-clover=coverage.xml
+      docker-compose run --rm $ci_env
     elif [[ "$WP_TRAVISCI" == "test:compat" ]]; then
       docker-compose run --rm php composer compat
     else
@@ -145,7 +142,7 @@ after_script:
   fi
 - |
   if [[ "$WP_TRAVISCI" == "test:coverage" ]]; then
-    docker-compose run -rm bash <(curl -s https://codecov.io/bash)
+    bash <(curl -s https://codecov.io/bash)
   fi
 
 notifications:
