@@ -31,7 +31,7 @@ matrix:
     name: JS Tests
   - env: WP_TRAVISCI=test:compat COMPOSER_INSTALL=true NPM_INSTALL=false WP_INSTALL=false
     name: "PHP Compatibility Check"
-  - env: LOCAL_PHP=7.3-fpm WP_TRAVISCI=test:coverage
+  - env: LOCAL_PHP=7.3-fpm WP_TRAVISCI=test:coverage LOCAL_PHP_XDEBUG=true
     name: "Code Coverage Report"
   - env: LOCAL_PHP=7.3-fpm WP_TRAVISCI=test:php
     name: "PHPUnit Tests: PHP 7.3"
@@ -131,7 +131,7 @@ script:
       docker-compose run --rm php composer lint:errors &&
       docker-compose run --rm php composer lint tests
     elif [[ "$WP_TRAVISCI" == "test:coverage" ]]; then
-      npm run test:php -- --verbose -c phpunit.xml.dist --coverage-clover=coverage.xml
+      npm run test:php -- --verbose -c phpunit.xml.dist --coverage-clover=coverage.xml $ci_env
     elif [[ "$WP_TRAVISCI" == "test:compat" ]]; then
       docker-compose run --rm php composer compat
     else
