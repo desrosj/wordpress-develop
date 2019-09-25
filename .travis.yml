@@ -126,7 +126,7 @@ script:
       docker-compose run --rm php composer lint:errors &&
       docker-compose run --rm php composer lint tests
     elif [[ "$WP_TRAVISCI" == "test:coverage" ]]; then
-      npm run test:php -- -qrr --verbose -c phpunit.xml.dist --coverage-clover=coverage.xml
+      npm run test:coverage -- --verbose -c phpunit.xml.dist --coverage-clover=coverage.xml
       docker-compose run --rm $ci_env
     elif [[ "$WP_TRAVISCI" == "test:compat" ]]; then
       docker-compose run --rm php composer compat
