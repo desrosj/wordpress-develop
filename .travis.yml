@@ -31,7 +31,7 @@ matrix:
     name: JS Tests
   - env: WP_TRAVISCI=test:compat COMPOSER_INSTALL=true NPM_INSTALL=false WP_INSTALL=false
     name: "PHP Compatibility Check"
-  - env: LOCAL_PHP=7.3-fpm WP_TRAVISCI=test:coverage LOCAL_PHP_XDEBUG=true
+  - env: LOCAL_PHP=7.3-fpm WP_TRAVISCI=test:coverage
     name: "Code Coverage Report"
   - env: LOCAL_PHP=7.3-fpm WP_TRAVISCI=test:php
     name: "PHPUnit Tests: PHP 7.3"
@@ -90,9 +90,8 @@ before_script:
   fi
 - |
   if [[ "$WP_TRAVISCI" == "test:coverage" ]]; then
-    ci_env=`bash <(curl -s https://codecov.io/env)`
+    ci_env="bash <(curl -s https://codecov.io/env)"
   fi
-
 - |
   if [[ "$LOCAL_PHP_MEMCACHED" == "true" ]]; then
     cp tests/phpunit/includes/object-cache.php build/wp-content/object-cache.php
@@ -131,7 +130,7 @@ script:
       docker-compose run --rm php composer lint:errors &&
       docker-compose run --rm php composer lint tests
     elif [[ "$WP_TRAVISCI" == "test:coverage" ]]; then
-      npm run test:php -- --verbose -c phpunit.xml.dist --coverage-clover=coverage.xml $ci_env
+      npm run test:php -- -qrr --verbose -c phpunit.xml.dist --coverage-clover=coverage.xml $ci_env
     elif [[ "$WP_TRAVISCI" == "test:compat" ]]; then
       docker-compose run --rm php composer compat
     else
