@@ -588,6 +588,29 @@ function wp_start_object_cache() {
 }
 
 /**
+ *
+ */
+function _wp_cache_compat_get_multi( $groups, $force = false ) {
+	$data = array();
+
+	foreach ( $groups as $group => $keys ) {
+		$data[ $group ] = array();
+
+		foreach ( $keys as $key ) {
+			$value = wp_cache_get( $key, $group, $force );
+
+			if ( ! $value ) {
+				continue;
+			}
+
+			$data[ $group ][ $key ] = $value;
+		}
+	}
+
+	return $data;
+}
+
+/**
  * Redirect to the installer if WordPress is not installed.
  *
  * Dies with an error message when Multisite is enabled.

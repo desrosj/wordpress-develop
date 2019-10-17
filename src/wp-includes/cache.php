@@ -124,6 +124,19 @@ function wp_cache_get( $key, $group = '', $force = false, &$found = null ) {
 }
 
 /**
+ *Retrieve multiple cache items.
+ *
+ * @param array $groups Associative array of cache groups to cache keys to fetch.
+ * @param bool  $force  Whether to force a refetch rather than relying on the local cache (default is false).
+ * @return false|array False on failure or cache contents on success as a two-level associative array, keyed by group and cache key.
+ */
+function wp_cache_get_multi( $groups, $force = false ) {
+	global $wp_object_cache;
+
+	return $wp_object_cache->get_multi( $groups, $force );
+}
+
+/**
  * Increment numeric cache item's value
  *
  * @since 3.3.0
@@ -554,6 +567,33 @@ class WP_Object_Cache {
 		$found               = false;
 		$this->cache_misses += 1;
 		return false;
+	}
+
+	/**
+	 * Retrieve multiple cache items.
+	 *
+	 * @param array $groups Associative array of cache groups to cache keys to fetch.
+	 * @param bool  $force Whether to force a refetch rather than relying on the local cache (default is false).
+	 * @return false|array False on failure or cache contents on success as an two-level associative array, keyed by group and cache key.
+	 */
+	public function get_multi( $groups, $force = false ) {
+		$data = array();
+
+		foreach ( $groups as $group => $keys ) {
+			$data[ $group ] = array();
+
+			foreach ( $keys as $key ) {
+				$value = $this->get( $key, $group, $force, $found );
+
+				if ( ! $found ) {
+					continue;
+				}
+
+				$data[ $group ][ $key ] = $value;
+			}
+		}
+
+		return $data;
 	}
 
 	/**

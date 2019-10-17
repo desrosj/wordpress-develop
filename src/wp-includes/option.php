@@ -163,7 +163,7 @@ function get_option( $option, $default = false ) {
  * @param string $option Option name.
  */
 function wp_protect_special_option( $option ) {
-	if ( 'alloptions' === $option || 'notoptions' === $option ) {
+	if ( 'alloptions' === $option || 'alloptionskeys' === $option || 'notoptions' === $option ) {
 		wp_die(
 			sprintf(
 				/* translators: %s: Option name. */
@@ -197,10 +197,20 @@ function form_option( $option ) {
 function wp_load_alloptions() {
 	global $wpdb;
 
+	$alloptions = false;
+
 	if ( ! wp_installing() || ! is_multisite() ) {
-		$alloptions = wp_cache_get( 'alloptions', 'options' );
-	} else {
-		$alloptions = false;
+		$keys = wp_cache_get( 'alloptionskeys', 'options' );
+
+		if ( is_array( $keys ) ) {
+			if ( function_exists( 'wp_cache_get_multi' ) ) {
+				$cached_options = wp_cache_get_multi( array( 'options' => array_keys( $keys ) ) );
+			} else {
+				$cached_options = _wp_cache_compay_get_multi( array( 'options' => array_keys( $keys ) ) );
+			}
+
+			$alloptions = $cached_options['options'];
+		}
 	}
 
 	if ( ! $alloptions ) {
@@ -212,11 +222,29 @@ function wp_load_alloptions() {
 		$wpdb->suppress_errors( $suppress );
 
 		$alloptions = array();
+		$keys       = array();
+
 		foreach ( (array) $alloptions_db as $o ) {
 			$alloptions[ $o->option_name ] = $o->option_value;
+			$keys[ $o->option_name ]       = true;
 		}
 
 		if ( ! wp_installing() || ! is_multisite() ) {
+			/**
+			 * Filters all options keys before caching them.
+			 *
+			 * @since 5.4.0
+			 *
+			 * @param array $keys Array with all options keys.
+			 */
+			$keys = apply_filters( 'pre_cache_alloptionskeys', $keys );
+			wp_cache_add( 'alloptionskeys', $keys, 'options' );
+
+			foreach ( $alloptions as $key => $value ) {
+				wp_cache_set( $key, $value, 'options' );
+			}
+
+			/** This needs to be tweaked. If this filter removes options from the list, the key should not be cached. */
 			/**
 			 * Filters all options before caching them.
 			 *
@@ -224,8 +252,8 @@ function wp_load_alloptions() {
 			 *
 			 * @param array $alloptions Array with all options.
 			 */
-			$alloptions = apply_filters( 'pre_cache_alloptions', $alloptions );
-			wp_cache_add( 'alloptions', $alloptions, 'options' );
+			//          $alloptions = apply_filters( 'pre_cache_alloptions', $alloptions );
+			//          wp_cache_add( 'alloptions', $alloptions, 'options' );
 		}
 	}
 
@@ -397,13 +425,7 @@ function update_option( $option, $value, $autoload = null ) {
 	}
 
 	if ( ! wp_installing() ) {
-		$alloptions = wp_load_alloptions();
-		if ( isset( $alloptions[ $option ] ) ) {
-			$alloptions[ $option ] = $serialized_value;
-			wp_cache_set( 'alloptions', $alloptions, 'options' );
-		} else {
-			wp_cache_set( $option, $serialized_value, 'options' );
-		}
+		wp_cache_set( $option, $serialized_value, 'options' );
 	}
 
 	/**
@@ -505,12 +527,12 @@ function add_option( $option, $value = '', $deprecated = '', $autoload = 'yes' )
 
 	if ( ! wp_installing() ) {
 		if ( 'yes' == $autoload ) {
-			$alloptions            = wp_load_alloptions();
-			$alloptions[ $option ] = $serialized_value;
-			wp_cache_set( 'alloptions', $alloptions, 'options' );
-		} else {
-			wp_cache_set( $option, $serialized_value, 'options' );
+			$alloptionskeys            = wp_cache_get( 'alloptionskeys', 'options' );
+			$alloptionskeys[ $option ] = true;
+			wp_cache_set( 'alloptionskeys', $alloptionskeys, 'options' );
 		}
+
+		wp_cache_set( $option, $serialized_value, 'options' );
 	}
 
 	// This option exists now
@@ -583,14 +605,15 @@ function delete_option( $option ) {
 	$result = $wpdb->delete( $wpdb->options, array( 'option_name' => $option ) );
 	if ( ! wp_installing() ) {
 		if ( 'yes' == $row->autoload ) {
-			$alloptions = wp_load_alloptions();
-			if ( is_array( $alloptions ) && isset( $alloptions[ $option ] ) ) {
-				unset( $alloptions[ $option ] );
-				wp_cache_set( 'alloptions', $alloptions, 'options' );
+			$alloptionskeys = wp_cache_get( 'alloptionskeys', 'options' );
+
+			if ( is_array( $alloptionskeys ) && isset( $alloptionskeys[ $option ] ) ) {
+				unset( $alloptionskeys[ $option ] );
+				wp_cache_set( 'alloptionskeys', $alloptionskeys, 'options' );
 			}
-		} else {
-			wp_cache_delete( $option, 'options' );
 		}
+
+		wp_cache_delete( $option, 'options' );
 	}
 	if ( $result ) {
 
