@@ -8,6 +8,8 @@
  * @deprecated 4.9.0 This file is no longer used as of the menu creation UX introduced in #40104.
  */
 
+_deprecated_file( basename( __FILE__ ), '4.9.0' );
+
 /**
  * Customize control class for new menus.
  *
@@ -36,7 +38,7 @@ class WP_Customize_New_Menu_Control extends WP_Customize_Control {
 	 * @param array                $args    Args.
 	 */
 	public function __construct( WP_Customize_Manager $manager, $id, array $args = array() ) {
-		_deprecated_file( basename( __FILE__ ), '4.9.0' ); // @todo Move this outside of class, and remove its require_once() from class-wp-customize-control.php. See #42364.
+		_deprecated_function( __METHOD__, '4.9.0' );
 		parent::__construct( $manager, $id, $args );
 	}
 
@@ -46,6 +48,7 @@ class WP_Customize_New_Menu_Control extends WP_Customize_Control {
 	 * @since 4.3.0
 	 */
 	public function render_content() {
+		_deprecated_function( __METHOD__, '4.9.0' );
 		?>
 		<button type="button" class="button button-primary" id="create-new-menu-submit"><?php _e( 'Create Menu' ); ?></button>
 		<span class="spinner"></span>
