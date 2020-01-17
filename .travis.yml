@@ -105,7 +105,7 @@ before_script:
 - svn --version
 - locale -a
 script:
-  if [[ "$WP_TRAVISCI" == "travis:phpunit" ]]; then
+  if [[ "$WP_TRAVISCI" == "test:compat" ]]; then
     composer run compat
   else
     grunt $WP_TRAVISCI
