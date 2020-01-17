@@ -25,6 +25,8 @@ matrix:
   - php: 7.0
     env: WP_TEST_REPORTER=true
   - php: 5.6
+  allow_failures:
+    - env: WP_TRAVISCI=test:compat
   fast_finish: true
 before_install:
 - |
@@ -100,7 +102,12 @@ before_script:
 - git --version
 - svn --version
 - locale -a
-script: grunt $WP_TRAVISCI
+script:
+  if [[ "$WP_TRAVISCI" == "travis:phpunit" ]]; then
+    composer run compat
+  else
+    grunt $WP_TRAVISCI
+  fi
 after_script:
 - |
   if [[ "$WP_TEST_REPORTER" == "true" ]]; then
