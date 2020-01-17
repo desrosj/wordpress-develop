@@ -12,6 +12,8 @@ env:
     - WP_TRAVISCI=travis:phpunit
 matrix:
   include:
+  - env: WP_TRAVISCI=test:compat
+    name: "PHP Compatibility Check"
   - php: 7.2
     env: WP_TRAVISCI=travis:format
   - php: 7.1
