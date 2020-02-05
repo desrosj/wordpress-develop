@@ -158,6 +158,8 @@ class WP_Automatic_Updater {
 		// Next up, is this an item we can update?
 		if ( 'core' == $type ) {
 			$update = Core_Upgrader::should_update_to_version( $item->current );
+		} elseif ( 'plugin' === $type ) {
+			$update = Plugin_Upgrader::should_update_to_version( $item );
 		} else {
 			$update = ! empty( $item->autoupdate );
 		}
@@ -499,6 +501,10 @@ class WP_Automatic_Updater {
 				$this->after_core_update( $this->update_results['core'][0] );
 			}
 
+			if ( ! empty( $this->update_results['plugin'] ) ) {
+				$this->after_plugin_update( $this->update_results['plugin'] );
+			}
+
 			/**
 			 * Fires after all automatic updates have run.
 			 *
@@ -602,6 +608,43 @@ class WP_Automatic_Updater {
 
 		if ( $send ) {
 			$this->send_email( 'fail', $core_update, $result );
+		}
+	}
+
+	/**
+	 * If we tried to perform plugin updates, check if we should send an email.
+	 *
+	 * @since 5.4.0
+	 *
+	 * @param object $update_results The result of the plugin updates.
+	 */
+	function after_plugin_update( $update_results ) {
+		if ( empty( $update_results ) ) {
+			return;
+		}
+
+		$success_items = array();
+		$failure_items = array();
+
+		foreach ( $update_results as $update_result ) {
+			if ( true === $update_result->result ) {
+				$success_items[] = $update_result;
+			} else {
+				$failure_items[] = $update_result;
+			}
+		}
+
+		// No updates were logged.
+		if ( empty( $success_items ) && empty( $failure_items ) ) {
+			return;
+		}
+
+		if ( empty( $failure_items ) ) {
+			$this->send_plugin_email( 'success', $success_items, $failure_items );
+		} elseif ( empty( $success_items ) ) {
+			$this->send_plugin_email( 'fail', $success_items, $failure_items );
+		} else {
+			$this->send_plugin_email( 'mixed', $success_items, $failure_items );
 		}
 	}
 
@@ -752,7 +795,7 @@ class WP_Automatic_Updater {
 			// Support offer if available.
 			$body .= "\n\n" . sprintf(
 				/* translators: %s: Support email address. */
-				__( 'The WordPress team is willing to help you. Forward this email to %s and the team will work with you to make sure your site is working.' ),
+					__( 'The WordPress team is willing to help you. Forward this email to %s and the team will work with you to make sure your site is working.' ),
 				$core_update->support_email
 			);
 		} else {
@@ -839,6 +882,133 @@ class WP_Automatic_Updater {
 		 * @param mixed  $result      The result for the core update. Can be WP_Error.
 		 */
 		$email = apply_filters( 'auto_core_update_email', $email, $type, $core_update, $result );
+
+		wp_mail( $email['to'], wp_specialchars_decode( $email['subject'] ), $email['body'], $email['headers'] );
+	}
+
+	/**
+	 * Sends an email upon the completion or failure of a plugin background update.
+	 *
+	 * @since 5.4.0
+	 *
+	 * @param string $type               The type of email to send. Can be one of 'success', 'failure', 'mixed'.
+	 * @param array  $successful_updates A list of plugin updates that succeeded.
+	 * @param array  $failed_updates     A list of plugin updates that failed.
+	 */
+	protected function send_plugin_email( $type, $successful_updates, $failed_updates ) {
+		/**
+		 * Filters whether to send an email following an automatic background plugin update.
+		 *
+		 * @since 5.4.0
+		 *
+		 * @param bool   $send    Whether to send the email. Default true.
+		 * @param string $type    The type of email to send. Can be one of
+		 *                        'success', 'failure' or 'mixed'.
+		 * @param object $updates The updates offered that were attempted.
+		 */
+		if ( ! apply_filters( 'auto_plugin_update_send_email', true, $type, $this->update_results['plugin'] ) ) {
+			return;
+		}
+
+		// No updates were attempted.
+		if ( empty( $successful_updates ) && empty( $failed_updates ) ) {
+			return;
+		}
+
+		$body = array();
+
+		switch ( $type ) {
+			case 'success':
+				/* translators: %s: Site title. */
+				$subject = __( '[%s] Plugins have automatically updated' );
+
+				break;
+
+			case 'fail':
+				/* translators: %s: Site title. */
+				$subject = __( '[%s] Plugins have failed to update' );
+				$body[]  = sprintf(
+					/* translators: %s: Home URL. */
+					__(
+						'Howdy! Failures occurred when attempting to update plugins on your site at %s.',
+						home_url()
+					)
+				);
+				$body[] = "\n";
+				$body[] = __( "Please check out your site now. It's possible that everything is working. If it says you need to update, you should do so." );
+
+				break;
+
+			case 'mixed':
+				/* translators: %s: Site title. */
+				$subject = __( '[%s] Some plugins have automatically updated' );
+
+				$body[] = sprintf(
+					/* translators: %s: Home URL. */
+					__( 'Howdy! There were some failures while attempting to update plugins on your site at %s.' ),
+					home_url()
+				);
+				$body[] = "\n";
+				$body[] = __( "Please check out your site now. It's possible that everything is working. If it says you need to update, you should do so." );
+				$body[] = "\n";
+
+				break;
+		}
+
+		if ( in_array( $type, array( 'fail', 'mixed' ), true ) && ! empty( $failed_updates ) ) {
+			$body[] = __( 'The following plugins failed to update:' );
+			// List failed updates.
+			foreach ( $failed_updates as $item ) {
+				/* translators: %s: Name of plugin. */
+				$body[] = ' ' . sprintf( __( '- %s' ), $item->name );
+			}
+			$body[] = "\n";
+		}
+
+		if ( in_array( $type, array( 'success', 'mixed' ), true ) && ! empty( $successful_updates ) ) {
+			// Successful updates.
+			$body[] = __( 'The following plugins were successfully updated:' );
+
+			foreach ( $successful_updates as $plugin ) {
+				/* translators: %s: Name of plugin. */
+				$body[] = ' ' . sprintf( __( '- %s' ), $plugin->name );
+			}
+		}
+
+		$body[] = "\n";
+
+		// Add a note about the support forums.
+		$body[] = __( 'If you experience any issues or need support, the volunteers in the WordPress.org support forums may be able to help.' );
+		$body[] = __( 'https://wordpress.org/support/forums/' );
+
+		$body[] = "\n" . __( 'The WordPress Team' );
+
+		$body    = implode( "\n", $body );
+		$to      = get_site_option( 'admin_email' );
+		$subject = sprintf( $subject, wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES ) );
+		$headers = '';
+
+		$email = compact( 'to', 'subject', 'body', 'headers' );
+
+		/**
+		 * Filters the email sent following an automatic background plugin update.
+		 *
+		 * @since 5.4.0
+		 *
+		 * @param array $email {
+		 *     Array of email arguments that will be passed to wp_mail().
+		 *
+		 *     @type string $to      The email recipient. An array of emails
+		 *                           can be returned, as handled by wp_mail().
+		 *     @type string $subject The email's subject.
+		 *     @type string $body    The email message body.
+		 *     @type string $headers Any email headers, defaults to no headers.
+		 * }
+		 * @param string $type        The type of email being sent. Can be one of
+		 *                            'success', 'fail', 'mixed'.
+		 * @param object $updates    The updates that were attempted.
+		 */
+		$email = apply_filters( 'auto_plugin_update_email', $email, $type, $this->update_results['plugin'] );
 
 		wp_mail( $email['to'], wp_specialchars_decode( $email['subject'] ), $email['body'], $email['headers'] );
 	}

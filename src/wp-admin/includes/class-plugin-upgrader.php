@@ -73,6 +73,36 @@ class Plugin_Upgrader extends WP_Upgrader {
 	}
 
 	/**
+	 * Determines if this plugin should update to an offered version.
+	 *
+	 * @since 5.4.0
+	 *
+	 * @param object $plugin
+	 * @return bool True if we should update to the offered version, otherwise false.
+	 */
+	public static function should_update_to_version( $plugin ) {
+		if ( defined( 'WP_AUTO_UPDATE_PLUGINS' ) ) {
+			$update = (bool) WP_AUTO_UPDATE_PLUGINS;
+		} else {
+			$enabled_plugin_auto_updates = get_site_option( 'wp_plugin_auto_update', array() );
+			$update                      = in_array( $plugin->plugin, $enabled_plugin_auto_updates, true );
+		}
+
+		/**
+		 * Filters whether to enable automatic updates for the plugin.
+		 *
+		 * @since 5.4.0
+		 *
+		 * @param bool   $update      Whether to enable automatic updates for this plugin.
+		 * @param string $plugin_file Main plugin file.
+		 * @param object $plugin      Plugin object.
+		 */
+		$update = apply_filters( 'allow_auto_plugin_update', $update, $plugin->plugin, $plugin );
+
+		return $update;
+	}
+
+	/**
 	 * Install a plugin package.
 	 *
 	 * @since 2.8.0

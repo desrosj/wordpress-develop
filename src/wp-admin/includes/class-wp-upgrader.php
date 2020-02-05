@@ -783,6 +783,11 @@ class WP_Upgrader {
 			return $working_dir;
 		}
 
+		// Enable maintenance mode for plugins.
+		if ( isset( $options['hook_extra'] ) && 'plugin' === $options['hook_extra']['type'] && is_plugin_active( $options['hook_extra']['plugin'] ) ) {
+			$this->maintenance_mode( true );
+		}
+
 		// With the given options, this installs it to the destination directory.
 		$result = $this->install_package(
 			array(
@@ -794,6 +799,11 @@ class WP_Upgrader {
 				'hook_extra'                  => $options['hook_extra'],
 			)
 		);
+
+		// Disable maintenance mode for plugins.
+		if ( isset( $options['hook_extra'] ) && 'plugin' === $options['hook_extra']['type'] && is_plugin_active( $options['hook_extra']['plugin'] ) ) {
+			$this->maintenance_mode( false );
+		}
 
 		$this->skin->set_result( $result );
 		if ( is_wp_error( $result ) ) {
