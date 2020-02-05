@@ -929,10 +929,8 @@ class WP_Automatic_Updater {
 				$subject = __( '[%s] Plugins have failed to update' );
 				$body[]  = sprintf(
 					/* translators: %s: Home URL. */
-					__(
-						'Howdy! Failures occurred when attempting to update plugins on your site at %s.',
-						home_url()
-					)
+					__( 'Howdy! Failures occurred when attempting to update plugins on your site at %s.' ),
+					home_url()
 				);
 				$body[] = "\n";
 				$body[] = __( "Please check out your site now. It's possible that everything is working. If it says you need to update, you should do so." );
