@@ -40,6 +40,13 @@ class Tests_Post_Types extends WP_UnitTestCase {
 	}
 
 	/**
+	 * @ticket 48558
+	 */
+	function test_register_post_type_return_value() {
+		$this->assertInstanceOf( 'WP_Post_Type', register_post_type( 'foo' ) );
+	}
+
+	/**
 	 * @ticket 31134
 	 *
 	 * @expectedIncorrectUsage register_post_type
@@ -254,6 +261,15 @@ class Tests_Post_Types extends WP_UnitTestCase {
 		$this->assertEquals( $before, $after );
 
 		_unregister_post_type( 'foo' );
+	}
+
+	/**
+	 * @ticket 38844
+	 */
+	public function test_get_post_type_object_includes_menu_icon_for_builtin_post_types() {
+		$this->assertEquals( 'dashicons-admin-post', get_post_type_object( 'post' )->menu_icon );
+		$this->assertEquals( 'dashicons-admin-page', get_post_type_object( 'page' )->menu_icon );
+		$this->assertEquals( 'dashicons-admin-media', get_post_type_object( 'attachment' )->menu_icon );
 	}
 
 	/**

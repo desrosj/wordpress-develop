@@ -30,6 +30,7 @@ function create_initial_post_types() {
 			'capability_type'       => 'post',
 			'map_meta_cap'          => true,
 			'menu_position'         => 5,
+			'menu_icon'             => 'dashicons-admin-post',
 			'hierarchical'          => false,
 			'rewrite'               => false,
 			'query_var'             => false,
@@ -54,6 +55,7 @@ function create_initial_post_types() {
 			'capability_type'       => 'page',
 			'map_meta_cap'          => true,
 			'menu_position'         => 20,
+			'menu_icon'             => 'dashicons-admin-page',
 			'hierarchical'          => true,
 			'rewrite'               => false,
 			'query_var'             => false,
@@ -85,6 +87,7 @@ function create_initial_post_types() {
 				'create_posts' => 'upload_files',
 			),
 			'map_meta_cap'          => true,
+			'menu_icon'             => 'dashicons-admin-media',
 			'hierarchical'          => false,
 			'rewrite'               => false,
 			'query_var'             => false,
@@ -1646,7 +1649,7 @@ function _post_type_meta_capabilities( $capabilities = null ) {
  * - `insert_into_item` - Label for the media frame button. Default is 'Insert into post' / 'Insert into page'.
  * - `uploaded_to_this_item` - Label for the media frame filter. Default is 'Uploaded to this post' /
  *                           'Uploaded to this page'.
- * - `featured_image` - Label for the Featured Image meta box title. Default is 'Featured Image'.
+ * - `featured_image` - Label for the featured image meta box title. Default is 'Featured image'.
  * - `set_featured_image` - Label for setting the featured image. Default is 'Set featured image'.
  * - `remove_featured_image` - Label for removing the featured image. Default is 'Remove featured image'.
  * - `use_featured_image` - Label in the media frame for using a featured image. Default is 'Use as featured image'.
@@ -1704,7 +1707,7 @@ function get_post_type_labels( $post_type_object ) {
 		'attributes'               => array( __( 'Post Attributes' ), __( 'Page Attributes' ) ),
 		'insert_into_item'         => array( __( 'Insert into post' ), __( 'Insert into page' ) ),
 		'uploaded_to_this_item'    => array( __( 'Uploaded to this post' ), __( 'Uploaded to this page' ) ),
-		'featured_image'           => array( _x( 'Featured Image', 'post' ), _x( 'Featured Image', 'page' ) ),
+		'featured_image'           => array( _x( 'Featured image', 'post' ), _x( 'Featured image', 'page' ) ),
 		'set_featured_image'       => array( _x( 'Set featured image', 'post' ), _x( 'Set featured image', 'page' ) ),
 		'remove_featured_image'    => array( _x( 'Remove featured image', 'post' ), _x( 'Remove featured image', 'page' ) ),
 		'use_featured_image'       => array( _x( 'Use as featured image', 'post' ), _x( 'Use as featured image', 'page' ) ),

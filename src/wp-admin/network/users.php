@@ -8,7 +8,7 @@
  */
 
 /** Load WordPress Administration Bootstrap */
-require_once( dirname( __FILE__ ) . '/admin.php' );
+require_once __DIR__ . '/admin.php';
 
 if ( ! current_user_can( 'manage_network_users' ) ) {
 	wp_die( __( 'Sorry, you are not allowed to access this page.' ), 403 );
@@ -31,11 +31,11 @@ if ( isset( $_GET['action'] ) ) {
 				$_POST['allusers'] = array( $id ); // confirm_delete_users() can only handle arrays.
 				$title             = __( 'Users' );
 				$parent_file       = 'users.php';
-				require_once( ABSPATH . 'wp-admin/admin-header.php' );
+				require_once ABSPATH . 'wp-admin/admin-header.php';
 				echo '<div class="wrap">';
 				confirm_delete_users( $_POST['allusers'] );
 				echo '</div>';
-				require_once( ABSPATH . 'wp-admin/admin-footer.php' );
+				require_once ABSPATH . 'wp-admin/admin-footer.php';
 			} else {
 				wp_redirect( network_admin_url( 'users.php' ) );
 			}
@@ -61,11 +61,11 @@ if ( isset( $_GET['action'] ) ) {
 								}
 								$title       = __( 'Users' );
 								$parent_file = 'users.php';
-								require_once( ABSPATH . 'wp-admin/admin-header.php' );
+								require_once ABSPATH . 'wp-admin/admin-header.php';
 								echo '<div class="wrap">';
 								confirm_delete_users( $_POST['allusers'] );
 								echo '</div>';
-								require_once( ABSPATH . 'wp-admin/admin-footer.php' );
+								require_once ABSPATH . 'wp-admin/admin-footer.php';
 								exit();
 
 							case 'spam':
@@ -158,7 +158,7 @@ if ( isset( $_GET['action'] ) ) {
 						}
 
 						if ( ! empty( $_POST['delete'] ) && 'reassign' == $_POST['delete'][ $blogid ][ $id ] ) {
-							remove_user_from_blog( $id, $blogid, $user_id );
+							remove_user_from_blog( $id, $blogid, (int) $user_id );
 						} else {
 							remove_user_from_blog( $id, $blogid );
 						}
@@ -237,7 +237,7 @@ get_current_screen()->set_screen_reader_content(
 	)
 );
 
-require_once( ABSPATH . 'wp-admin/admin-header.php' );
+require_once ABSPATH . 'wp-admin/admin-header.php';
 
 if ( isset( $_REQUEST['updated'] ) && $_REQUEST['updated'] == 'true' && ! empty( $_REQUEST['action'] ) ) {
 	?>
@@ -294,4 +294,4 @@ if ( isset( $_REQUEST['updated'] ) && $_REQUEST['updated'] == 'true' && ! empty(
 	</form>
 </div>
 
-<?php require_once( ABSPATH . 'wp-admin/admin-footer.php' ); ?>
+<?php require_once ABSPATH . 'wp-admin/admin-footer.php'; ?>

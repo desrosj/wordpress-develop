@@ -9,7 +9,7 @@
  */
 
 /** WordPress Administration Bootstrap */
-require_once( dirname( __FILE__ ) . '/admin.php' );
+require_once __DIR__ . '/admin.php';
 
 $parent_file  = 'edit.php';
 $submenu_file = 'edit.php';
@@ -96,6 +96,14 @@ switch ( $action ) {
 		$_POST['comment_status'] = get_default_comment_status( $post->post_type );
 		$_POST['ping_status']    = get_default_comment_status( $post->post_type, 'pingback' );
 
+		// Wrap Quick Draft content in the Paragraph block.
+		if ( false === strpos( $_POST['content'], '<!-- wp:paragraph -->' ) ) {
+			$_POST['content'] = sprintf(
+				'<!-- wp:paragraph -->%s<!-- /wp:paragraph -->',
+				str_replace( array( "\r\n", "\r", "\n" ), '<br />', $_POST['content'] )
+			);
+		}
+
 		edit_post();
 		wp_dashboard_quick_press();
 		exit;
@@ -176,7 +184,7 @@ switch ( $action ) {
 		}
 
 		if ( use_block_editor_for_post( $post ) ) {
-			include( ABSPATH . 'wp-admin/edit-form-blocks.php' );
+			require ABSPATH . 'wp-admin/edit-form-blocks.php';
 			break;
 		}
 
@@ -195,7 +203,7 @@ switch ( $action ) {
 			enqueue_comment_hotkeys_js();
 		}
 
-		include( ABSPATH . 'wp-admin/edit-form-advanced.php' );
+		require ABSPATH . 'wp-admin/edit-form-advanced.php';
 
 		break;
 
@@ -350,4 +358,5 @@ switch ( $action ) {
 		wp_redirect( admin_url( 'edit.php' ) );
 		exit();
 } // End switch.
-include( ABSPATH . 'wp-admin/admin-footer.php' );
+
+require_once ABSPATH . 'wp-admin/admin-footer.php';
