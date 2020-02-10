@@ -86,6 +86,8 @@ function wp_default_packages_vendor( &$scripts ) {
 		'wp-polyfill-fetch',
 		'wp-polyfill-formdata',
 		'wp-polyfill-node-contains',
+		'wp-polyfill-url',
+		'wp-polyfill-dom-rect',
 		'wp-polyfill-element-closest',
 		'wp-polyfill',
 	);
@@ -97,7 +99,9 @@ function wp_default_packages_vendor( &$scripts ) {
 		'lodash'                      => '4.17.15',
 		'wp-polyfill-fetch'           => '3.0.0',
 		'wp-polyfill-formdata'        => '3.0.12',
-		'wp-polyfill-node-contains'   => '3.26.0-0',
+		'wp-polyfill-node-contains'   => '3.42.0',
+		'wp-polyfill-url'             => '3.42.0',
+		'wp-polyfill-dom-rect'        => '3.42.0',
 		'wp-polyfill-element-closest' => '2.0.2',
 		'wp-polyfill'                 => '7.4.4',
 	);
@@ -122,6 +126,8 @@ function wp_default_packages_vendor( &$scripts ) {
 			array(
 				'\'fetch\' in window' => 'wp-polyfill-fetch',
 				'document.contains'   => 'wp-polyfill-node-contains',
+				'window.URL'          => 'wp-polyfill-url',
+				'window.DOMRect'      => 'wp-polyfill-dom-rect',
 				'window.FormData && window.FormData.prototype.keys' => 'wp-polyfill-formdata',
 				'Element.prototype.matches && Element.prototype.closest' => 'wp-polyfill-element-closest',
 			)
@@ -254,12 +260,14 @@ function wp_default_packages_scripts( &$scripts ) {
 		'html-entities',
 		'i18n',
 		'is-shallow-equal',
+		'keyboard-shortcuts',
 		'keycodes',
 		'list-reusable-blocks',
 		'media-utils',
 		'notices',
 		'nux',
 		'plugins',
+		'primitives',
 		'priority-queue',
 		'redux-routine',
 		'rich-text',
@@ -268,6 +276,7 @@ function wp_default_packages_scripts( &$scripts ) {
 		'token-list',
 		'url',
 		'viewport',
+		'warning',
 		'wordcount',
 	);
 
@@ -593,7 +602,7 @@ function wp_default_packages( &$scripts ) {
 function wp_scripts_get_suffix( $type = '' ) {
 	static $suffixes;
 
-	if ( $suffixes === null ) {
+	if ( null === $suffixes ) {
 		// Include an unmodified $wp_version.
 		require ABSPATH . WPINC . '/version.php';
 
@@ -611,7 +620,7 @@ function wp_scripts_get_suffix( $type = '' ) {
 		);
 	}
 
-	if ( $type === 'dev' ) {
+	if ( 'dev' === $type ) {
 		return $suffixes['dev_suffix'];
 	}
 
@@ -923,7 +932,7 @@ function wp_default_scripts( &$scripts ) {
 		'upload_stopped'            => __( 'Upload stopped.' ),
 		'dismiss'                   => __( 'Dismiss' ),
 		'crunching'                 => __( 'Crunching&hellip;' ),
-		'deleted'                   => __( 'moved to the trash.' ),
+		'deleted'                   => __( 'moved to the Trash.' ),
 		/* translators: %s: File name. */
 		'error_uploading'           => __( '&#8220;%s&#8221; has failed to upload.' ),
 	);

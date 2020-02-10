@@ -127,7 +127,7 @@ function check_comment( $author, $email, $url, $comment, $user_ip, $user_agent, 
 	 * email address. If both checks pass, return true. Otherwise, return false.
 	 */
 	if ( 1 == get_option( 'comment_whitelist' ) ) {
-		if ( 'trackback' != $comment_type && 'pingback' != $comment_type && $author != '' && $email != '' ) {
+		if ( 'trackback' !== $comment_type && 'pingback' !== $comment_type && '' != $author && '' != $email ) {
 			$comment_user = get_user_by( 'email', wp_unslash( $email ) );
 			if ( ! empty( $comment_user->ID ) ) {
 				$ok_to_comment = $wpdb->get_var( $wpdb->prepare( "SELECT comment_approved FROM $wpdb->comments WHERE user_id = %d AND comment_approved = '1' LIMIT 1", $comment_user->ID ) );
@@ -217,11 +217,11 @@ function get_comment( &$comment = null, $output = OBJECT ) {
 	 */
 	$_comment = apply_filters( 'get_comment', $_comment );
 
-	if ( $output == OBJECT ) {
+	if ( OBJECT == $output ) {
 		return $_comment;
-	} elseif ( $output == ARRAY_A ) {
+	} elseif ( ARRAY_A == $output ) {
 		return $_comment->to_array();
-	} elseif ( $output == ARRAY_N ) {
+	} elseif ( ARRAY_N == $output ) {
 		return array_values( $_comment->to_array() );
 	}
 	return $_comment;
@@ -1364,8 +1364,8 @@ function wp_count_comments( $post_id = 0 ) {
 /**
  * Trashes or deletes a comment.
  *
- * The comment is moved to trash instead of permanently deleted unless trash is
- * disabled, item is already in the trash, or $force_delete is true.
+ * The comment is moved to Trash instead of permanently deleted unless Trash is
+ * disabled, item is already in the Trash, or $force_delete is true.
  *
  * The post comment count will be updated if the comment was approved and has a
  * post ID available.
@@ -1375,7 +1375,7 @@ function wp_count_comments( $post_id = 0 ) {
  * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param int|WP_Comment $comment_id   Comment ID or WP_Comment object.
- * @param bool           $force_delete Whether to bypass trash and force deletion. Default is false.
+ * @param bool           $force_delete Whether to bypass Trash and force deletion. Default is false.
  * @return bool True on success, false on failure.
  */
 function wp_delete_comment( $comment_id, $force_delete = false ) {
@@ -1429,7 +1429,7 @@ function wp_delete_comment( $comment_id, $force_delete = false ) {
 	do_action( 'deleted_comment', $comment->comment_ID, $comment );
 
 	$post_id = $comment->comment_post_ID;
-	if ( $post_id && $comment->comment_approved == 1 ) {
+	if ( $post_id && 1 == $comment->comment_approved ) {
 		wp_update_comment_count( $post_id );
 	}
 
@@ -1445,7 +1445,7 @@ function wp_delete_comment( $comment_id, $force_delete = false ) {
 /**
  * Moves a comment to the Trash
  *
- * If trash is disabled, comment is permanently deleted.
+ * If Trash is disabled, comment is permanently deleted.
  *
  * @since 2.9.0
  *
@@ -1655,15 +1655,15 @@ function wp_get_comment_status( $comment_id ) {
 
 	$approved = $comment->comment_approved;
 
-	if ( $approved == null ) {
+	if ( null == $approved ) {
 		return false;
-	} elseif ( $approved == '1' ) {
+	} elseif ( '1' == $approved ) {
 		return 'approved';
-	} elseif ( $approved == '0' ) {
+	} elseif ( '0' == $approved ) {
 		return 'unapproved';
-	} elseif ( $approved == 'spam' ) {
+	} elseif ( 'spam' == $approved ) {
 		return 'spam';
-	} elseif ( $approved == 'trash' ) {
+	} elseif ( 'trash' == $approved ) {
 		return 'trash';
 	} else {
 		return false;
@@ -1913,7 +1913,7 @@ function wp_insert_comment( $commentdata ) {
 
 	$id = (int) $wpdb->insert_id;
 
-	if ( $comment_approved == 1 ) {
+	if ( 1 == $comment_approved ) {
 		wp_update_comment_count( $comment_post_ID );
 
 		foreach ( array( 'server', 'gmt', 'blog' ) as $timezone ) {
@@ -2632,7 +2632,7 @@ function discover_pingback_server_uri( $url, $deprecated = '' ) {
 	$pingback_link_offset_squote = strpos( $contents, $pingback_str_squote );
 	if ( $pingback_link_offset_dquote || $pingback_link_offset_squote ) {
 		$quote                   = ( $pingback_link_offset_dquote ) ? '"' : '\'';
-		$pingback_link_offset    = ( $quote == '"' ) ? $pingback_link_offset_dquote : $pingback_link_offset_squote;
+		$pingback_link_offset    = ( '"' === $quote ) ? $pingback_link_offset_dquote : $pingback_link_offset_squote;
 		$pingback_href_pos       = strpos( $contents, 'href=', $pingback_link_offset );
 		$pingback_href_start     = $pingback_href_pos + 6;
 		$pingback_href_end       = strpos( $contents, $quote, $pingback_href_start );
@@ -2843,7 +2843,7 @@ function pingback( $content, $post_id ) {
 			if ( $test ) {
 				if ( isset( $test['query'] ) ) {
 					$post_links[] = $link_test;
-				} elseif ( isset( $test['path'] ) && ( $test['path'] != '/' ) && ( $test['path'] != '' ) ) {
+				} elseif ( isset( $test['path'] ) && ( '/' !== $test['path'] ) && ( '' !== $test['path'] ) ) {
 					$post_links[] = $link_test;
 				}
 			}
@@ -3005,7 +3005,7 @@ function pingback_ping_source_uri( $source_uri ) {
  * @return IXR_Error
  */
 function xmlrpc_pingback_error( $ixr_error ) {
-	if ( $ixr_error->code === 48 ) {
+	if ( 48 === $ixr_error->code ) {
 		return $ixr_error;
 	}
 	return new IXR_Error( 0, '' );

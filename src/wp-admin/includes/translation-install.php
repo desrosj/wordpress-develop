@@ -21,7 +21,7 @@ function translations_api( $type, $args = null ) {
 	require ABSPATH . WPINC . '/version.php';
 
 	if ( ! in_array( $type, array( 'plugins', 'themes', 'core' ) ) ) {
-		return  new WP_Error( 'invalid_type', __( 'Invalid translation type.' ) );
+		return new WP_Error( 'invalid_type', __( 'Invalid translation type.' ) );
 	}
 
 	/**
@@ -154,7 +154,7 @@ function wp_get_available_translations() {
  *
  * @since 4.0.0
  *
- * @global string $wp_local_package
+ * @global string $wp_local_package Locale code of the package.
  *
  * @param array[] $languages Array of available languages (populated via the Translation API).
  */

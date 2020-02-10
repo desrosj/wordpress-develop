@@ -676,15 +676,15 @@ function get_children( $args = '', $output = OBJECT ) {
 		$kids[ $child->ID ] = $children[ $key ];
 	}
 
-	if ( $output == OBJECT ) {
+	if ( OBJECT == $output ) {
 		return $kids;
-	} elseif ( $output == ARRAY_A ) {
+	} elseif ( ARRAY_A == $output ) {
 		$weeuns = array();
 		foreach ( (array) $kids as $kid ) {
 			$weeuns[ $kid->ID ] = get_object_vars( $kids[ $kid->ID ] );
 		}
 		return $weeuns;
-	} elseif ( $output == ARRAY_N ) {
+	} elseif ( ARRAY_N == $output ) {
 		$babes = array();
 		foreach ( (array) $kids as $kid ) {
 			$babes[ $kid->ID ] = array_values( get_object_vars( $kids[ $kid->ID ] ) );
@@ -784,9 +784,9 @@ function get_post( $post = null, $output = OBJECT, $filter = 'raw' ) {
 
 	$_post = $_post->filter( $filter );
 
-	if ( $output == ARRAY_A ) {
+	if ( ARRAY_A == $output ) {
 		return $_post->to_array();
-	} elseif ( $output == ARRAY_N ) {
+	} elseif ( ARRAY_N == $output ) {
 		return array_values( $_post->to_array() );
 	}
 
@@ -1399,7 +1399,7 @@ function get_post_types( $args = array(), $output = 'names', $operator = 'and' )
  *                                              ?{query_var_string}={post_slug} will be valid.
  *     @type bool        $can_export            Whether to allow this post type to be exported. Default true.
  *     @type bool        $delete_with_user      Whether to delete posts of this type when deleting a user. If true,
- *                                              posts of this type belonging to the user will be moved to trash
+ *                                              posts of this type belonging to the user will be moved to Trash
  *                                              when then user is deleted. If false, posts of this type belonging
  *                                              to the user will *not* be trashed or deleted. If not set (the default),
  *                                              posts are trashed if post_type_supports('author'). Otherwise posts
@@ -1639,7 +1639,7 @@ function _post_type_meta_capabilities( $capabilities = null ) {
  * - `view_items` - Label for viewing post type archives. Default is 'View Posts' / 'View Pages'.
  * - `search_items` - Label for searching plural items. Default is 'Search Posts' / 'Search Pages'.
  * - `not_found` - Label used when no items are found. Default is 'No posts found' / 'No pages found'.
- * - `not_found_in_trash` - Label used when no items are in the trash. Default is 'No posts found in Trash' /
+ * - `not_found_in_trash` - Label used when no items are in the Trash. Default is 'No posts found in Trash' /
  *                        'No pages found in Trash'.
  * - `parent_item_colon` - Label used to prefix parents of hierarchical items. Not used on non-hierarchical
  *                       post types. Default is 'Parent Page:'.
@@ -1806,7 +1806,7 @@ function _add_post_type_submenus() {
 	foreach ( get_post_types( array( 'show_ui' => true ) ) as $ptype ) {
 		$ptype_obj = get_post_type_object( $ptype );
 		// Sub-menus only.
-		if ( ! $ptype_obj->show_in_menu || $ptype_obj->show_in_menu === true ) {
+		if ( ! $ptype_obj->show_in_menu || true === $ptype_obj->show_in_menu ) {
 			continue;
 		}
 		add_submenu_page( $ptype_obj->show_in_menu, $ptype_obj->labels->name, $ptype_obj->labels->all_items, $ptype_obj->cap->edit_posts, "edit.php?post_type=$ptype" );
@@ -2926,8 +2926,8 @@ function wp_post_mime_type_where( $post_mime_types, $table_alias = '' ) {
  * it is deleted also. This includes comments, post meta fields, and terms
  * associated with the post.
  *
- * The post or page is moved to trash instead of permanently deleted unless
- * trash is disabled, item is already in the trash, or $force_delete is true.
+ * The post or page is moved to Trash instead of permanently deleted unless
+ * Trash is disabled, item is already in the Trash, or $force_delete is true.
  *
  * @since 1.0.0
  *
@@ -2936,7 +2936,7 @@ function wp_post_mime_type_where( $post_mime_types, $table_alias = '' ) {
  * @see wp_trash_post()
  *
  * @param int  $postid       Optional. Post ID. Default 0.
- * @param bool $force_delete Optional. Whether to bypass trash and force deletion.
+ * @param bool $force_delete Optional. Whether to bypass Trash and force deletion.
  *                           Default false.
  * @return WP_Post|false|null Post data on success, false or null on failure.
  */
@@ -2966,7 +2966,7 @@ function wp_delete_post( $postid = 0, $force_delete = false ) {
 	 *
 	 * @param bool|null $delete       Whether to go forward with deletion.
 	 * @param WP_Post   $post         Post object.
-	 * @param bool      $force_delete Whether to bypass the trash.
+	 * @param bool      $force_delete Whether to bypass the Trash.
 	 */
 	$check = apply_filters( 'pre_delete_post', null, $post, $force_delete );
 	if ( null !== $check ) {
@@ -3103,7 +3103,7 @@ function _reset_front_page_settings_for_post( $post_id ) {
 /**
  * Move a post or page to the Trash
  *
- * If trash is disabled, the post or page is permanently deleted.
+ * If Trash is disabled, the post or page is permanently deleted.
  *
  * @since 2.9.0
  *
@@ -3142,7 +3142,7 @@ function wp_trash_post( $post_id = 0 ) {
 	}
 
 	/**
-	 * Fires before a post is sent to the trash.
+	 * Fires before a post is sent to the Trash.
 	 *
 	 * @since 3.3.0
 	 *
@@ -3167,7 +3167,7 @@ function wp_trash_post( $post_id = 0 ) {
 	wp_trash_post_comments( $post_id );
 
 	/**
-	 * Fires after a post is sent to the trash.
+	 * Fires after a post is sent to the Trash.
 	 *
 	 * @since 2.9.0
 	 *
@@ -3211,7 +3211,7 @@ function wp_untrash_post( $post_id = 0 ) {
 	}
 
 	/**
-	 * Fires before a post is restored from the trash.
+	 * Fires before a post is restored from the Trash.
 	 *
 	 * @since 2.9.0
 	 *
@@ -3238,7 +3238,7 @@ function wp_untrash_post( $post_id = 0 ) {
 	wp_untrash_post_comments( $post_id );
 
 	/**
-	 * Fires after a post is restored from the trash.
+	 * Fires after a post is restored from the Trash.
 	 *
 	 * @since 2.9.0
 	 *
@@ -3250,7 +3250,7 @@ function wp_untrash_post( $post_id = 0 ) {
 }
 
 /**
- * Moves comments for a post to the trash.
+ * Moves comments for a post to the Trash.
  *
  * @since 2.9.0
  *
@@ -3270,7 +3270,7 @@ function wp_trash_post_comments( $post = null ) {
 	$post_id = $post->ID;
 
 	/**
-	 * Fires before comments are sent to the trash.
+	 * Fires before comments are sent to the Trash.
 	 *
 	 * @since 2.9.0
 	 *
@@ -3296,7 +3296,7 @@ function wp_trash_post_comments( $post = null ) {
 	clean_comment_cache( array_keys( $statuses ) );
 
 	/**
-	 * Fires after comments are sent to the trash.
+	 * Fires after comments are sent to the Trash.
 	 *
 	 * @since 2.9.0
 	 *
@@ -3309,7 +3309,7 @@ function wp_trash_post_comments( $post = null ) {
 }
 
 /**
- * Restore comments for a post from the trash.
+ * Restore comments for a post from the Trash.
  *
  * @since 2.9.0
  *
@@ -3335,7 +3335,7 @@ function wp_untrash_post_comments( $post = null ) {
 	}
 
 	/**
-	 * Fires before comments are restored for a post from the trash.
+	 * Fires before comments are restored for a post from the Trash.
 	 *
 	 * @since 2.9.0
 	 *
@@ -3363,7 +3363,7 @@ function wp_untrash_post_comments( $post = null ) {
 	delete_post_meta( $post_id, '_wp_trash_meta_comments_status' );
 
 	/**
-	 * Fires after comments are restored for a post from the trash.
+	 * Fires after comments are restored for a post from the Trash.
 	 *
 	 * @since 2.9.0
 	 *
@@ -3843,7 +3843,20 @@ function wp_insert_post( $postarr, $wp_error = false ) {
 
 	// If a trashed post has the desired slug, change it and let this post have it.
 	if ( 'trash' !== $post_status && $post_name ) {
-		wp_add_trashed_suffix_to_post_name_for_trashed_posts( $post_name, $post_ID );
+		/**
+		 * Filters whether or not to add a `__trashed` suffix to trashed posts that match the name of the updated post.
+		 *
+		 * @since 5.4.0
+		 *
+		 * @param bool   $add_trashed_suffix Whether to attempt to add the suffix.
+		 * @param string $post_name          The name of the post being updated.
+		 * @param int    $post_ID            Post ID.
+		 */
+		$add_trashed_suffix = apply_filters( 'add_trashed_suffix_to_trashed_posts', true, $post_name, $post_ID );
+
+		if ( $add_trashed_suffix ) {
+			wp_add_trashed_suffix_to_post_name_for_trashed_posts( $post_name, $post_ID );
+		}
 	}
 
 	// When trashing an existing post, change its slug to allow non-trashed posts to use it.
@@ -4200,7 +4213,7 @@ function wp_update_post( $postarr = array(), $wp_error = false ) {
 		$postarr['post_date_gmt'] = '';
 	}
 
-	if ( $postarr['post_type'] == 'attachment' ) {
+	if ( 'attachment' === $postarr['post_type'] ) {
 		return wp_insert_attachment( $postarr, false, 0, $wp_error );
 	}
 
@@ -4946,7 +4959,7 @@ function get_page_by_path( $page_path, $output = OBJECT, $post_type = 'page' ) {
 			 * Loop through the given path parts from right to left,
 			 * ensuring each matches the post ancestry.
 			 */
-			while ( $p->post_parent != 0 && isset( $pages[ $p->post_parent ] ) ) {
+			while ( 0 != $p->post_parent && isset( $pages[ $p->post_parent ] ) ) {
 				$count++;
 				$parent = $pages[ $p->post_parent ];
 				if ( ! isset( $revparts[ $count ] ) || $parent->post_name != $revparts[ $count ] ) {
@@ -4955,7 +4968,7 @@ function get_page_by_path( $page_path, $output = OBJECT, $post_type = 'page' ) {
 				$p = $parent;
 			}
 
-			if ( $p->post_parent == 0 && $count + 1 == count( $revparts ) && $p->post_name == $revparts[ $count ] ) {
+			if ( 0 == $p->post_parent && count( $revparts ) == $count + 1 && $p->post_name == $revparts[ $count ] ) {
 				$foundid = $page->ID;
 				if ( $page->post_type == $post_type ) {
 					break;
@@ -5561,15 +5574,15 @@ function wp_insert_attachment( $args, $file = false, $parent = 0, $wp_error = fa
  * Deletion removes all post meta fields, taxonomy, comments, etc. associated
  * with the attachment (except the main post).
  *
- * The attachment is moved to the trash instead of permanently deleted unless trash
- * for media is disabled, item is already in the trash, or $force_delete is true.
+ * The attachment is moved to the Trash instead of permanently deleted unless Trash
+ * for media is disabled, item is already in the Trash, or $force_delete is true.
  *
  * @since 2.0.0
  *
  * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param int  $post_id      Attachment ID.
- * @param bool $force_delete Optional. Whether to bypass trash and force deletion.
+ * @param bool $force_delete Optional. Whether to bypass Trash and force deletion.
  *                           Default false.
  * @return WP_Post|false|null Post data on success, false or null on failure.
  */
@@ -6734,7 +6747,7 @@ function clean_attachment_cache( $id, $clean_terms = false ) {
 function _transition_post_status( $new_status, $old_status, $post ) {
 	global $wpdb;
 
-	if ( $old_status != 'publish' && $new_status == 'publish' ) {
+	if ( 'publish' !== $old_status && 'publish' === $new_status ) {
 		// Reset GUID if transitioning to publish and it is empty.
 		if ( '' == get_the_guid( $post->ID ) ) {
 			$wpdb->update( $wpdb->posts, array( 'guid' => get_permalink( $post->ID ) ), array( 'ID' => $post->ID ) );

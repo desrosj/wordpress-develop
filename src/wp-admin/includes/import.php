@@ -176,7 +176,7 @@ function wp_get_popular_importers() {
 		foreach ( $popular_importers['importers'] as &$importer ) {
 			// phpcs:ignore WordPress.WP.I18n.LowLevelTranslationFunction,WordPress.WP.I18n.NonSingularStringLiteralText
 			$importer['description'] = translate( $importer['description'] );
-			if ( $importer['name'] != 'WordPress' ) {
+			if ( 'WordPress' !== $importer['name'] ) {
 				// phpcs:ignore WordPress.WP.I18n.LowLevelTranslationFunction,WordPress.WP.I18n.NonSingularStringLiteralText
 				$importer['name'] = translate( $importer['name'] );
 			}
@@ -209,12 +209,6 @@ function wp_get_popular_importers() {
 			'description' => __( 'Import posts and comments from a Movable Type or TypePad blog.' ),
 			'plugin-slug' => 'movabletype-importer',
 			'importer-id' => 'mt',
-		),
-		'opml'        => array(
-			'name'        => __( 'Blogroll' ),
-			'description' => __( 'Import links in OPML format.' ),
-			'plugin-slug' => 'opml-importer',
-			'importer-id' => 'opml',
 		),
 		'rss'         => array(
 			'name'        => __( 'RSS' ),

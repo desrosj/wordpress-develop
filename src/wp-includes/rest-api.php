@@ -372,7 +372,7 @@ function get_rest_url( $blog_id = null, $path = '/', $scheme = 'rest' ) {
 
 	if ( is_ssl() && isset( $_SERVER['SERVER_NAME'] ) ) {
 		// If the current host is the same as the REST URL host, force the REST URL scheme to HTTPS.
-		if ( $_SERVER['SERVER_NAME'] === parse_url( get_home_url( $blog_id ), PHP_URL_HOST ) ) {
+		if ( parse_url( get_home_url( $blog_id ), PHP_URL_HOST ) === $_SERVER['SERVER_NAME'] ) {
 			$url = set_url_scheme( $url, 'https' );
 		}
 	}
@@ -1570,4 +1570,26 @@ function rest_preload_api_request( $memo, $path ) {
 	}
 
 	return $memo;
+}
+
+/**
+ * Parses the "_embed" parameter into the list of resources to embed.
+ *
+ * @since 5.4.0
+ *
+ * @param string|array $embed Raw "_embed" parameter value.
+ * @return true|string[] Either true to embed all embeds, or a list of relations to embed.
+ */
+function rest_parse_embed_param( $embed ) {
+	if ( ! $embed || 'true' === $embed || '1' === $embed ) {
+		return true;
+	}
+
+	$rels = wp_parse_list( $embed );
+
+	if ( ! $rels ) {
+		return true;
+	}
+
+	return $rels;
 }

@@ -76,7 +76,7 @@ $post_ID = isset( $post_ID ) ? (int) $post_ID : 0;
 $user_ID = isset( $user_ID ) ? (int) $user_ID : 0;
 $action  = isset( $action ) ? $action : '';
 
-if ( $post_ID == get_option( 'page_for_posts' ) && empty( $post->post_content ) ) {
+if ( get_option( 'page_for_posts' ) == $post_ID && empty( $post->post_content ) ) {
 	add_action( 'edit_form_after_title', '_wp_posts_page_notice' );
 	remove_post_type_support( $post_type, 'editor' );
 }
@@ -494,7 +494,7 @@ wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
 do_action( 'edit_form_top', $post );
 ?>
 
-<div id="poststuff">
+<div class="poststuff">
 <div id="post-body" class="metabox-holder columns-<?php echo 1 == get_current_screen()->get_columns() ? '1' : '2'; ?>">
 <div id="post-body-content">
 
@@ -534,7 +534,7 @@ do_action( 'edit_form_top', $post );
 		if ( has_filter( 'pre_get_shortlink' ) || has_filter( 'get_shortlink' ) ) {
 			$shortlink = wp_get_shortlink( $post->ID, 'post' );
 
-			if ( ! empty( $shortlink ) && $shortlink !== $permalink && $permalink !== home_url( '?page_id=' . $post->ID ) ) {
+			if ( ! empty( $shortlink ) && $shortlink !== $permalink && home_url( '?page_id=' . $post->ID ) !== $permalink ) {
 				$sample_permalink_html .= '<input id="shortlink" type="hidden" value="' . esc_attr( $shortlink ) . '" /><button type="button" class="button button-small" onclick="prompt(&#39;URL:&#39;, jQuery(\'#shortlink\').val());">' . __( 'Get Shortlink' ) . '</button>';
 			}
 		}
@@ -671,7 +671,7 @@ do_meta_boxes( $post_type, 'side', $post );
 
 ?>
 </div>
-<div id="postbox-container-2" class="postbox-container">
+<div class="postbox-container-2 postbox-container">
 <?php
 
 do_meta_boxes( null, 'normal', $post );

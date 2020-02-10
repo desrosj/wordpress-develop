@@ -223,9 +223,9 @@ if ( is_blog_installed() ) {
 }
 
 /**
- * @global string $wp_version
- * @global string $required_php_version
- * @global string $required_mysql_version
+ * @global string $wp_version             The WordPress version string.
+ * @global string $required_php_version   The required PHP version string.
+ * @global string $required_mysql_version The required MySQL version string.
  */
 global $wp_version, $required_php_version, $required_mysql_version;
 
@@ -290,7 +290,7 @@ if ( defined( 'DO_NOT_UPGRADE_GLOBAL_TABLES' ) ) {
 }
 
 /**
- * @global string    $wp_local_package
+ * @global string    $wp_local_package Locale code of the package.
  * @global WP_Locale $wp_locale        WordPress date and time locale object.
  */
 $language = '';
@@ -369,7 +369,7 @@ switch ( $step ) {
 			// TODO: Poka-yoke.
 			display_setup_form( __( 'Please provide a valid username.' ) );
 			$error = true;
-		} elseif ( $user_name != sanitize_user( $user_name, true ) ) {
+		} elseif ( sanitize_user( $user_name, true ) != $user_name ) {
 			display_setup_form( __( 'The username you provided has invalid characters.' ) );
 			$error = true;
 		} elseif ( $admin_password != $admin_password_check ) {
@@ -386,7 +386,7 @@ switch ( $step ) {
 			$error = true;
 		}
 
-		if ( $error === false ) {
+		if ( false === $error ) {
 			$wpdb->show_errors();
 			$result = wp_install( $weblog_title, $user_name, $admin_email, $public, '', wp_slash( $admin_password ), $loaded_language );
 			?>

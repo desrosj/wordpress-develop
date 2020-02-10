@@ -62,7 +62,7 @@ function login_header( $title = 'Log In', $message = '', $wp_error = null ) {
 	$shake_error_codes = apply_filters( 'shake_error_codes', $shake_error_codes );
 
 	if ( $shake_error_codes && $wp_error->has_errors() && in_array( $wp_error->get_error_code(), $shake_error_codes, true ) ) {
-		add_action( 'login_head', 'wp_shake_js', 12 );
+		add_action( 'login_footer', 'wp_shake_js', 12 );
 	}
 
 	$login_title = get_bloginfo( 'name', 'display' );
@@ -335,11 +335,7 @@ function login_footer( $input_id = '' ) {
 function wp_shake_js() {
 	?>
 	<script type="text/javascript">
-	addLoadEvent = function(func){if(typeof jQuery!="undefined")jQuery(document).ready(func);else if(typeof wpOnload!='function'){wpOnload=func;}else{var oldonload=wpOnload;wpOnload=function(){oldonload();func();}}};
-	function s(id,pos){g(id).left=pos+'px';}
-	function g(id){return document.getElementById(id).style;}
-	function shake(id,a,d){c=a.shift();s(id,c);if(a.length>0){setTimeout(function(){shake(id,a,d);},d);}else{try{g(id).position='static';wp_attempt_focus();}catch(e){}}}
-	addLoadEvent(function(){ var p=new Array(15,30,15,0,-15,-30,-15,0);p=p.concat(p.concat(p));var i=document.forms[0].id;g(i).position='relative';shake(i,p,20);});
+	document.querySelector('form').classList.add('shake');
 	</script>
 	<?php
 }
@@ -514,7 +510,7 @@ if ( defined( 'RELOCATE' ) && RELOCATE ) { // Move flag is set.
 
 	$url = dirname( set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'] ) );
 
-	if ( $url !== get_option( 'siteurl' ) ) {
+	if ( get_option( 'siteurl' ) !== $url ) {
 		update_option( 'siteurl', $url );
 	}
 }
@@ -844,7 +840,7 @@ switch ( $action ) {
 		 */
 		do_action( 'lost_password', $errors );
 
-		login_header( __( 'Lost Password' ), '<p class="message">' . __( 'Please enter your username or email address. You will receive a link to create a new password via email.' ) . '</p>', $errors );
+		login_header( __( 'Lost Password' ), '<p class="message">' . __( 'Please enter your username or email address. You will receive an email message with instructions on how to reset your password.' ) . '</p>', $errors );
 
 		$user_login = '';
 
@@ -1282,7 +1278,7 @@ switch ( $action ) {
 				}
 			}
 
-			if ( ( empty( $redirect_to ) || $redirect_to === 'wp-admin/' || $redirect_to === admin_url() ) ) {
+			if ( ( empty( $redirect_to ) || 'wp-admin/' === $redirect_to || admin_url() === $redirect_to ) ) {
 				// If the user doesn't belong to a blog, send them to user admin. If the user can't edit posts, send them to their profile.
 				if ( is_multisite() && ! get_active_blog_for_user( $user->ID ) && ! is_super_admin( $user->ID ) ) {
 					$redirect_to = user_admin_url();

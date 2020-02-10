@@ -695,7 +695,7 @@ function bloginfo( $show = '' ) {
  *
  * @since 0.71
  *
- * @global string $wp_version
+ * @global string $wp_version The WordPress version string.
  *
  * @param string $show   Optional. Site info to retrieve. Default empty (site name).
  * @param string $filter Optional. How to filter what is retrieved. Default 'raw'.
@@ -856,7 +856,7 @@ function get_bloginfo( $show = '', $filter = 'raw' ) {
 function get_site_icon_url( $size = 512, $url = '', $blog_id = 0 ) {
 	$switched_blog = false;
 
-	if ( is_multisite() && ! empty( $blog_id ) && (int) $blog_id !== get_current_blog_id() ) {
+	if ( is_multisite() && ! empty( $blog_id ) && get_current_blog_id() !== (int) $blog_id ) {
 		switch_to_blog( $blog_id );
 		$switched_blog = true;
 	}
@@ -924,7 +924,7 @@ function has_site_icon( $blog_id = 0 ) {
 function has_custom_logo( $blog_id = 0 ) {
 	$switched_blog = false;
 
-	if ( is_multisite() && ! empty( $blog_id ) && (int) $blog_id !== get_current_blog_id() ) {
+	if ( is_multisite() && ! empty( $blog_id ) && get_current_blog_id() !== (int) $blog_id ) {
 		switch_to_blog( $blog_id );
 		$switched_blog = true;
 	}
@@ -950,7 +950,7 @@ function get_custom_logo( $blog_id = 0 ) {
 	$html          = '';
 	$switched_blog = false;
 
-	if ( is_multisite() && ! empty( $blog_id ) && (int) $blog_id !== get_current_blog_id() ) {
+	if ( is_multisite() && ! empty( $blog_id ) && get_current_blog_id() !== (int) $blog_id ) {
 		switch_to_blog( $blog_id );
 		$switched_blog = true;
 	}
@@ -1846,7 +1846,7 @@ function wp_get_archives( $args = '' ) {
 	}
 
 	$order = strtoupper( $parsed_args['order'] );
-	if ( $order !== 'ASC' ) {
+	if ( 'ASC' !== $order ) {
 		$order = 'DESC';
 	}
 
@@ -2006,7 +2006,7 @@ function wp_get_archives( $args = '' ) {
 		}
 		if ( $results ) {
 			foreach ( (array) $results as $result ) {
-				if ( $result->post_date != '0000-00-00 00:00:00' ) {
+				if ( '0000-00-00 00:00:00' !== $result->post_date ) {
 					$url = get_permalink( $result );
 					if ( $result->post_title ) {
 						/** This filter is documented in wp-includes/post-template.php */
@@ -2014,7 +2014,7 @@ function wp_get_archives( $args = '' ) {
 					} else {
 						$text = $result->ID;
 					}
-					$selected = $result->ID === get_the_ID();
+					$selected = get_the_ID() === $result->ID;
 					$output  .= get_archives_link( $url, $text, $parsed_args['format'], $parsed_args['before'], $parsed_args['after'], $selected );
 				}
 			}
@@ -2167,32 +2167,6 @@ function get_calendar( $initial = true, $echo = true ) {
 	$calendar_output .= '
 	</tr>
 	</thead>
-
-	<tfoot>
-	<tr>';
-
-	if ( $previous ) {
-		$calendar_output .= "\n\t\t" . '<td colspan="3" id="prev"><a href="' . get_month_link( $previous->year, $previous->month ) . '">&laquo; ' .
-			$wp_locale->get_month_abbrev( $wp_locale->get_month( $previous->month ) ) .
-		'</a></td>';
-	} else {
-		$calendar_output .= "\n\t\t" . '<td colspan="3" id="prev" class="pad">&nbsp;</td>';
-	}
-
-	$calendar_output .= "\n\t\t" . '<td class="pad">&nbsp;</td>';
-
-	if ( $next ) {
-		$calendar_output .= "\n\t\t" . '<td colspan="3" id="next"><a href="' . get_month_link( $next->year, $next->month ) . '">' .
-			$wp_locale->get_month_abbrev( $wp_locale->get_month( $next->month ) ) .
-		' &raquo;</a></td>';
-	} else {
-		$calendar_output .= "\n\t\t" . '<td colspan="3" id="next" class="pad">&nbsp;</td>';
-	}
-
-	$calendar_output .= '
-	</tr>
-	</tfoot>
-
 	<tbody>
 	<tr>';
 
@@ -2227,9 +2201,9 @@ function get_calendar( $initial = true, $echo = true ) {
 		}
 		$newrow = false;
 
-		if ( $day == current_time( 'j' ) &&
-			$thismonth == current_time( 'm' ) &&
-			$thisyear == current_time( 'Y' ) ) {
+		if ( current_time( 'j' ) == $day &&
+			current_time( 'm' ) == $thismonth &&
+			current_time( 'Y' ) == $thisyear ) {
 			$calendar_output .= '<td id="today">';
 		} else {
 			$calendar_output .= '<td>';
@@ -2257,10 +2231,35 @@ function get_calendar( $initial = true, $echo = true ) {
 	}
 
 	$pad = 7 - calendar_week_mod( gmdate( 'w', mktime( 0, 0, 0, $thismonth, $day, $thisyear ) ) - $week_begins );
-	if ( $pad != 0 && $pad != 7 ) {
+	if ( 0 != $pad && 7 != $pad ) {
 		$calendar_output .= "\n\t\t" . '<td class="pad" colspan="' . esc_attr( $pad ) . '">&nbsp;</td>';
 	}
-	$calendar_output .= "\n\t</tr>\n\t</tbody>\n\t</table>";
+	$calendar_output .= "\n\t</tr>\n\t</tbody>";
+
+	$calendar_output .= "\n\t</table>";
+
+	$calendar_output .= '<nav aria-label="' . __( 'Previous and next months' ) . '">';
+
+	if ( $previous ) {
+		$calendar_output .= "\n\t\t" . '<span id="prev"><a href="' . get_month_link( $previous->year, $previous->month ) . '">&laquo; ' .
+			$wp_locale->get_month_abbrev( $wp_locale->get_month( $previous->month ) ) .
+		'</a></span>';
+	} else {
+		$calendar_output .= "\n\t\t" . '<span id="prev">&nbsp;</span>';
+	}
+
+	$calendar_output .= "\n\t\t" . '<span class="pad">&nbsp;</span>';
+
+	if ( $next ) {
+		$calendar_output .= "\n\t\t" . '<span id="next"><a href="' . get_month_link( $next->year, $next->month ) . '">' .
+			$wp_locale->get_month_abbrev( $wp_locale->get_month( $next->month ) ) .
+		' &raquo;</a></span>';
+	} else {
+		$calendar_output .= "\n\t\t" . '<span id="next" class="pad">&nbsp;</span>';
+	}
+
+	$calendar_output .= '
+	</nav>';
 
 	$cache[ $key ] = $calendar_output;
 	wp_cache_set( 'get_calendar', $cache, 'calendar' );
@@ -2890,6 +2889,14 @@ function wp_head() {
  */
 function wp_footer() {
 	/**
+	 * Sets up the Admin Bar if the current theme does not use `wp_body_open`.
+	 *
+	 * @since 5.4.0
+	 */
+	if ( ! did_action( 'wp_body_open' ) ) {
+		add_action( 'wp_footer', 'wp_admin_bar_render', 1000 );
+	}
+	/**
 	 * Prints scripts or data before the closing body tag on the front end.
 	 *
 	 * @since 1.5.1
@@ -3400,11 +3407,13 @@ function wp_default_editor() {
  * See https://core.trac.wordpress.org/ticket/19173 for more information.
  *
  * @see _WP_Editors::editor()
+ * @see _WP_Editors::parse_settings()
  * @since 3.3.0
  *
  * @param string $content   Initial content for the editor.
- * @param string $editor_id HTML ID attribute value for the textarea and TinyMCE. Can only be /[a-z]+/.
- * @param array  $settings  See _WP_Editors::editor().
+ * @param string $editor_id HTML ID attribute value for the textarea and TinyMCE.
+ *                          Should not contain square brackets.
+ * @param array  $settings  See _WP_Editors::parse_settings() for description.
  */
 function wp_editor( $content, $editor_id, $settings = array() ) {
 	if ( ! class_exists( '_WP_Editors', false ) ) {
@@ -3958,11 +3967,11 @@ function get_language_attributes( $doctype = 'html' ) {
 
 	$lang = get_bloginfo( 'language' );
 	if ( $lang ) {
-		if ( get_option( 'html_type' ) == 'text/html' || $doctype == 'html' ) {
+		if ( 'text/html' === get_option( 'html_type' ) || 'html' === $doctype ) {
 			$attributes[] = 'lang="' . esc_attr( $lang ) . '"';
 		}
 
-		if ( get_option( 'html_type' ) != 'text/html' || $doctype == 'xhtml' ) {
+		if ( 'text/html' !== get_option( 'html_type' ) || 'xhtml' === $doctype ) {
 			$attributes[] = 'xml:lang="' . esc_attr( $lang ) . '"';
 		}
 	}

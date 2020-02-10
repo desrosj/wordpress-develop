@@ -78,7 +78,7 @@ class Core_Upgrader extends WP_Upgrader {
 		$this->upgrade_strings();
 
 		// Is an update available?
-		if ( ! isset( $current->response ) || $current->response == 'latest' ) {
+		if ( ! isset( $current->response ) || 'latest' === $current->response ) {
 			return new WP_Error( 'up_to_date', $this->strings['up_to_date'] );
 		}
 
@@ -386,8 +386,8 @@ class Core_Upgrader extends WP_Upgrader {
 	 *
 	 * @since 3.7.0
 	 *
-	 * @global string $wp_version
-	 * @global string $wp_local_package
+	 * @global string $wp_version       The WordPress version string.
+	 * @global string $wp_local_package Locale code of the package.
 	 *
 	 * @return bool True if the checksums match, otherwise false.
 	 */

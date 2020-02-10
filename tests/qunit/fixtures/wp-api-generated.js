@@ -709,7 +709,7 @@ mockedApiResponse.Schema = {
                         "force": {
                             "required": false,
                             "default": false,
-                            "description": "Whether to bypass trash and force deletion.",
+                            "description": "Whether to bypass Trash and force deletion.",
                             "type": "boolean"
                         }
                     }
@@ -1536,7 +1536,7 @@ mockedApiResponse.Schema = {
                         "force": {
                             "required": false,
                             "default": false,
-                            "description": "Whether to bypass trash and force deletion.",
+                            "description": "Whether to bypass Trash and force deletion.",
                             "type": "boolean"
                         }
                     }
@@ -2306,7 +2306,7 @@ mockedApiResponse.Schema = {
                         "force": {
                             "required": false,
                             "default": false,
-                            "description": "Whether to bypass trash and force deletion.",
+                            "description": "Whether to bypass Trash and force deletion.",
                             "type": "boolean"
                         }
                     }
@@ -2658,7 +2658,7 @@ mockedApiResponse.Schema = {
                         "force": {
                             "required": false,
                             "default": false,
-                            "description": "Whether to bypass trash and force deletion.",
+                            "description": "Whether to bypass Trash and force deletion.",
                             "type": "boolean"
                         }
                     }
@@ -4312,7 +4312,7 @@ mockedApiResponse.Schema = {
                         "force": {
                             "required": false,
                             "default": false,
-                            "description": "Whether to bypass trash and force deletion.",
+                            "description": "Whether to bypass Trash and force deletion.",
                             "type": "boolean"
                         },
                         "password": {
@@ -4621,46 +4621,6 @@ mockedApiResponse.Schema = {
                             "required": false,
                             "default": [],
                             "description": "Attributes for core/latest-posts block",
-                            "type": "object"
-                        },
-                        "post_id": {
-                            "required": false,
-                            "description": "ID of the post context.",
-                            "type": "integer"
-                        }
-                    }
-                }
-            ]
-        },
-        "/wp/v2/block-renderer/(?P<name>core/navigation)": {
-            "namespace": "wp/v2",
-            "methods": [
-                "GET"
-            ],
-            "endpoints": [
-                {
-                    "methods": [
-                        "GET"
-                    ],
-                    "args": {
-                        "name": {
-                            "required": false,
-                            "description": "Unique registered name for the block.",
-                            "type": "string"
-                        },
-                        "context": {
-                            "required": false,
-                            "default": "view",
-                            "enum": [
-                                "edit"
-                            ],
-                            "description": "Scope under which the request is made; determines fields present in response.",
-                            "type": "string"
-                        },
-                        "attributes": {
-                            "required": false,
-                            "default": [],
-                            "description": "Attributes for core/navigation block",
                             "type": "object"
                         },
                         "post_id": {
