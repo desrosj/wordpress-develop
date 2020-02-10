@@ -73,7 +73,7 @@ class WP_Automatic_Updater {
 	 */
 	public function is_vcs_checkout( $context ) {
 		$context_dirs = array( untrailingslashit( $context ) );
-		if ( $context !== ABSPATH ) {
+		if ( ABSPATH !== $context ) {
 			$context_dirs[] = untrailingslashit( ABSPATH );
 		}
 
@@ -86,7 +86,7 @@ class WP_Automatic_Updater {
 				$check_dirs[] = $context_dir;
 
 				// Once we've hit '/' or 'C:\', we need to stop. dirname will keep returning the input here.
-				if ( $context_dir == dirname( $context_dir ) ) {
+				if ( dirname( $context_dir ) === $context_dir ) {
 					break;
 				}
 
@@ -229,7 +229,7 @@ class WP_Automatic_Updater {
 		$notified = get_site_option( 'auto_core_update_notified' );
 
 		// Don't notify if we've already notified the same email address of the same version.
-		if ( $notified && $notified['email'] == get_site_option( 'admin_email' ) && $notified['version'] == $item->current ) {
+		if ( $notified && get_site_option( 'admin_email' ) === $notified['email'] && $notified['version'] == $item->current ) {
 			return false;
 		}
 
@@ -542,9 +542,9 @@ class WP_Automatic_Updater {
 		// Any of these WP_Error codes are critical failures, as in they occurred after we started to copy core files.
 		// We should not try to perform a background update again until there is a successful one-click update performed by the user.
 		$critical = false;
-		if ( $error_code === 'disk_full' || false !== strpos( $error_code, '__copy_dir' ) ) {
+		if ( 'disk_full' === $error_code || false !== strpos( $error_code, '__copy_dir' ) ) {
 			$critical = true;
-		} elseif ( $error_code === 'rollback_was_required' && is_wp_error( $result->get_error_data()->rollback ) ) {
+		} elseif ( 'rollback_was_required' === $error_code && is_wp_error( $result->get_error_data()->rollback ) ) {
 			// A rollback is only critical if it failed too.
 			$critical        = true;
 			$rollback_result = $result->get_error_data()->rollback;
@@ -590,7 +590,7 @@ class WP_Automatic_Updater {
 
 		$n = get_site_option( 'auto_core_update_notified' );
 		// Don't notify if we've already notified the same email address of the same version of the same notification type.
-		if ( $n && 'fail' == $n['type'] && $n['email'] == get_site_option( 'admin_email' ) && $n['version'] == $core_update->current ) {
+		if ( $n && 'fail' === $n['type'] && get_site_option( 'admin_email' ) === $n['email'] && $n['version'] == $core_update->current ) {
 			$send = false;
 		}
 
@@ -805,7 +805,7 @@ class WP_Automatic_Updater {
 		}
 
 		// Updates are important!
-		if ( $type != 'success' || $newer_version_available ) {
+		if ( 'success' !== $type || $newer_version_available ) {
 			$body .= "\n\n" . __( 'Keeping your site updated is important for security. It also makes the internet a safer place for you and your readers.' );
 		}
 
@@ -814,7 +814,7 @@ class WP_Automatic_Updater {
 		}
 
 		// If things are successful and we're now on the latest, mention plugins and themes if any are out of date.
-		if ( $type == 'success' && ! $newer_version_available && ( get_plugin_updates() || get_theme_updates() ) ) {
+		if ( 'success' === $type && ! $newer_version_available && ( get_plugin_updates() || get_theme_updates() ) ) {
 			$body .= "\n\n" . __( 'You also have some plugins or themes with updates available. Update them now:' );
 			$body .= "\n" . network_admin_url();
 		}
@@ -915,65 +915,154 @@ class WP_Automatic_Updater {
 			return;
 		}
 
+		$sent_emails    = get_site_option( 'auto_plugin_update_notified', array() );
+		$active_failure = false;
+
+		// Make sure notifications of the same type for the same plugins have not been sent already.
+		foreach ( array( $successful_updates, $failed_updates ) as $update_type ) {
+			foreach ( $update_type as $key => $update ) {
+				$result = $update->result;
+
+				// FLag that an active plugin failed to update for a more informative email.
+				if ( ! $result && is_plugin_active( $update->item->plugin ) ) {
+					$active_failure = true;
+				}
+
+				if ( isset( $sent_emails[ $update->item->slug ] ) && $sent_emails[ $update->item->slug ]['version'] === $update->item->new_version && $sent_emails[ $update->item->slug ]['email'] === get_site_option( 'admin_email' ) ) {
+					if ( $result && 'success' === $sent_emails[ $update->item->slug ]['type'] ) {
+						unset( $successful_updates[ $key ] );
+						continue;
+					} elseif ( ! $result && 'fail' === $sent_emails[ $update->item->slug ]['type'] ) {
+						unset( $failed_updates[ $key ] );
+						continue;
+					}
+				}
+
+				$sent_emails[ $update->item->slug ] = array(
+					'type'      => ( $result ) ? 'success' : 'fail',
+					'version'   => $update->item->new_version,
+					'email'     => get_site_option( 'admin_email' ),
+					'timestamp' => time(),
+				);
+			}
+		}
+
+		// Check that there are still updates to email about.
+		if ( empty( $successful_updates ) && empty( $failed_updates ) ) {
+			return;
+		}
+
+		update_site_option( 'auto_plugin_update_notified', $sent_emails );
+
+		// Adjust the type of email if some update notifications were previously sent out.
+		if ( empty( $successful_updates ) ) {
+			$type = 'fail';
+		} elseif ( empty( $failed_updates ) ) {
+			$type = 'success';
+		} else {
+			$type = 'mixed';
+		}
+
 		$body = array();
 
 		switch ( $type ) {
 			case 'success':
 				/* translators: %s: Site title. */
 				$subject = __( '[%s] Plugins have automatically updated' );
+				$body[]  = sprintf(
+					/* translators: %s: Home URL. */
+					__( 'Howdy! Plugins on your site at %s have been automatically updated.' ),
+					home_url()
+				);
+				$body[] = "\n";
 
 				break;
 
 			case 'fail':
-				/* translators: %s: Site title. */
-				$subject = __( '[%s] Plugins have failed to update' );
-				$body[]  = sprintf(
-					/* translators: %s: Home URL. */
-					__( 'Howdy! Failures occurred when attempting to update plugins on your site at %s.' ),
-					home_url()
-				);
+				if ( $active_failure ) {
+					/* translators: %s: Site title. */
+					$subject = __( '[%s] URGENT: Your site may be down due to a failed plugin update' );
+					$body[]  = sprintf(
+						/* translators: %s: Home URL. */
+						__( 'Howdy! We ran into some issues trying to update plugins on your site at %s.' ),
+						home_url()
+					);
+					$body[] = "\n";
+					$body[] = __( 'At least one plugin that failed to update is currently active. Please check out your site now.' );
+					$body[] = "\n";
+					$body[] = __( "It's possible that everything is working. If it says you need to update, you should do so." );
+				} else {
+					/* translators: %s: Site title. */
+					$subject = __( '[%s] Inactive plugins have failed to update' );
+					$body[]  = sprintf(
+						/* translators: %s: Home URL. */
+						__( 'Howdy! We ran into some issues trying to update plugins on your site at %s.' ),
+						home_url()
+					);
+					$body[] = "\n";
+					$body[] = __( 'None of the plugins that failed to update are currently active. This means everything is probably fine! But, we recommend checking your site now just to be sure.' );
+					$body[] = "\n";
+					$body[] = __( 'If it says you need to update, you should do so.' );
+				}
+
 				$body[] = "\n";
-				$body[] = __( "Please check out your site now. It's possible that everything is working. If it says you need to update, you should do so." );
 
 				break;
 
 			case 'mixed':
-				/* translators: %s: Site title. */
-				$subject = __( '[%s] Some plugins have automatically updated' );
+				if ( $active_failure ) {
+					/* translators: %s: Site title. */
+					$subject = __( '[%s] URGENT: Your site may be down due to a failed plugin update' );
+					$body[]  = sprintf(
+						/* translators: %s: Home URL. */
+						__( 'Howdy! We ran into some issues trying to update plugins on your site at %s.' ),
+						home_url()
+					);
+					$body[] = "\n";
+					$body[] = __( 'Some updated successfully, but at least one plugin that failed to update is currently active. Please check out your site now.' );
+					$body[] = "\n";
+					$body[] = __( "It's possible that everything is working. If it says you need to update, you should do so." );
+				} else {
+					/* translators: %s: Site title. */
+					$subject = __( '[%s] Some plugins have automatically updated' );
 
-				$body[] = sprintf(
-					/* translators: %s: Home URL. */
-					__( 'Howdy! There were some failures while attempting to update plugins on your site at %s.' ),
-					home_url()
-				);
-				$body[] = "\n";
-				$body[] = __( "Please check out your site now. It's possible that everything is working. If it says you need to update, you should do so." );
+					$body[] = sprintf(
+						/* translators: %s: Home URL. */
+						__( 'Howdy! There were some failures while attempting to update plugins on your site at %s.' ),
+						home_url()
+					);
+					$body[] = "\n";
+					$body[] = __( 'None of the plugins that failed to update are currently active. This means everything is probably fine! But, we recommend checking your site now just to be sure.' );
+					$body[] = "\n";
+					$body[] = __( 'If it says you need to update, you should do so.' );
+				}
+
 				$body[] = "\n";
 
 				break;
 		}
 
 		if ( in_array( $type, array( 'fail', 'mixed' ), true ) && ! empty( $failed_updates ) ) {
-			$body[] = __( 'The following plugins failed to update:' );
+			$body[] = __( 'These plugins failed to update:' );
 			// List failed updates.
-			foreach ( $failed_updates as $item ) {
-				/* translators: %s: Name of plugin. */
-				$body[] = ' ' . sprintf( __( '- %s' ), $item->name );
+			foreach ( $failed_updates as $plugin ) {
+				/* translators: 1: Plugin name, 2: New version. */
+				$body[] = ' ' . sprintf( __( '- %1$s (%2$s)' ), $plugin->name, $plugin->item->new_version );
 			}
 			$body[] = "\n";
 		}
 
 		if ( in_array( $type, array( 'success', 'mixed' ), true ) && ! empty( $successful_updates ) ) {
 			// Successful updates.
-			$body[] = __( 'The following plugins were successfully updated:' );
+			$body[] = __( 'These plugins were successfully updated:' );
 
 			foreach ( $successful_updates as $plugin ) {
-				/* translators: %s: Name of plugin. */
-				$body[] = ' ' . sprintf( __( '- %s' ), $plugin->name );
+				/* translators: 1: Plugin name, 2: New version. */
+				$body[] = ' ' . sprintf( __( '- %1$s (%2$s)' ), $plugin->name, $plugin->item->new_version );
 			}
-		}
 
-		$body[] = "\n";
+			$body[] = "\n";
+		}
 
 		// Add a note about the support forums.
 		$body[] = __( 'If you experience any issues or need support, the volunteers in the WordPress.org support forums may be able to help.' );
@@ -1002,11 +1091,12 @@ class WP_Automatic_Updater {
 		 *     @type string $body    The email message body.
 		 *     @type string $headers Any email headers, defaults to no headers.
 		 * }
-		 * @param string $type        The type of email being sent. Can be one of
-		 *                            'success', 'fail', 'mixed'.
-		 * @param object $updates    The updates that were attempted.
+		 * @param string $type           The type of email being sent. Can be one of
+		 *                               'success', 'fail', 'mixed'.
+		 * @param object $updates        The updates that were attempted.
+		 * @param bool   $active_failure Whether an active plugin failed to update.
 		 */
-		$email = apply_filters( 'auto_plugin_update_email', $email, $type, $this->update_results['plugin'] );
+		$email = apply_filters( 'auto_plugin_update_email', $email, $type, $this->update_results['plugin'], $active_failure );
 
 		wp_mail( $email['to'], wp_specialchars_decode( $email['subject'] ), $email['body'], $email['headers'] );
 	}
