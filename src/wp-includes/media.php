@@ -1137,9 +1137,7 @@ function wp_get_attachment_image_src( $attachment_id, $size = 'thumbnail', $icon
  * browser scale down the image.
  *
  * @since 2.5.0
- * @since 4.4.0 The `$srcset` and `$sizes` attributes were added.
- * @since 5.5.0 The `$loading` attribute was added.
- * @since 6.1.0 The `$decoding` attribute was added.
+ * @since 5.6.0 Returns `wp_get_attachment_image` filter.
  *
  * @param int          $attachment_id Image attachment ID.
  * @param string|int[] $size          Optional. Image size. Accepts any registered image size name, or an array
@@ -1167,8 +1165,9 @@ function wp_get_attachment_image_src( $attachment_id, $size = 'thumbnail', $icon
  * @return string HTML img element or empty string on failure.
  */
 function wp_get_attachment_image( $attachment_id, $size = 'thumbnail', $icon = false, $attr = '' ) {
-	$html  = '';
-	$image = wp_get_attachment_image_src( $attachment_id, $size, $icon );
+	$attachment = '';
+	$html       = '';
+	$image      = wp_get_attachment_image_src( $attachment_id, $size, $icon );
 
 	if ( $image ) {
 		list( $src, $width, $height ) = $image;
@@ -1301,19 +1300,15 @@ function wp_get_attachment_image( $attachment_id, $size = 'thumbnail', $icon = f
 	}
 
 	/**
-	 * Filters the HTML img element representing an image attachment.
+	 * HTML img element representing an image attachment
 	 *
 	 * @since 5.6.0
 	 *
-	 * @param string       $html          HTML img element or empty string on failure.
-	 * @param int          $attachment_id Image attachment ID.
-	 * @param string|int[] $size          Requested image size. Can be any registered image size name, or
-	 *                                    an array of width and height values in pixels (in that order).
-	 * @param bool         $icon          Whether the image should be treated as an icon.
-	 * @param string[]     $attr          Array of attribute values for the image markup, keyed by attribute name.
-	 *                                    See wp_get_attachment_image().
+	 * @param string       $html       HTML img element or empty string on failure.
+	 * @param string       $attachment The attachment WP_Post object.
+	 * @param string|array $size       Image size.
 	 */
-	return apply_filters( 'wp_get_attachment_image', $html, $attachment_id, $size, $icon, $attr );
+	return apply_filters( 'wp_get_attachment_image', $html, $attachment, $size );
 }
 
 /**
