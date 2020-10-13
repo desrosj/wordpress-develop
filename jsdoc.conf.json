@@ -11,7 +11,7 @@
 		"dictionaries": [ "jsdoc", "closure" ]
 	},
 	"templates": {
-		"cleverLinks": false,
+		"cleverLinks": true,
 		"monospaceLinks": false,
 		"theme": "united",
 		"outputSourceFiles": true,
