@@ -922,10 +922,10 @@ class WP_Posts_List_Table extends WP_List_Table {
 	 *
 	 * @since 4.3.0
 	 *
-	 * @param WP_Post $post The current WP_Post object.
+	 * @param WP_Post $item The current WP_Post object.
 	 */
-	public function column_cb( $post ) {
-		if ( current_user_can( 'edit_post', $post->ID ) ) :
+	public function column_cb( $item ) {
+		if ( current_user_can( 'edit_post', $item->ID ) ) :
 			?>
 			<label class="screen-reader-text" for="cb-select-<?php the_ID(); ?>">
 				<?php

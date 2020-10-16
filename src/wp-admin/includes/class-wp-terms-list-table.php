@@ -359,17 +359,17 @@ class WP_Terms_List_Table extends WP_List_Table {
 	}
 
 	/**
-	 * @param WP_Term $tag Term object.
+	 * @param WP_Term $item Term object.
 	 * @return string
 	 */
-	public function column_cb( $tag ) {
-		if ( current_user_can( 'delete_term', $tag->term_id ) ) {
+	public function column_cb( $item ) {
+		if ( current_user_can( 'delete_term', $item->term_id ) ) {
 			return sprintf(
 				'<label class="screen-reader-text" for="cb-select-%1$s">%2$s</label>' .
 				'<input type="checkbox" name="delete_tags[]" value="%1$s" id="cb-select-%1$s" />',
-				$tag->term_id,
+				$item->term_id,
 				/* translators: %s: Taxonomy term name. */
-				sprintf( __( 'Select %s' ), $tag->name )
+				sprintf( __( 'Select %s' ), $item->name )
 			);
 		}
 

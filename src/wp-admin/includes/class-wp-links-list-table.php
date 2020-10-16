@@ -167,17 +167,17 @@ class WP_Links_List_Table extends WP_List_Table {
 	 *
 	 * @since 4.3.0
 	 *
-	 * @param object $link The current link object.
+	 * @param object $item The current link object.
 	 */
-	public function column_cb( $link ) {
+	public function column_cb( $item ) {
 		?>
-		<label class="screen-reader-text" for="cb-select-<?php echo $link->link_id; ?>">
+		<label class="screen-reader-text" for="cb-select-<?php echo $item->link_id; ?>">
 			<?php
 			/* translators: %s: Link name. */
-			printf( __( 'Select %s' ), $link->link_name );
+			printf( __( 'Select %s' ), $item->link_name );
 			?>
 		</label>
-		<input type="checkbox" name="linkcheck[]" id="cb-select-<?php echo $link->link_id; ?>" value="<?php echo esc_attr( $link->link_id ); ?>" />
+		<input type="checkbox" name="linkcheck[]" id="cb-select-<?php echo $item->link_id; ?>" value="<?php echo esc_attr( $item->link_id ); ?>" />
 		<?php
 	}
 

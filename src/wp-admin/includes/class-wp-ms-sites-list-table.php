@@ -397,19 +397,19 @@ class WP_MS_Sites_List_Table extends WP_List_Table {
 	 *
 	 * @since 4.3.0
 	 *
-	 * @param array $blog Current site.
+	 * @param array $item Current site.
 	 */
-	public function column_cb( $blog ) {
-		if ( ! is_main_site( $blog['blog_id'] ) ) :
-			$blogname = untrailingslashit( $blog['domain'] . $blog['path'] );
+	public function column_cb( $item ) {
+		if ( ! is_main_site( $item['blog_id'] ) ) :
+			$blogname = untrailingslashit( $item['domain'] . $item['path'] );
 			?>
-			<label class="screen-reader-text" for="blog_<?php echo $blog['blog_id']; ?>">
+			<label class="screen-reader-text" for="blog_<?php echo $item['blog_id']; ?>">
 				<?php
 				/* translators: %s: Site URL. */
 				printf( __( 'Select %s' ), $blogname );
 				?>
 			</label>
-			<input type="checkbox" id="blog_<?php echo $blog['blog_id']; ?>" name="allblogs[]" value="<?php echo esc_attr( $blog['blog_id'] ); ?>" />
+			<input type="checkbox" id="blog_<?php echo $item['blog_id']; ?>" name="allblogs[]" value="<?php echo esc_attr( $item['blog_id'] ); ?>" />
 			<?php
 		endif;
 	}

@@ -375,18 +375,18 @@ class WP_Media_List_Table extends WP_List_Table {
 	 *
 	 * @since 4.3.0
 	 *
-	 * @param WP_Post $post The current WP_Post object.
+	 * @param WP_Post $item The current WP_Post object.
 	 */
-	public function column_cb( $post ) {
-		if ( current_user_can( 'edit_post', $post->ID ) ) {
+	public function column_cb( $item ) {
+		if ( current_user_can( 'edit_post', $item->ID ) ) {
 			?>
-			<label class="screen-reader-text" for="cb-select-<?php echo $post->ID; ?>">
+			<label class="screen-reader-text" for="cb-select-<?php echo $item->ID; ?>">
 				<?php
 				/* translators: %s: Attachment title. */
 				printf( __( 'Select %s' ), _draft_or_post_title() );
 				?>
 			</label>
-			<input type="checkbox" name="media[]" id="cb-select-<?php echo $post->ID; ?>" value="<?php echo $post->ID; ?>" />
+			<input type="checkbox" name="media[]" id="cb-select-<?php echo $item->ID; ?>" value="<?php echo $item->ID; ?>" />
 			<?php
 		}
 	}
