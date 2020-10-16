@@ -68,9 +68,6 @@ jobs:
       - name: Run PHPCS on all Core files
         run: phpcs -q -n --report=checkstyle | cs2pr
 
-      - name: Check test suite files for warnings
-        run: phpcs tests -q --report=checkstyle | cs2pr
-
   # Runs the JavaScript coding standards checks.
   #
   # Performs the following steps:
