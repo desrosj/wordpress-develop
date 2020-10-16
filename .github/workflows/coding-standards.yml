@@ -35,12 +35,20 @@ jobs:
         run: |
           npm --version
           node --version
-          curl --version
-          git --version
-          svn --version
-          php --version
-          php -i
-          locale -a
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - name: Set up Composer caching
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-composer-dependencies
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
 
       - name: Install NodeJS
         uses: actions/setup-node@v1
@@ -57,6 +65,17 @@ jobs:
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-npm-
+
+      - name: Log debug information
+        run: |
+          composer --version
+          npm --version
+          node --version
+
+      - name: Install Composer dependencies
+        run: |
+          composer install --prefer-dist --no-suggest --no-progress --no-ansi --no-interaction
+          echo "${PWD}/vendor/bin" >> $GITHUB_PATH
 
       - name: Install Dependencies
         run: npm ci
