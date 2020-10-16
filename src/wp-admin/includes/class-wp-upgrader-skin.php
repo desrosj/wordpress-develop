@@ -178,25 +178,25 @@ class WP_Upgrader_Skin {
 	}
 
 	/**
-	 * @param string $string
-	 * @param mixed  ...$args Optional text replacements.
+	 * @param string $feedback
+	 * @param mixed  ...$args  Optional text replacements.
 	 */
-	public function feedback( $string, ...$args ) {
-		if ( isset( $this->upgrader->strings[ $string ] ) ) {
-			$string = $this->upgrader->strings[ $string ];
+	public function feedback( $feedback, ...$args ) {
+		if ( isset( $this->upgrader->strings[ $feedback ] ) ) {
+			$feedback = $this->upgrader->strings[ $feedback ];
 		}
 
-		if ( strpos( $string, '%' ) !== false ) {
+		if ( strpos( $feedback, '%' ) !== false ) {
 			if ( $args ) {
-				$args   = array_map( 'strip_tags', $args );
-				$args   = array_map( 'esc_html', $args );
-				$string = vsprintf( $string, $args );
+				$args     = array_map( 'strip_tags', $args );
+				$args     = array_map( 'esc_html', $args );
+				$feedback = vsprintf( $feedback, $args );
 			}
 		}
-		if ( empty( $string ) ) {
+		if ( empty( $feedback ) ) {
 			return;
 		}
-		show_message( $string );
+		show_message( $feedback );
 	}
 
 	/**
