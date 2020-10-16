@@ -605,11 +605,11 @@ class WP_Terms_List_Table extends WP_List_Table {
 	}
 
 	/**
-	 * @param WP_Term $tag         Term object.
+	 * @param WP_Term $item        Term object.
 	 * @param string  $column_name Name of the column.
 	 * @return string
 	 */
-	public function column_default( $tag, $column_name ) {
+	public function column_default( $item, $column_name ) {
 		/**
 		 * Filters the displayed columns in the terms list table.
 		 *
@@ -622,7 +622,7 @@ class WP_Terms_List_Table extends WP_List_Table {
 		 * @param string $column_name Name of the column.
 		 * @param int    $term_id     Term ID.
 		 */
-		return apply_filters( "manage_{$this->screen->taxonomy}_custom_column", '', $column_name, $tag->term_id );
+		return apply_filters( "manage_{$this->screen->taxonomy}_custom_column", '', $column_name, $item->term_id );
 	}
 
 	/**

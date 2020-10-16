@@ -584,10 +584,10 @@ class WP_Media_List_Table extends WP_List_Table {
 	 *
 	 * @since 4.3.0
 	 *
-	 * @param WP_Post $post        The current WP_Post object.
+	 * @param WP_Post $item        The current WP_Post object.
 	 * @param string  $column_name Current column name.
 	 */
-	public function column_default( $post, $column_name ) {
+	public function column_default( $item, $column_name ) {
 		if ( 'categories' === $column_name ) {
 			$taxonomy = 'category';
 		} elseif ( 'tags' === $column_name ) {
@@ -599,7 +599,7 @@ class WP_Media_List_Table extends WP_List_Table {
 		}
 
 		if ( $taxonomy ) {
-			$terms = get_the_terms( $post->ID, $taxonomy );
+			$terms = get_the_terms( $item->ID, $taxonomy );
 			if ( is_array( $terms ) ) {
 				$out = array();
 				foreach ( $terms as $t ) {
@@ -632,7 +632,7 @@ class WP_Media_List_Table extends WP_List_Table {
 		 * @param string $column_name Name of the custom column.
 		 * @param int    $post_id     Attachment ID.
 		 */
-		do_action( 'manage_media_custom_column', $column_name, $post->ID );
+		do_action( 'manage_media_custom_column', $column_name, $item->ID );
 	}
 
 	/**

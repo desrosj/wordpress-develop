@@ -1172,10 +1172,12 @@ class WP_Posts_List_Table extends WP_List_Table {
 	 *
 	 * @since 4.3.0
 	 *
-	 * @param WP_Post $post        The current WP_Post object.
+	 * @param WP_Post $item        The current WP_Post object.
 	 * @param string  $column_name The current column name.
 	 */
-	public function column_default( $post, $column_name ) {
+	public function column_default( $item, $column_name ) {
+		$post = $item;
+
 		if ( 'categories' === $column_name ) {
 			$taxonomy = 'category';
 		} elseif ( 'tags' === $column_name ) {
