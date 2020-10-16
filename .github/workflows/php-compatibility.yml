@@ -1,9 +1,5 @@
 name: PHP Compatibility
 
-env:
-  TEST_REPO: ${{ github.repository }}
-  TEST_BRANCH: ${{ github.ref }}
-
 on:
   push:
     branches:
