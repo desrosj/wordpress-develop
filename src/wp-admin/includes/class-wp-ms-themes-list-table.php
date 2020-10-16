@@ -947,10 +947,12 @@ class WP_MS_Themes_List_Table extends WP_List_Table {
 	 * @global string $status
 	 * @global array  $totals
 	 *
-	 * @param WP_Theme $theme
+	 * @param WP_Theme $item Theme.
 	 */
-	public function single_row( $theme ) {
+	public function single_row( $item ) {
 		global $status, $totals;
+
+		$theme = $item;
 
 		if ( $this->is_site_themes ) {
 			$allowed = $theme->is_allowed( 'site', $this->site_id );
