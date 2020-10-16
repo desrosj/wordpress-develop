@@ -242,7 +242,7 @@ jobs:
         run: npm run test:${{ env.PHPUNIT_SCRIPT }} -- --verbose -c phpunit.xml.dist --group restapi-jsclient
 
       - name: WordPress Test Reporter
-        if: ${{ ${{ matrix.php_versions }} == '7.3' }}
+        if: ${{ matrix.php_versions == '7.3' }}
         uses: actions/checkout@v2
         with:
           repository: 'WordPress/phpunit-test-runner'
