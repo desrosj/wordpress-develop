@@ -63,5 +63,8 @@ jobs:
           composer install --prefer-dist --no-suggest --no-progress --no-ansi --no-interaction
           echo "${PWD}/vendor/bin" >> $GITHUB_PATH
 
+      - name: Log PHPCS debug information
+        run: phpcs -i
+
       - name: Run PHP compatibility tests
         run: phpcs --standard=phpcompat.xml.dist -q --report=checkstyle | cs2pr
