@@ -204,7 +204,11 @@ abstract class WP_UnitTestCase_Base extends PHPUnit_Framework_TestCase {
 		$travis_branch       = getenv( 'TRAVIS_BRANCH' );
 		$travis_pull_request = getenv( 'TRAVIS_PULL_REQUEST' );
 
-		if ( false !== $travis_pull_request && 'master' !== $travis_branch ) {
+		if ( ! $travis_branch || ! $travis_pull_request ) {
+			return;
+		}
+
+		if ( 'master' !== $travis_branch || 'false' !== $travis_pull_request ) {
 			$this->markTestSkipped( 'For automated test runs, this test is only run on trunk/master' );
 		}
 	}
