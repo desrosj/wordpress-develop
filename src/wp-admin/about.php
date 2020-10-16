@@ -10,7 +10,7 @@
 require_once( dirname( __FILE__ ) . '/admin.php' );
 
 /* translators: Page title of the About WordPress page in the admin. */
-$title = _x('About', 'page title');
+$title = _x( 'About', 'page title' );
 
 list( $display_version ) = explode( '-', get_bloginfo( 'version' ) );
 
