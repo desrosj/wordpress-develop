@@ -145,13 +145,15 @@ class WP_Sitemaps_Posts extends WP_Sitemaps_Provider {
 	 *
 	 * @since 5.5.0
 	 *
-	 * @param string $post_type Optional. Post type name. Default empty.
+	 * @param string $object_subtype Optional. Post type name. Default empty.
 	 * @return int Total number of pages.
 	 */
-	public function get_max_num_pages( $post_type = '' ) {
-		if ( empty( $post_type ) ) {
+	public function get_max_num_pages( $object_subtype = '' ) {
+		if ( empty( $object_subtype ) ) {
 			return 0;
 		}
+
+		$post_type = $object_subtype;
 
 		/**
 		 * Filters the max number of pages before it is generated.
