@@ -153,18 +153,18 @@ final class WP_Customize_Custom_CSS_Setting extends WP_Customize_Setting {
 	 * @since 4.7.0
 	 * @since 4.9.0 Checking for balanced characters has been moved client-side via linting in code editor.
 	 *
-	 * @param string $css The input string.
+	 * @param string $value The input string.
 	 * @return true|WP_Error True if the input was validated, otherwise WP_Error.
 	 */
-	public function validate( $css ) {
+	public function validate( $value ) {
 		$validity = new WP_Error();
 
-		if ( preg_match( '#</?\w+#', $css ) ) {
+		if ( preg_match( '#</?\w+#', $value ) ) {
 			$validity->add( 'illegal_markup', __( 'Markup is not allowed in CSS.' ) );
 		}
 
 		if ( ! $validity->has_errors() ) {
-			$validity = parent::validate( $css );
+			$validity = parent::validate( $value );
 		}
 		return $validity;
 	}
