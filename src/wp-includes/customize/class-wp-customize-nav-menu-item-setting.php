@@ -649,18 +649,18 @@ class WP_Customize_Nav_Menu_Item_Setting extends WP_Customize_Setting {
 	 *
 	 * @since 4.3.0
 	 *
-	 * @param array $menu_item_value The value to sanitize.
+	 * @param array $value The menu item value to sanitize.
 	 * @return array|false|null|WP_Error Null or WP_Error if an input isn't valid. False if it is marked for deletion.
 	 *                                   Otherwise the sanitized value.
 	 */
-	public function sanitize( $menu_item_value ) {
+	public function sanitize( $value ) {
 		// Menu is marked for deletion.
-		if ( false === $menu_item_value ) {
-			return $menu_item_value;
+		if ( false === $value ) {
+			return $value;
 		}
 
 		// Invalid.
-		if ( ! is_array( $menu_item_value ) ) {
+		if ( ! is_array( $value ) ) {
 			return null;
 		}
 
@@ -682,54 +682,54 @@ class WP_Customize_Nav_Menu_Item_Setting extends WP_Customize_Setting {
 			'nav_menu_term_id' => 0,
 			'_invalid'         => false,
 		);
-		$menu_item_value             = array_merge( $default, $menu_item_value );
-		$menu_item_value             = wp_array_slice_assoc( $menu_item_value, array_keys( $default ) );
-		$menu_item_value['position'] = (int) $menu_item_value['position'];
+		$value             = array_merge( $default, $value );
+		$value             = wp_array_slice_assoc( $value, array_keys( $default ) );
+		$value['position'] = (int) $value['position'];
 
 		foreach ( array( 'object_id', 'menu_item_parent', 'nav_menu_term_id' ) as $key ) {
 			// Note we need to allow negative-integer IDs for previewed objects not inserted yet.
-			$menu_item_value[ $key ] = (int) $menu_item_value[ $key ];
+			$value[ $key ] = (int) $value[ $key ];
 		}
 
 		foreach ( array( 'type', 'object', 'target' ) as $key ) {
-			$menu_item_value[ $key ] = sanitize_key( $menu_item_value[ $key ] );
+			$value[ $key ] = sanitize_key( $value[ $key ] );
 		}
 
 		foreach ( array( 'xfn', 'classes' ) as $key ) {
-			$value = $menu_item_value[ $key ];
-			if ( ! is_array( $value ) ) {
-				$value = explode( ' ', $value );
+			$item_value = $value[ $key ];
+			if ( ! is_array( $item_value ) ) {
+				$item_value = explode( ' ', $item_value );
 			}
-			$menu_item_value[ $key ] = implode( ' ', array_map( 'sanitize_html_class', $value ) );
+			$value[ $key ] = implode( ' ', array_map( 'sanitize_html_class', $item_value ) );
 		}
 
-		$menu_item_value['original_title'] = sanitize_text_field( $menu_item_value['original_title'] );
+		$value['original_title'] = sanitize_text_field( $value['original_title'] );
 
 		// Apply the same filters as when calling wp_insert_post().
 
 		/** This filter is documented in wp-includes/post.php */
-		$menu_item_value['title'] = wp_unslash( apply_filters( 'title_save_pre', wp_slash( $menu_item_value['title'] ) ) );
+		$value['title'] = wp_unslash( apply_filters( 'title_save_pre', wp_slash( $value['title'] ) ) );
 
 		/** This filter is documented in wp-includes/post.php */
-		$menu_item_value['attr_title'] = wp_unslash( apply_filters( 'excerpt_save_pre', wp_slash( $menu_item_value['attr_title'] ) ) );
+		$value['attr_title'] = wp_unslash( apply_filters( 'excerpt_save_pre', wp_slash( $value['attr_title'] ) ) );
 
 		/** This filter is documented in wp-includes/post.php */
-		$menu_item_value['description'] = wp_unslash( apply_filters( 'content_save_pre', wp_slash( $menu_item_value['description'] ) ) );
+		$value['description'] = wp_unslash( apply_filters( 'content_save_pre', wp_slash( $value['description'] ) ) );
 
-		if ( '' !== $menu_item_value['url'] ) {
-			$menu_item_value['url'] = esc_url_raw( $menu_item_value['url'] );
-			if ( '' === $menu_item_value['url'] ) {
+		if ( '' !== $value['url'] ) {
+			$value['url'] = esc_url_raw( $value['url'] );
+			if ( '' === $value['url'] ) {
 				return new WP_Error( 'invalid_url', __( 'Invalid URL.' ) ); // Fail sanitization if URL is invalid.
 			}
 		}
-		if ( 'publish' !== $menu_item_value['status'] ) {
-			$menu_item_value['status'] = 'draft';
+		if ( 'publish' !== $value['status'] ) {
+			$value['status'] = 'draft';
 		}
 
-		$menu_item_value['_invalid'] = (bool) $menu_item_value['_invalid'];
+		$value['_invalid'] = (bool) $value['_invalid'];
 
 		/** This filter is documented in wp-includes/class-wp-customize-setting.php */
-		return apply_filters( "customize_sanitize_{$this->id}", $menu_item_value, $this );
+		return apply_filters( "customize_sanitize_{$this->id}", $value, $this );
 	}
 
 	/**
