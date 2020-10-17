@@ -964,12 +964,13 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 	 *
 	 * @since 4.7.0
 	 *
-	 * @param WP_User         $user    User object.
+	 * @param WP_User         $item    User object.
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response Response object.
 	 */
-	public function prepare_item_for_response( $user, $request ) {
+	public function prepare_item_for_response( $item, $request ) {
 
+		$user   = $item;
 		$data   = array();
 		$fields = $this->get_fields_for_response( $request );
 

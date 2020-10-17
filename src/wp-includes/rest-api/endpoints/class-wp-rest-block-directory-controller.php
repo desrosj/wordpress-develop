@@ -112,12 +112,14 @@ class WP_REST_Block_Directory_Controller extends WP_REST_Controller {
 	 *
 	 * @since 5.5.0
 	 *
-	 * @param array           $plugin  The plugin metadata.
+	 * @param array           $item    The plugin metadata.
 	 * @param WP_REST_Request $request Request object.
 	 *
 	 * @return WP_Error|WP_REST_Response Response object on success, or WP_Error object on failure.
 	 */
-	public function prepare_item_for_response( $plugin, $request ) {
+	public function prepare_item_for_response( $item, $request ) {
+		$plugin = $item;
+
 		// There might be multiple blocks in a plugin. Only the first block is mapped.
 		$block_data = reset( $plugin['blocks'] );
 

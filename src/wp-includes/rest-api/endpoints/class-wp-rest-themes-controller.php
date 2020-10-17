@@ -107,11 +107,12 @@ class WP_REST_Themes_Controller extends WP_REST_Controller {
 	 *
 	 * @since 5.0.0
 	 *
-	 * @param WP_Theme        $theme   Theme object.
+	 * @param WP_Theme        $item    Theme object.
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response Response object.
 	 */
-	public function prepare_item_for_response( $theme, $request ) {
+	public function prepare_item_for_response( $item, $request ) {
+		$theme  = $item;
 		$data   = array();
 		$fields = $this->get_fields_for_response( $request );
 

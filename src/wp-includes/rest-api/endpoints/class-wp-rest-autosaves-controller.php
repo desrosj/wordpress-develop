@@ -397,19 +397,19 @@ class WP_REST_Autosaves_Controller extends WP_REST_Revisions_Controller {
 	 *
 	 * @since 5.0.0
 	 *
-	 * @param WP_Post         $post    Post revision object.
+	 * @param WP_Post         $item    Post revision object.
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response Response object.
 	 */
-	public function prepare_item_for_response( $post, $request ) {
+	public function prepare_item_for_response( $item, $request ) {
 
-		$response = $this->revisions_controller->prepare_item_for_response( $post, $request );
+		$response = $this->revisions_controller->prepare_item_for_response( $item, $request );
 
 		$fields = $this->get_fields_for_response( $request );
 
 		if ( in_array( 'preview_link', $fields, true ) ) {
-			$parent_id          = wp_is_post_autosave( $post );
-			$preview_post_id    = false === $parent_id ? $post->ID : $parent_id;
+			$parent_id          = wp_is_post_autosave( $item );
+			$preview_post_id    = false === $parent_id ? $item->ID : $parent_id;
 			$preview_query_args = array();
 
 			if ( false !== $parent_id ) {
@@ -432,10 +432,10 @@ class WP_REST_Autosaves_Controller extends WP_REST_Revisions_Controller {
 		 * @since 5.0.0
 		 *
 		 * @param WP_REST_Response $response The response object.
-		 * @param WP_Post          $post     The original revision object.
+		 * @param WP_Post          $item     The original revision object.
 		 * @param WP_REST_Request  $request  Request used to generate the response.
 		 */
-		return apply_filters( 'rest_prepare_autosave', $response, $post, $request );
+		return apply_filters( 'rest_prepare_autosave', $response, $item, $request );
 	}
 
 	/**
