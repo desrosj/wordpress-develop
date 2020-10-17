@@ -52,11 +52,12 @@ class WP_Sitemaps_Taxonomies extends WP_Sitemaps_Provider {
 	 *
 	 * @since 5.5.0
 	 *
-	 * @param int    $page_num Page of results.
-	 * @param string $taxonomy Optional. Taxonomy name. Default empty.
+	 * @param int    $page_num       Page of results.
+	 * @param string $object_subtype Optional. Taxonomy name. Default empty.
 	 * @return array Array of URLs for a sitemap.
 	 */
-	public function get_url_list( $page_num, $taxonomy = '' ) {
+	public function get_url_list( $page_num, $object_subtype = '' ) {
+		$taxonomy        = $object_subtype;
 		$supported_types = $this->get_object_subtypes();
 
 		// Bail early if the queried taxonomy is not supported.
