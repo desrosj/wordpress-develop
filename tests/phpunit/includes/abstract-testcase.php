@@ -190,8 +190,8 @@ abstract class WP_UnitTestCase_Base extends PHPUnit\Framework\TestCase {
 		$travis_pull_request = getenv( 'TRAVIS_PULL_REQUEST' );
 
 		// https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables
-		$github_event_name = getenv( 'GHA_EVENT_NAME' );
-		$github_ref        = getenv( 'GHA_REF' );
+		$github_event_name = getenv( 'GITHUB_EVENT_NAME' );
+		$github_ref        = getenv( 'GITHUB_REF' );
 
 		if ( 'false' !== $github_event_name ) {
 			// We're on GitHub Actions.
