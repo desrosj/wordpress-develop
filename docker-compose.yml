@@ -16,6 +16,8 @@ services:
 
     environment:
       LOCAL_DIR: ${LOCAL_DIR-src}
+      GITHUB_REF: ${GITHUB_REF}
+      GITHUB_EVENT_NAME: ${GITHUB_EVENT_NAME}
 
     volumes:
       - ./tools/local-env/default.template:/etc/nginx/conf.d/default.template

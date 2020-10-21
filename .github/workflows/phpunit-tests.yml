@@ -142,8 +142,6 @@ jobs:
     env:
       LOCAL_PHP: ${{ matrix.php }}-fpm
       LOCAL_PHP_MEMCACHED: ${{ matrix.memcached }}
-      GHA_EVENT_NAME: ${{ github.event_name }}
-      GHA_REF: ${{ github.ref }}
 
     steps:
       - name: Configure environment variables
