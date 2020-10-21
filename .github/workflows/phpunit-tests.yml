@@ -119,7 +119,7 @@ jobs:
   # - Reports test results to the Distributed Hosting Tests.
   # - todo: Configure Slack notifications for failing tests.
   test-php:
-    name: ${{ matrix.php }}${{ matrix.memcached && ' with memcached' || '' }} on ${{ matrix.os }}
+    name: ${{ matrix.php }}/MySQL ${{ matrix.mysql }}${{ matrix.memcached && ' with memcached' || '' }} on ${{ matrix.os }}
     needs: setup-wordpress
     runs-on: ${{ matrix.os }}
     strategy:
@@ -133,15 +133,18 @@ jobs:
           # Include job for PHP 7.4 with memcached.
           - php: '7.4'
             os: ubuntu-latest
+            mysql: 5.7
             memcached: true
           # Report the results of the PHP 7.4 without memcached job.
           - php: '7.4'
             os: ubuntu-latest
+            mysql: 5.7
             memcached: false
             report: true
     env:
       LOCAL_PHP: ${{ matrix.php }}-fpm
       LOCAL_PHP_MEMCACHED: ${{ matrix.memcached }}
+      LOCLA_MYSQL: ${{ matrix.mysql }}
 
     steps:
       - name: Configure environment variables
