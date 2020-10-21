@@ -51,8 +51,8 @@ jobs:
 
       - name: Log debug information
         run: |
-          echo "${{ github.ref }}"
-          echo "${{ github.event_name }}"
+          echo "$GITHUB_REF"
+          echo "$GITHUB_EVENT_NAME"
           npm --version
           node --version
           curl --version
