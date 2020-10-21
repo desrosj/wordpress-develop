@@ -144,7 +144,7 @@ jobs:
     env:
       LOCAL_PHP: ${{ matrix.php }}-fpm
       LOCAL_PHP_MEMCACHED: ${{ matrix.memcached }}
-      LOCLA_MYSQL: ${{ matrix.mysql }}
+      LOCAL_MYSQL: ${{ matrix.mysql }}
 
     steps:
       - name: Configure environment variables
