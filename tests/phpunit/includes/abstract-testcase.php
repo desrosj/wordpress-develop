@@ -193,13 +193,14 @@ abstract class WP_UnitTestCase_Base extends PHPUnit\Framework\TestCase {
 		$github_event_name = getenv( 'GITHUB_EVENT_NAME' );
 		$github_ref        = getenv( 'GITHUB_REF' );
 
+		echo $github_ref;
+		echo $github_event_name;
+
 		if ( ( ! $travis_branch || ! $travis_pull_request ) && ! $github_event_name ) {
 			return;
 		}
 
 		if ( ! empty( $github_event_name ) ) {
-			echo $github_event_name;
-			echo $github_ref;
 			if ( in_array( $github_event_name, array( 'pull_request', 'pull_request_target' ), true ) || 'refs/heads/master' !== $github_ref  ) {
 				$this->markTestSkipped( 'For automated test runs, this test is only run on trunk/master' );
 			}
