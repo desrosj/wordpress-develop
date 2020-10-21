@@ -17,8 +17,6 @@ env:
   # Controls which NPM script to use for running PHPUnit tests. Options ar `php` and `php-composer`.
   PHPUNIT_SCRIPT: php
   LOCAL_PHP_MEMCACHED: ${{ false }}
-  EVENT_NAME: ${{ github.event_name }}
-  EVENT_REF: ${{ github.ref }}
 
 jobs:
   # Sets up WordPress for testing or development use.
@@ -144,6 +142,8 @@ jobs:
     env:
       LOCAL_PHP: ${{ matrix.php }}-fpm
       LOCAL_PHP_MEMCACHED: ${{ matrix.memcached }}
+      GHA_EVENT_NAME: ${{ github.event_name }}
+      GHA_REF: ${{ github.ref }}
 
     steps:
       - name: Configure environment variables
