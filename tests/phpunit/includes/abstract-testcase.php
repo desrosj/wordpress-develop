@@ -193,10 +193,10 @@ abstract class WP_UnitTestCase_Base extends PHPUnit\Framework\TestCase {
 		$github_event_name = getenv( 'GITHUB_EVENT_NAME' );
 		$github_ref        = getenv( 'GITHUB_REF' );
 
-		var_dupm( $travis_pull_request);
-		var_dupm( $travis_branch);
-		var_dupm( $github_ref );
-		var_dupm( $github_event_name );
+		var_dump( $travis_pull_request);
+		var_dump( $travis_branch);
+		var_dump( $github_ref );
+		var_dump( $github_event_name );
 
 		if ( $github_event_name ) {
 			// We're on GitHub Actions.
