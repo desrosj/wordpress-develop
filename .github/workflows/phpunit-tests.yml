@@ -179,6 +179,9 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Hash state of dependencies
+        run: npx install-changed --hash-only
+
       - name: Get composer cache directory
         id: composer-cache
         if: ${{ env.COMPOSER_INSTALL == true || env.LOCAL_PHP == '8.0-fpm' }}
