@@ -80,6 +80,7 @@ jobs:
   # - Sets up caching for NPM.
   # - Logs updated debug information.
   # _ Installs NPM dependencies.
+  # - Hash the `package.json` file (prevents needlessly executing `npm install`).
   # - Run the WordPress JSHint checks.
   # - todo: Configure Slack notifications for failing tests.
   jshint:
@@ -121,6 +122,9 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci
+
+      - name: Hash package.json
+        run: npx install-changed --hash-only
 
       - name: Run JSHint
         run: npm run grunt jshint
