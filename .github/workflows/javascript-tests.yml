@@ -65,7 +65,7 @@ jobs:
         run: npm ci
 
       - name: Hash state of dependencies
-        run: npm install-changed --hash-only
+        run: npx install-changed --hash-only
 
       - name: Run QUnit tests
         run: npm run grunt qunit:compiled
