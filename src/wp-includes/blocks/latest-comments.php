@@ -116,42 +116,67 @@ function render_block_core_latest_comments( $attributes = array() ) {
 		}
 	}
 
-	$classnames = array();
+	$class = 'wp-block-latest-comments';
+	if ( isset( $attributes['align'] ) ) {
+		$class .= " align{$attributes['align']}";
+	}
 	if ( $attributes['displayAvatar'] ) {
-		$classnames[] = 'has-avatars';
+		$class .= ' has-avatars';
 	}
 	if ( $attributes['displayDate'] ) {
-		$classnames[] = 'has-dates';
+		$class .= ' has-dates';
 	}
 	if ( $attributes['displayExcerpt'] ) {
-		$classnames[] = 'has-excerpts';
+		$class .= ' has-excerpts';
 	}
 	if ( empty( $comments ) ) {
-		$classnames[] = 'no-comments';
+		$class .= ' no-comments';
 	}
-	$wrapper_attributes = get_block_wrapper_attributes( array( 'class' => implode( ' ', $classnames ) ) );
+	$classnames = esc_attr( $class );
 
-	return ! empty( $comments ) ? sprintf(
-		'<ol %1$s>%2$s</ol>',
-		$wrapper_attributes,
+	$block_content = ! empty( $comments ) ? sprintf(
+		'<ol class="%1$s">%2$s</ol>',
+		$classnames,
 		$list_items_markup
 	) : sprintf(
-		'<div %1$s>%2$s</div>',
-		$wrapper_attributes,
+		'<div class="%1$s">%2$s</div>',
+		$classnames,
 		__( 'No comments to show.' )
 	);
+
+	return $block_content;
 }
 
-/**
- * Registers the `core/latest-comments` block.
- */
-function register_block_core_latest_comments() {
-	register_block_type_from_metadata(
-		__DIR__ . '/latest-comments',
-		array(
-			'render_callback' => 'render_block_core_latest_comments',
-		)
-	);
-}
-
-add_action( 'init', 'register_block_core_latest_comments' );
+register_block_type(
+	'core/latest-comments',
+	array(
+		'attributes'      => array(
+			'className'      => array(
+				'type' => 'string',
+			),
+			'commentsToShow' => array(
+				'type'    => 'number',
+				'default' => 5,
+				'minimum' => 1,
+				'maximum' => 100,
+			),
+			'displayAvatar'  => array(
+				'type'    => 'boolean',
+				'default' => true,
+			),
+			'displayDate'    => array(
+				'type'    => 'boolean',
+				'default' => true,
+			),
+			'displayExcerpt' => array(
+				'type'    => 'boolean',
+				'default' => true,
+			),
+			'align'          => array(
+				'type' => 'string',
+				'enum' => array( 'center', 'left', 'right', 'wide', 'full', '' ),
+			),
+		),
+		'render_callback' => 'render_block_core_latest_comments',
+	)
+);
