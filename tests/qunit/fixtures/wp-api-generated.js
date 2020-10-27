@@ -4917,6 +4917,12 @@ mockedApiResponse.Schema = {
                         "POST"
                     ],
                     "args": {
+                        "app_id": {
+                            "description": "A uuid provided by the application to uniquely identify it. It is recommended to use an UUID v5 with the URL or DNS namespace.",
+                            "type": "string",
+                            "format": "uuid",
+                            "required": false
+                        },
                         "name": {
                             "description": "The name of the application password.",
                             "type": "string",
@@ -4967,6 +4973,12 @@ mockedApiResponse.Schema = {
                         "PATCH"
                     ],
                     "args": {
+                        "app_id": {
+                            "description": "A uuid provided by the application to uniquely identify it. It is recommended to use an UUID v5 with the URL or DNS namespace.",
+                            "type": "string",
+                            "format": "uuid",
+                            "required": false
+                        },
                         "name": {
                             "description": "The name of the application password.",
                             "type": "string",

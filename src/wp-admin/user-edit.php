@@ -717,30 +717,33 @@ endif;
 		<p><?php _e( 'Application passwords allow authentication via non-interactive systems, such as XML-RPC or the REST API, without providing your actual password. Application passwords can be easily revoked. They cannot be used for traditional logins to your website.' ); ?></p>
 			<?php
 			if ( is_multisite() ) {
-				$blogs = get_blogs_of_user( $user_id, true );
-				if ( count( $blogs ) > 1 ) {
+				$blogs       = get_blogs_of_user( $user_id, true );
+				$blogs_count = count( $blogs );
+				if ( $blogs_count > 1 ) {
 					?>
 					<p>
-					<?php
-					printf(
-						/* translators: 1: url to my-sites.php, 2: Number of blogs the user has. */
-						_n(
-							'Application passwords grant access to <a href="%1$s">the %2$s blog in this installation that you have permissions on</a>.',
-							'Application passwords grant access to <a href="%1$s">all %2$s blogs in this installation that you have permissions on</a>.',
-							count( $blogs )
-						),
-						admin_url( 'my-sites.php' ),
-						number_format_i18n( count( $blogs ) )
-					);
-					?>
+						<?php
+						printf(
+							/* translators: 1: URL to my-sites.php, 2: Number of blogs the user has. */
+							_n(
+								'Application passwords grant access to <a href="%1$s">the %2$s blog in this installation that you have permissions on</a>.',
+								'Application passwords grant access to <a href="%1$s">all %2$s blogs in this installation that you have permissions on</a>.',
+								$blogs_count
+							),
+							admin_url( 'my-sites.php' ),
+							number_format_i18n( $blogs_count )
+						);
+						?>
 					</p>
 					<?php
 				}
 			}
 			?>
-		<div class="create-application-password">
-			<label for="new_application_password_name" class="screen-reader-text"><?php _e( 'New Application Password Name' ); ?></label>
-			<input type="text" size="30" id="new_application_password_name" name="new_application_password_name" placeholder="<?php esc_attr_e( 'New Application Password Name' ); ?>" class="input" />
+		<div class="create-application-password form-wrap">
+			<div class="form-field">
+				<label for="new_application_password_name"><?php _e( 'New Application Password Name' ); ?></label>
+				<input type="text" size="30" id="new_application_password_name" name="new_application_password_name" placeholder="<?php esc_attr_e( 'WordPress App on My Phone' ); ?>" class="input" />
+			</div>
 
 			<?php
 			/**
@@ -753,7 +756,7 @@ endif;
 			do_action( 'wp_create_application_password_form', $profileuser );
 			?>
 
-			<?php submit_button( __( 'Add New' ), 'secondary', 'do_new_application_password', false ); ?>
+			<?php submit_button( __( 'Add New' ), 'secondary', 'do_new_application_password' ); ?>
 		</div>
 
 		<div class="application-passwords-list-table-wrapper">
@@ -855,19 +858,19 @@ endif;
 <?php if ( isset( $application_passwords_list_table ) ) : ?>
 	<script type="text/html" id="tmpl-new-application-password">
 		<div class="notice notice-success is-dismissible new-application-password-notice" role="alert" tabindex="0">
-			<p>
+			<p class="application-password-display">
 				<?php
 				printf(
 					/* translators: 1: Application name, 2: Generated password. */
 					esc_html__( 'Your new password for %1$s is: %2$s' ),
 					'<strong>{{ data.name }}</strong>',
-					'<kbd>{{ data.password }}</kbd>'
+					'<input type="text" class="code" readonly="readonly" value="{{ data.password }}" />'
 				);
 				?>
 			</p>
 			<p><?php esc_attr_e( 'Be sure to save this in a safe location. You will not be able to retrieve it.' ); ?></p>
 			<button type="button" class="notice-dismiss">
-				<span class="screen-reader-text"><?php __( 'Dismiss this notice.' ); ?></span>
+				<span class="screen-reader-text"><?php _e( 'Dismiss this notice.' ); ?></span>
 			</button>
 		</div>
 	</script>
