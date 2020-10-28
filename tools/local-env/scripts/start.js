@@ -3,7 +3,6 @@ const dotenvExpand = require( 'dotenv-expand' );
 const { execSync } = require( 'child_process' );
 
 const dotenvfile = dotenv.config();
-
 dotenvExpand( dotenvfile );
 
 // Start the local-env containers.
