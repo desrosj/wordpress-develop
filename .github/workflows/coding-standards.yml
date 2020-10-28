@@ -121,7 +121,7 @@ jobs:
           node --version
 
       - name: Install Dependencies
-        run: npm ci
+        run: npx install-changed
 
       - name: Hash package.json
         run: npx install-changed --hash-only
