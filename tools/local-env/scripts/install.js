@@ -4,9 +4,7 @@ const wait_on = require( 'wait-on' );
 const { execSync } = require( 'child_process' );
 const { renameSync, readFileSync, writeFileSync } = require( 'fs' );
 
-const dotenvfile = dotenv.config();
-
-dotenvExpand( dotenvfile );
+dotenvExpand( dotenv.config() );
 
 // Create wp-config.php.
 wp_cli( 'config create --dbname=wordpress_develop --dbuser=root --dbpass=password --dbhost=mysql --path=/var/www/src --force' );
