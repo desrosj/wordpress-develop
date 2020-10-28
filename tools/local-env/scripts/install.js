@@ -5,6 +5,7 @@ const { execSync } = require( 'child_process' );
 const { renameSync, readFileSync, writeFileSync } = require( 'fs' );
 
 const dotenvfile = dotenv.config();
+
 dotenvExpand( dotenvfile );
 
 // Create wp-config.php.
