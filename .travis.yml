@@ -29,13 +29,13 @@ env:
 
 jobs:
   include:
-  - env: WP_TRAVISCI=test:e2e LOCAL_PHPUNIT=latest PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=
+  - env: WP_TRAVISCI=test:e2e LOCAL_PHPUNIT= PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=
     name: E2E Tests
-  - env: WP_TRAVISCI=lint:php LOCAL_PHPUNIT= COMPOSER_INSTALL=true NPM_INSTALL=false WP_INSTALL=false
+  - env: WP_TRAVISCI=lint:php COMPOSER_INSTALL=true NPM_INSTALL=false WP_INSTALL=false
     name: PHP Linting
-  - env: WP_TRAVISCI=test:compat LOCAL_PHPUNIT= COMPOSER_INSTALL=true NPM_INSTALL=false WP_INSTALL=false
+  - env: WP_TRAVISCI=test:compat COMPOSER_INSTALL=true NPM_INSTALL=false WP_INSTALL=false
     name: "PHP Compatibility Check"
-  - env: WP_TRAVISCI=travis:js WP_INSTALL=false LOCAL_PHPUNIT= PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=
+  - env: WP_TRAVISCI=travis:js WP_INSTALL=false PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=
     name: JS Tests
   - env: LOCAL_PHP=8.0-fpm LOCAL_PHPUNIT=8.0-fpm COMPOSER_INSTALL=true WP_TRAVISCI=test:php
     name: "PHPUnit Tests: PHP 8.0"
