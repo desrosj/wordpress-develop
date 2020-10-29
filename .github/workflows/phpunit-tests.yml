@@ -88,7 +88,7 @@ jobs:
         uses: thedoctor0/zip-release@0.4.1
         with:
           filename: built-wp-${{ github.sha }}.zip
-          exclusions: '/*node_modules/*'
+          exclusions: '*.git* /*node_modules/* packagehash.txt'
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v2
