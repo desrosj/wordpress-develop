@@ -19,8 +19,7 @@ jobs:
   # - Logs debug information about the runner container.
   # - Installs NodeJS 12 (todo: install the version of NPM specified in the `.nvmrc` file to support older branches)
   # - Sets up caching for NPM.
-  # _ Installs NPM dependencies.
-  # - Hash the `package.json` file (prevents needlessly executing `npm install`).
+  # _ Installs NPM dependencies using install-changed to hash the `package.json` file.
   # - Builds WordPress to run from the `build` directory.
   test-npm:
     name: Tests NPM on Windows
@@ -63,10 +62,7 @@ jobs:
             ${{ runner.os }}-npm-
 
       - name: Install Dependencies
-        run: npm ci
-
-      - name: Hash package.json
-        run: npx install-changed --hash-only
+        run: npx install-changed
 
       - name: Build WordPress
         run: npm run build

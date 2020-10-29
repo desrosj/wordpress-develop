@@ -79,8 +79,7 @@ jobs:
   # - Installs NodeJS 12 (todo: install the version of NPM specified in the `.nvmrc` file to support older branches)
   # - Sets up caching for NPM.
   # - Logs updated debug information.
-  # _ Installs NPM dependencies.
-  # - Hash the `package.json` file (prevents needlessly executing `npm install`).
+  # _ Installs NPM dependencies using install-changed to hash the `package.json` file.
   # - Run the WordPress JSHint checks.
   # - todo: Configure Slack notifications for failing tests.
   jshint:
@@ -122,9 +121,6 @@ jobs:
 
       - name: Install Dependencies
         run: npx install-changed
-
-      - name: Hash package.json
-        run: npx install-changed --hash-only
 
       - name: Run JSHint
         run: npm run grunt jshint

@@ -17,8 +17,7 @@ jobs:
   # - Installs NodeJS 12 (todo: install the version of NPM specified in the `.nvmrc` file to support older branches)
   # - Sets up caching for NPM.
   # - Logs updated debug information.
-  # _ Installs NPM dependencies.
-  # - Hash the `package.json` file (prevents needlessly executing `npm install`).
+  # _ Installs NPM dependencies using install-changed to hash the `package.json` file.
   # - Run the WordPress QUnit tests.
   # - todo: Configure Slack notifications for failing tests.
   test-js:
@@ -63,10 +62,7 @@ jobs:
           node --version
 
       - name: Install Dependencies
-        run: npm ci
-
-      - name: Hash package.json
-        run: npx install-changed --hash-only
+        run: npx install-changed
 
       - name: Run QUnit tests
         run: npm run grunt qunit:compiled
