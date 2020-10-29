@@ -62,7 +62,7 @@ jobs:
             ${{ runner.os }}-npm-
 
       - name: Install Dependencies
-        run: npx install-changed
+        run: npx install-changed --install-command="npm ci"
 
       - name: Build WordPress
         run: npm run build
