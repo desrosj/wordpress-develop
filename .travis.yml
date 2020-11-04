@@ -51,6 +51,7 @@ before_install:
 before_script:
   - |
     if [[ "$COMPOSER_INSTALL" == "true" ]]; then
+      composer self-update --2
       composer --version
       composer install
     fi
