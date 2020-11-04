@@ -51,9 +51,8 @@ before_install:
 before_script:
   - |
     if [[ "$COMPOSER_INSTALL" == "true" ]]; then
-      composer self-update --2
-      composer --version
-      composer install
+      docker-compose run --rm php composer --version
+      docker-compose run --rm php composer install
     fi
   - npm --version
   - node --version
@@ -102,6 +101,8 @@ script:
       npm run test:php -- --verbose -c phpunit.xml.dist --group restapi-jsclient &&
       # __fakegroup__ is excluded to force PHPUnit to ignore the <exclude> settings in phpunit.xml.dist.
       LOCAL_PHP_XDEBUG=true npm run test:php -- -v --group xdebug --exclude-group __fakegroup__
+    elif [[ "$WP_TRAVISCI" == "travis"format" ]]; then
+      docker-compose run --rm php composer format
     else
       npm run grunt $WP_TRAVISCI
     fi
