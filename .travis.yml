@@ -30,7 +30,7 @@ matrix:
       name: "PHPUnit Tests: PHP 7.0"
     - env: LOCAL_PHP=5.6-fpm LOCAL_PHPUNIT=4-php-5.6-fpm WP_TRAVISCI=test:php
       name: "PHPUnit Tests: PHP 5.6"
-    - env: LOCAL_PHP=5.2-fpm LOCAL_PHPUNIT=5.2-fpm WP_TRAVISCI=travis:phpunit
+    - env: LOCAL_PHP=5.2-fpm LOCAL_PHPUNIT=5.2-fpm WP_TRAVISCI=travis:phpunit WP_INSTALL=false
       php: 5.2
       dist: precise
   fast_finish: true
