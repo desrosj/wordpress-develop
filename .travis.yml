@@ -3,11 +3,6 @@ language: generic
 services:
   - docker
 
-addons:
-  apt:
-    packages:
-      - docker-ce
-
 cache:
   apt: true
   directories:
@@ -44,6 +39,13 @@ before_install:
   - |
     if [[ "$WP_TRAVISCI" == "test:php" ]]; then
       travis_retry svn checkout https://plugins.svn.wordpress.org/wordpress-importer/tags/0.6.3/ tests/phpunit/data/plugins/wordpress-importer
+    fi
+  - |
+    if [[ "$WP_TRAVISCI" != "travis:phpunit" ]]; then
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+      sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+      sudo apt-get update
+      sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
     fi
   - |
     sudo rm /usr/local/bin/docker-compose
