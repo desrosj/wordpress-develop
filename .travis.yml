@@ -62,7 +62,6 @@ before_script:
   - npm --version
   - node --version
   - nvm install
-  - npm install -g grunt-cli
   - |
     if [[ "$WP_TRAVISCI" == "travis:phpunit" ]]; then
       phpenv config-rm xdebug.ini

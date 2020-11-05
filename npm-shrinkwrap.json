@@ -2216,6 +2216,20 @@
       "resolved": "https://registry.npmjs.org/grunt-banner/-/grunt-banner-0.6.0.tgz",
       "dev": true
     },
+    "grunt-cli": {
+      "version": "0.1.13",
+      "from": "grunt-cli@0.1.13",
+      "resolved": "https://registry.npmjs.org/grunt-cli/-/grunt-cli-0.1.13.tgz",
+      "dev": true,
+      "dependencies": {
+        "resolve": {
+          "version": "0.3.1",
+          "from": "resolve@>=0.3.1 <0.4.0",
+          "resolved": "https://registry.npmjs.org/resolve/-/resolve-0.3.1.tgz",
+          "dev": true
+        }
+      }
+    },
     "grunt-contrib-clean": {
       "version": "1.0.0",
       "from": "grunt-contrib-clean@>=1.0.0 <1.1.0",
