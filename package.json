@@ -51,6 +51,6 @@
     "env:cli": "node ./tools/local-env/scripts/docker.js run cli",
     "env:logs": "node ./tools/local-env/scripts/docker.js logs",
     "env:pull": "node ./tools/local-env/scripts/docker.js pull",
-    "test:php": "node ./tools/local-env/scripts/docker.js run --rm phpunit phpunit",
+    "test:php": "node ./tools/local-env/scripts/docker.js run --rm phpunit phpunit"
   }
 }
