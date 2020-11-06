@@ -5,6 +5,7 @@ module.exports = function(grunt) {
 		SOURCE_DIR = 'src/',
 		BUILD_DIR = 'build/',
 		autoprefixer = require('autoprefixer'),
+		nodesass = require( 'node-sass' ),
 		mediaConfig = {},
 		mediaBuilds = ['audiovideo', 'grid', 'models', 'views'];
 
@@ -166,6 +167,7 @@ module.exports = function(grunt) {
 				ext: '.css',
 				src: ['wp-admin/css/colors/*/colors.scss'],
 				options: {
+					implementation: nodesass,
 					outputStyle: 'expanded'
 				}
 			}
