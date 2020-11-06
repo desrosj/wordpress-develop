@@ -96,6 +96,7 @@ before_script:
   - |
     if [[ "$LOCAL_PHP_MEMCACHED" == "true" ]]; then
       curl https://raw.githubusercontent.com/tollmanz/wordpress-pecl-memcached-object-cache/584392b56dc4adbe52bd2c7b86f875e23a3e5f75/object-cache.php > src/wp-content/object-cache.php
+      sed -i "s/'127.0.0.1'/'memcached'/" object-cache.php
       docker run --name memcached --net $(basename "$PWD")_wpdevnet -d memcached
     fi
   - |
