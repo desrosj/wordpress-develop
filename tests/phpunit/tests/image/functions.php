@@ -492,16 +492,20 @@ class Tests_Image_Functions extends WP_UnitTestCase {
 		$pdf_path = '/tmp/test.pdf';
 		copy( DIR_TESTDATA . '/images/wordpress-gsoc-flyer.pdf', $pdf_path );
 
-		$editor = wp_get_image_editor( $test_file );
+		$editor = wp_get_image_editor( $pdf_path );
 		if ( is_wp_error( $editor ) ) {
 			$this->markTestSkipped( $editor->get_error_message() );
 		}
 
-		$attachment_id = $this->factory->attachment->create_object( $pdf_path, 0, array(
-			'post_mime_type' => 'application/pdf',
-		) );
+		$attachment_id = $this->factory->attachment->create_object(
+			$pdf_path,
+			0,
+			array(
+				'post_mime_type' => 'application/pdf',
+			)
+		);
 
-		$metadata = wp_generate_attachment_metadata( $attachment_id, $pdf_path );
+		$metadata     = wp_generate_attachment_metadata( $attachment_id, $pdf_path );
 		$preview_path = '/tmp/' . $metadata['sizes']['full']['file'];
 
 		// PDF preview didn't overwrite PDF.
