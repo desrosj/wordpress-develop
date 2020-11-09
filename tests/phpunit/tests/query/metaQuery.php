@@ -2121,6 +2121,8 @@ class Tests_Query_MetaQuery extends WP_UnitTestCase {
 			)
 		);
 
+		var_dump( $q );
+
 		$this->assertSameSets( array( $posts[0] ), $q->posts );
 	}
 
@@ -2163,6 +2165,7 @@ class Tests_Query_MetaQuery extends WP_UnitTestCase {
 			)
 		);
 
+		var_dump( $q );
 		$this->assertSameSets( array( $posts[1], $posts[2] ), $q->posts );
 	}
 }

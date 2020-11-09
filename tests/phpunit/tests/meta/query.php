@@ -758,6 +758,8 @@ class Tests_Meta_Query extends WP_UnitTestCase {
 			)
 		);
 
+		var_dump( $q );
+
 		$this->assertSameSets( array( $posts[0], $posts[2] ), $q->posts );
 
 		$q = new WP_Query(
@@ -766,10 +768,10 @@ class Tests_Meta_Query extends WP_UnitTestCase {
 				'meta_compare_key' => 'REGEXP',
 				'meta_type_key'    => 'BINARY',
 				'fields'           => 'ids',
-				'fields'           => 'ids',
 			)
 		);
 
+		var_dump( $q );
 		$this->assertSameSets( array( $posts[0] ), $q->posts );
 	}
 
