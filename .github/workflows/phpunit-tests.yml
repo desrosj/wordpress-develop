@@ -121,13 +121,13 @@ jobs:
   # - Reports test results to the Distributed Hosting Tests.
   # - todo: Configure Slack notifications for failing tests.
   test-php:
-    name: ${{ matrix.php }}${{ matrix.memcached && ' with memcached' || '' }} on ${{ matrix.os }}
+    name: ${{ matrix.php }}/${{ matrix.mysql }}${{ matrix.memcached && ' with memcached' || '' }} on ${{ matrix.os }}
     needs: setup-wordpress
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         php: [ '8.0', '7.4', '7.3', '7.2', '7.1', '7.0', '5.6.20' ]
-        mysql: [ '5.5', '5.6', '5.7', '8.0' ]
+        mysql: [ '5.6', '5.7', '8.0' ]
         os: [ ubuntu-latest ]
         memcached: [ false ]
         include:
