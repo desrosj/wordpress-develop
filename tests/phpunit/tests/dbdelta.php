@@ -707,7 +707,7 @@ class Tests_dbDelta extends WP_UnitTestCase {
 	 */
 	function test_wp_get_db_schema_does_no_alter_queries_on_existing_install() {
 		$updates = dbDelta( wp_get_db_schema() );
-		var_dump( $updates );
+
 		$this->assertEmpty( $updates );
 	}
 
