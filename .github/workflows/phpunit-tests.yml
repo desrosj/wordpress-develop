@@ -118,7 +118,7 @@ jobs:
   # - Reports test results to the Distributed Hosting Tests.
   # - todo: Configure Slack notifications for failing tests.
   test-php-mysql:
-    name: ${{ matrix.php }}/${{ matrix.mysql }}${{ matrix.memcached && ' with memcached' || '' }} on ${{ matrix.os }}
+    name: ${{ matrix.php }}/MySQL ${{ matrix.mysql }}${{ matrix.memcached && ' with memcached' || '' }} on ${{ matrix.os }}
     needs: setup-wordpress
     runs-on: ${{ matrix.os }}
     strategy:
@@ -282,7 +282,7 @@ jobs:
         # run: docker-compose run --rm -e WPT_REPORT_API_KEY -e WPT_PREPARE_DIR=/var/www -e WPT_TEST_DIR=/var/www php php test-runner/report.php
 
   test-php-mariadb:
-    name: ${{ matrix.php }}/${{ matrix.mysql }}${{ matrix.memcached && ' with memcached' || '' }} on ${{ matrix.os }}
+    name: ${{ matrix.php }}/MariaDB ${{ matrix.mysql }}${{ matrix.memcached && ' with memcached' || '' }} on ${{ matrix.os }}
     needs: setup-wordpress
     runs-on: ${{ matrix.os }}
     strategy:
