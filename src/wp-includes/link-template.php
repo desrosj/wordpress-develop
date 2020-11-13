@@ -420,6 +420,17 @@ function get_attachment_link( $post = null, $leavename = false ) {
 		$parent = false;
 	}
 
+	if ( $parent ) {
+		$parent_status_obj = get_post_status_object( get_post_status( $post->post_parent ) );
+		if (
+			! is_post_type_viewable( get_post_type( $post->post_parent ) ) ||
+			$parent_status_obj->internal ||
+			$parent_status_obj->protected
+		) {
+			$parent = false;
+		}
+	}
+
 	if ( $wp_rewrite->using_permalinks() && $parent ) {
 		if ( 'page' === $parent->post_type ) {
 			$parentlink = _get_page_link( $post->post_parent ); // Ignores page_on_front.
@@ -452,6 +463,8 @@ function get_attachment_link( $post = null, $leavename = false ) {
 	 * Filters the permalink for an attachment.
 	 *
 	 * @since 2.0.0
+	 * @since 5.6.0 Providing an empty string will now disable
+	 *              the view attachment page link on the media modal.
 	 *
 	 * @param string $link    The attachment's permalink.
 	 * @param int    $post_id Attachment ID.

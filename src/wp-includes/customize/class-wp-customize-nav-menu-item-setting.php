@@ -664,7 +664,7 @@ class WP_Customize_Nav_Menu_Item_Setting extends WP_Customize_Setting {
 			return null;
 		}
 
-		$default                     = array(
+		$default           = array(
 			'object_id'        => 0,
 			'object'           => '',
 			'menu_item_parent' => 0,
