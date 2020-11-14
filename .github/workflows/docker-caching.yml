@@ -110,6 +110,9 @@ jobs:
       - name: Log running Docker containers
         run: docker ps -a
 
+      - name: Log running Docker containers
+        run: docker images
+
       - name: WordPress Docker container debug information
         run: |
           docker-compose run --rm mysql mysql --version
