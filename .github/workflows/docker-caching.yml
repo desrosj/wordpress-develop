@@ -1,4 +1,4 @@
-name: PHPUnit Tests
+name: Cache Docker Layers
 
 on:
   push:
@@ -25,9 +25,8 @@ jobs:
   # - Builds WordPress to run from the `build` directory.
   # - Creates a ZIP file of compiled WordPress.
   # - Uploads ZIP file as an artifact.
-  setup-wordpress:
+  cache-docker-layers:
     name: ${{ matrix.php }}${{ matrix.memcached && ' with memcached' || '' }} on ${{ matrix.os }}
-    needs: setup-wordpress
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
