@@ -91,14 +91,6 @@ jobs:
           echo "PHP_FPM_UID=$(id -u)" >> $GITHUB_ENV
           echo "PHP_FPM_GID=$(id -g)" >> $GITHUB_ENV
 
-      - name: Docker debug information
-        run: |
-          docker -v
-          docker-compose -v
-
-      - name: Pull Docker images
-        run: npm run env:pull
-
       - name: General debug information
         run: |
           npm --version
@@ -107,11 +99,26 @@ jobs:
           git --version
           svn --version
 
+      - name: Docker debug information
+        run: |
+          docker -v
+          docker-compose -v
+
+      - name: Pull Docker images
+        run: npm run env:pull
+
       - name: Log running Docker containers
         run: docker ps -a
 
       - name: Log Docker images
-        run: docker images --filter "dangling=true"
+        run: docker images
+
+      - name: Cache Docker layers
+        uses: satackey/action-docker-layer-caching@v0.0.8
+        with:
+          key: docker-cache-${{ matrix.os }}-${{ matrix.php }}
+          restore-keys: |
+            foo-docker-cache-${{ matrix.os }}-${{ matrix.php }}
 
       - name: WordPress Docker container debug information
         run: |
