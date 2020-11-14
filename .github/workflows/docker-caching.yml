@@ -103,6 +103,7 @@ jobs:
         run: |
           docker -v
           docker-compose -v
+          docker info
 
       - name: Pull Docker images
         run: npm run env:pull
