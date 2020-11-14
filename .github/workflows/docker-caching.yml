@@ -123,6 +123,7 @@ jobs:
 
       - name: Cache Docker layers
         uses: satackey/action-docker-layer-caching@v0.0.8
+        continue-on-error: true
         with:
           key: docker-cache-${{ matrix.os }}-${{ matrix.php }}
           restore-keys: |
