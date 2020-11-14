@@ -85,10 +85,10 @@ jobs:
 
       - name: Cache packagelock.txt
         uses: actions/cache@v2
-          id: wp-packagelock
-          with:
-            path: packagelock.txt
-            key: ${{ runner.os }}-${{ hashFile('packagelock.txt') }}
+        id: wp-packagelock
+        with:
+          path: packagelock.txt
+          key: ${{ runner.os }}-${{ hashFile('packagelock.txt') }}
 
       - name: Install Dependencies
         run: npx install-changed --install-command="npm ci"
