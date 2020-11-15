@@ -123,6 +123,7 @@ jobs:
       - name: Log running Docker containers
         run: docker ps -a
 
+
       - name: Log Docker images
         run: docker images
 
