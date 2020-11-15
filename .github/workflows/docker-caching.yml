@@ -90,7 +90,9 @@ jobs:
           path: packagelock.txt
           key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-packagelock
 
-
+      - name: Display files
+        run: ls
+        
       - name: Install Dependencies
         run: npx install-changed --install-command="npm ci"
 
