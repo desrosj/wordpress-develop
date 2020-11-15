@@ -89,8 +89,9 @@ jobs:
         if: steps.nodejs-cache.outputs.cache-hit == 'true'
         id: wp-packagelock
         with:
-          path: packagelock.txt
-          key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-packagelock
+          path: |
+            **/packagelock.txt
+          key: ${{ runner.os }}-500-packagelock
 
       - name: Display files
         run: ls
