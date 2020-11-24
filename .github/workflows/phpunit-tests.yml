@@ -35,7 +35,7 @@ jobs:
   setup-wordpress:
     name: Setup WordPress
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
+    if: ${{ github.repository == 'WordPress/wordpress-develop' || secrets.WP_PHP_TESTS }}
 
     steps:
       - name: Cancel previous runs of this workflow (pull requests only)
@@ -179,11 +179,11 @@ jobs:
 
       - name: Get composer cache directory
         id: composer-cache
-        if: ${{ env.COMPOSER_INSTALL == true || env.LOCAL_PHP == '8.0-fpm' }}
+        if: ${{ env.COMPOSER_INSTALL == true || secrets.LOCAL_PHP == '8.0-fpm' }}
         run: echo "::set-output name=dir::$(composer config cache-files-dir)"
 
       - name: Cache Composer dependencies
-        if: ${{ env.COMPOSER_INSTALL == true || env.LOCAL_PHP == '8.0-fpm' }}
+        if: ${{ env.COMPOSER_INSTALL == true || secrets.LOCAL_PHP == '8.0-fpm' }}
         uses: actions/cache@v2
         env:
           cache-name: cache-composer-dependencies
@@ -194,7 +194,7 @@ jobs:
             ${{ runner.os }}-composer-
 
       - name: Install Composer dependencies
-        if: ${{ env.COMPOSER_INSTALL == true || env.LOCAL_PHP == '8.0-fpm' }}
+        if: ${{ env.COMPOSER_INSTALL == true || secrets.LOCAL_PHP == '8.0-fpm' }}
         run: |
           docker-compose run --rm php composer --version
 

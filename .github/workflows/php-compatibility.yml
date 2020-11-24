@@ -27,7 +27,7 @@ jobs:
   php-comatibility:
     name: Check PHP compatibility
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
+    if: ${{ github.repository == 'WordPress/wordpress-develop' || secrets.WP_PHP_COMPAT }}
 
     steps:
       - name: Checkout repository
