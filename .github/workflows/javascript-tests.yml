@@ -9,7 +9,6 @@ on:
 
 env:
   WP_JS_TESTS: ${{ secrets.WP_JS_TESTS }}
-  TEST_ENV_VAR: "test"
 
 jobs:
   # Runs the QUnit tests for WordPress.
@@ -27,7 +26,7 @@ jobs:
   test-js:
     name: QUnit Tests
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || 'test' == env.TEST_ENV_VAR }}
+    if: ${{ github.repository == 'WordPress/wordpress-develop' || WP_JS_TESTS }}
 
     steps:
       - name: Cancel previous runs of this workflow (pull requests only)

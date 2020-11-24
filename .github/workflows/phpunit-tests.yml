@@ -11,6 +11,7 @@ on:
     - cron: '0 0 * * 0'
 
 env:
+  WP_PHP_TESTS: ${{ secrets.WP_PHP_TESTS }}
   LOCAL_DIR: build
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}
   COMPOSER_INSTALL: ${{ false }}
@@ -35,7 +36,7 @@ jobs:
   setup-wordpress:
     name: Setup WordPress
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || secrets.WP_PHP_TESTS }}
+    if: ${{ github.repository == 'WordPress/wordpress-develop' || env.WP_PHP_TESTS }}
 
     steps:
       - name: Cancel previous runs of this workflow (pull requests only)
