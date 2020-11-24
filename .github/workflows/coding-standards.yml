@@ -37,7 +37,7 @@ jobs:
       WP_CODING_STANDARDS: ${{ secrets.WP_CODING_STANDARDS }}
       WP_CODING_STANDARDS_PR: ${{ secrets.WP_CODING_STANDARDS_PR }}
 
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || env.WP_GHA_FORK || env.WP_CODING_STANDARDS || ( github.event_name == 'pull_request' && env.WP_CODING_STANDARDS_PR ) }}
+    if: ${{ github.repository == 'WordPress/wordpress-develop' || WP_GHA_FORK || WP_CODING_STANDARDS || ( github.event_name == 'pull_request' && WP_CODING_STANDARDS_PR ) }}
 
     steps:
       - name: Checkout repository
