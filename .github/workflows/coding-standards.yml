@@ -91,7 +91,7 @@ jobs:
   jshint:
     name: JavaScript coding standards
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || env.WP_CODING_STANDARDS }}
+    if: ${{ github.repository == 'WordPress/wordpress-develop' || env.WP_CODING_STANDARDS || ( github.event_name == 'pull_request' && env.WP_CODING_STANDARDS_PR ) }}
     env:
       PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}
 
