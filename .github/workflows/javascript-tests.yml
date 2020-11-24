@@ -7,10 +7,6 @@ on:
       - '*.*'
   pull_request:
 
-env:
-  WP_JS_TESTS: ${{ secrets.WP_JS_TESTS }}
-  WP_JS_TESTS_PR: ${{ secrets.WP_JS_TESTS_PR }}
-
 jobs:
   # Runs the QUnit tests for WordPress.
   #
@@ -27,6 +23,10 @@ jobs:
   test-js:
     name: QUnit Tests
     runs-on: ubuntu-latest
+    env:
+      WP_JS_TESTS: ${{ secrets.WP_JS_TESTS }}
+      WP_JS_TESTS_PR: ${{ secrets.WP_JS_TESTS_PR }}
+
     if: ${{ github.repository == 'WordPress/wordpress-develop' || WP_JS_TESTS || ( github.event_name == 'pull_request' && env.WP_JS_TESTS_PR ) }}
 
     steps:
