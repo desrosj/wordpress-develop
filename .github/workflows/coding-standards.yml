@@ -11,6 +11,7 @@ on:
 
 env:
   WP_CODING_STANDARDS: ${{ secrets.WP_CODING_STANDARDS }}
+  WP_CODING_STANDARDS_PR: ${{ secrets.WP_CODING_STANDARDS_PR }}
 
 jobs:
   # Runs PHP coding standards checks.
@@ -30,7 +31,7 @@ jobs:
   phpcs:
     name: PHP coding standards
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || env.WP_CODING_STANDARDS }}
+    if: ${{ github.repository == 'WordPress/wordpress-develop' || env.WP_CODING_STANDARDS || ( github.event_name == 'pull_request' && env.WP_CODING_STANDARDS_PR ) }}
 
     steps:
       - name: Checkout repository
