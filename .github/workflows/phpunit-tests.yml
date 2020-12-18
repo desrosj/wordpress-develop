@@ -132,18 +132,38 @@ jobs:
         php: [ '8.0', '7.4', '7.3', '7.2', '7.1', '7.0', '5.6.20' ]
         os: [ ubuntu-latest ]
         memcached: [ false ]
+        db_type: [ 'mysql' ]
+        db_version: [ '5.7' ]
         include:
           # Include job for PHP 7.4 with memcached.
           - php: '7.4'
             os: ubuntu-latest
             memcached: true
+            db_type: 'mysql'
+            db_version: '5.7'
+          # Test latest PHP on MariaB latest.
+          - php: '8.0'
+            os: ubuntu-latest
+            memcached: false
+            db_type: 'mariadb'
+            db_version: 'latest'
+          # Test oldest supported PHP with MariaDB
+          - php: '5.6.20'
+            os: ubuntu-latest
+            memcached: false
+            db_type: 'mariadb'
+            db_version: '10.1'
           # Report the results of the PHP 7.4 without memcached job.
           - php: '7.4'
             os: ubuntu-latest
             memcached: false
+            db_type: 'mysql'
+            db_version: '5.7'
             report: true
     env:
       LOCAL_PHP: ${{ matrix.php }}-fpm
+      LOCAL_DB_TYPE: ${{ matrix.db_type }}
+      LOCAL_DB_VERSION: ${{ matrix.db_version }}
       LOCAL_PHP_MEMCACHED: ${{ matrix.memcached }}
 
     steps:
