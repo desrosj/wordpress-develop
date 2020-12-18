@@ -17,8 +17,6 @@ env:
   # Controls which NPM script to use for running PHPUnit tests. Options ar `php` and `php-composer`.
   PHPUNIT_SCRIPT: php
   LOCAL_PHP_MEMCACHED: ${{ false }}
-  LOCAL_DB_TYPE: 'mysql'
-  LOCAL_DB_VERSION: '5.7'
 
 jobs:
   # Sets up WordPress for testing or development use.
@@ -134,11 +132,15 @@ jobs:
         php: [ '8.0', '7.4', '7.3', '7.2', '7.1', '7.0', '5.6.20' ]
         os: [ ubuntu-latest ]
         memcached: [ false ]
+        db_type: [ 'mysql' ]
+        db_version: [ '5.7' ]
         include:
           # Include job for PHP 7.4 with memcached.
           - php: '7.4'
             os: ubuntu-latest
             memcached: true
+            db_type: 'mysql'
+            db_version: '5.7'
           # Test latest PHP on MariaB latest.
           - php: '8.0'
             os: ubuntu-latest
@@ -160,6 +162,8 @@ jobs:
             report: true
     env:
       LOCAL_PHP: ${{ matrix.php }}-fpm
+      LOCAL_DB_TYPE: ${{ matrix.db_type }}
+      LOCAL_DB_VERSION: ${{ matrix.db_version }}
       LOCAL_PHP_MEMCACHED: ${{ matrix.memcached }}
 
     steps:
@@ -167,12 +171,6 @@ jobs:
         run: |
           echo "PHP_FPM_UID=$(id -u)" >> $GITHUB_ENV
           echo "PHP_FPM_GID=$(id -g)" >> $GITHUB_ENV
-
-      - name: Specify specific database type and version
-        if: ${{ matrix.db_type != '' && matrix.db_version != '' }}
-        env:
-          LOCAL_DB_TYPE: ${{ matrix.db_type }}
-          LOCAL_DB_VERSION: ${{ matrix.db_version }}
 
       - name: Download the built WordPress artifact
         uses: actions/download-artifact@v2
