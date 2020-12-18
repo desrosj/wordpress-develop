@@ -170,9 +170,9 @@ jobs:
 
       - name: Specify specific database type and version
         if: ${{ matrix.db_type != '' && matrix.db_version != '' }}
-        env:
-          LOCAL_DB_TYPE: ${{ matrix.db_type }}
-          LOCAL_DB_VERSION: ${{ matrix.db_version }}
+        run: |
+          echo "LOCAL_DB_TYPE=${{ matrix.db_type }}" >> $GITHUB_ENV
+          echo "LOCAL_DB_VERSION=${{ matrix.db_version }}" >> $GITHUB_ENV
 
       - name: Download the built WordPress artifact
         uses: actions/download-artifact@v2
