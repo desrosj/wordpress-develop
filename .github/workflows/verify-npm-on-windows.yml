@@ -6,7 +6,9 @@ on:
       - master
       - '3.[7-9]'
       - '[4-9].[0-9]'
+      - '5.5-test'
   pull_request:
+  workflow_dispatch:
 
 env:
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}
