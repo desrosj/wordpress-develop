@@ -9,7 +9,7 @@ on:
       - '5.5-test'
   pull_request:
   repository_dispatch:
-    - test-old-branches
+    types: [ test-old-branches ]
 
 env:
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}

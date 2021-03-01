@@ -14,7 +14,7 @@ on:
       - '[4-9].[0-9]*'
   pull_request:
   repository_dispatch:
-    - test-old-branches
+    types: [ test-old-branches ]
 
 jobs:
   # Runs PHP coding standards checks.
