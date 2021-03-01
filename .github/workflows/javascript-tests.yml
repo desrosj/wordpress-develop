@@ -12,7 +12,8 @@ on:
       - '3.[89]*'
       - '[4-9].[0-9]*'
   pull_request:
-  workflow_dispatch:
+  repository_dispatch:
+    - test-old-branches
 
 jobs:
   # Runs the QUnit tests for WordPress.

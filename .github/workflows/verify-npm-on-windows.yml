@@ -8,7 +8,8 @@ on:
       - '[4-9].[0-9]'
       - '5.5-test'
   pull_request:
-  workflow_dispatch:
+  repository_dispatch:
+    - test-old-branches
 
 env:
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}

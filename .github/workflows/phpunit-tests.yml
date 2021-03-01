@@ -11,7 +11,8 @@ on:
       - '3.[7-9]*'
       - '[4-9].[0-9]*'
   pull_request:
-  workflow_dispatch:
+  repository_dispatch:
+    - test-old-branches
   # Once weekly On Sundays at 00:00 UTC.
   schedule:
     - cron: '0 0 * * 0'

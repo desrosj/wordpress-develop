@@ -12,7 +12,8 @@ on:
       - '5.[5-9]*'
       - '[6-9].[0-9]*'
   pull_request:
-  workflow_dispatch:
+  repository_dispatch:
+    - test-old-branches
 
 jobs:
 
