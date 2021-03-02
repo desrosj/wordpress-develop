@@ -37,5 +37,5 @@ jobs:
               'WordPress',
               'wordpress-develop',
               '${{ matrix.workflow }}',
-              '${{ matrix.branch }}',
+              '${{ matrix.branch }}'
             });
