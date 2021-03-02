@@ -13,8 +13,7 @@ on:
       - '3.[89]*'
       - '[4-9].[0-9]*'
   pull_request:
-  repository_dispatch:
-    types: [ test-old-branches ]
+  workflow_dispatch:
 
 jobs:
   # Runs PHP coding standards checks.
