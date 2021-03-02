@@ -28,7 +28,7 @@ jobs:
 #        ]
         branch: [ '5.5-test' ]
     steps:
-      - name: Dispatch workflow run (manually with cURL)
+      - name: Dispatch workflow run
         uses: actions/github-script@v3
         with:
           github-token: ${{ secrets.GHA_OLD_BRANCH_DISPATCH }}
