@@ -36,6 +36,6 @@ jobs:
             github.actions.createWorkflowDispatch({
               'WordPress',
               'wordpress-develop',
-              '${{ mtrix.workflow }}',
+              '${{ matrix.workflow }}',
               '${{ matrix.branch }}',
             });
