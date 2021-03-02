@@ -9,7 +9,7 @@ on:
 
 jobs:
   dispatch-workflows:
-    name:
+    name: ${{ matrix.branch }} - ${{ matrix.workflow }}
     runs-on: ubuntu-latest
     env:
       TOKEN: ${{ secrets.GHA_OLD_BRANCH_DISPATCH }}
@@ -24,12 +24,12 @@ jobs:
           'phpunit-tests.yml',
           'verify-npm-on-windows.yml'
         ]
-        branch: [
-           '5.7', '5.6', '5.5-test', '5.4', '5.3', '5.2', '5.1', '5.0',
-           '4.9', '4.8', '4.7', '4.6', '4.5', '4.4', '4.3', '4.2', '4.1', '4.0',
-           '3.9', '3.8', '3.7'
-        ]
-#        branch: [ '5.5-test' ]
+#        branch: [
+#           '5.7', '5.6', '5.5-test', '5.4', '5.3', '5.2', '5.1', '5.0',
+#           '4.9', '4.8', '4.7', '4.6', '4.5', '4.4', '4.3', '4.2', '4.1', '4.0',
+#           '3.9', '3.8', '3.7'
+#        ]
+        branch: [ '5.5-test' ]
     steps:
       - name: Dispatch workflow run (manually with cURL)
         run: |
