@@ -16,6 +16,7 @@ on:
       - master
       - '3.[89]'
       - '[4-9].[0-9]'
+      - 'trac/*'
     paths:
       # Any change to a PHP or JavaScript file should run checks.
       - '**.js'
