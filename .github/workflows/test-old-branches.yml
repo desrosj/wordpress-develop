@@ -36,6 +36,6 @@ jobs:
             github.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: ${{ matrix.workflow }},
-              ref: ${{ matrix.branch }}
+              workflow_id: '${{ matrix.workflow }}',
+              ref: '${{ matrix.branch }}'
             });
