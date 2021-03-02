@@ -1,7 +1,7 @@
 # Welcome to WordPress Development!
 
 For the in-depth documentation, please visit the [Contributor Handbook](https://make.wordpress.org/core/handbook/contribute/).
-
+Test
 **Core WordPress Development does not occur on GitHub; however, pull requests are accepted as long as there is a corresponding [Trac](https://core.trac.wordpress.org) ticket.**
 
 For WordPress Block Editor development, please see the [Gutenberg GitHub repository](https://github.com/wordpress/gutenberg/).
