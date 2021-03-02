@@ -30,7 +30,7 @@ on:
       # Configures PHPCS.
       - 'phpcs.xml.dist'
       # Changes to workflow files should always verify all workflows are successful.
-      - '.github/workflows/*.yml'
+#      - '.github/workflows/*.yml'
 
 jobs:
   # Runs PHP coding standards checks.
