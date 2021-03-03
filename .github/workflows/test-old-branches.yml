@@ -37,5 +37,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: '${{ matrix.workflow }}',
-              ref: '${{ matrix.branch }}'
+              ref: 'refs/heads/${{ matrix.branch }}'
             });
