@@ -1,4 +1,4 @@
-name: Coding Standards${{ github.event_name == 'workflow_dispatch' && ' (${{ github.ref }})' || '' }}
+name: Coding Standards
 
 on:
   push:
