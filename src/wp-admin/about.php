@@ -23,7 +23,7 @@ require_once ABSPATH . 'wp-admin/admin-header.php';
 
 		<div class="about__header">
 			<div class="about__header-image">
-				<img alt="<?php _e( 'Code is Poetry' ); ?>" src="images/about-badge.svg" />
+				<img alt="<?php _e( 'Code is Poetry' ); ?>" src="<?php echo admin_url( 'images/about-badge.svg' ); ?>" />
 			</div>
 
 			<div class="about__header-title">
@@ -58,11 +58,7 @@ require_once ABSPATH . 'wp-admin/admin-header.php';
 				</h1>
 				<p>
 					<?php
-					printf(
-						/* translators: %s: The current WordPress version number. */
-						__( 'With this new version, the editor cleans up the colors and helps you work in a few places you couldn’t before—at least, not without getting into code or hiring a pro. The controls you use most, like changing type sizes, are in more places—right where you need them. And layout changes that should be simple, like full-height images, get even simpler to make.' ),
-						$display_version
-					);
+					_e( 'With this new version, WordPress brings you fresh colors. The editor helps you work in a few places you couldn’t before—at least, not without getting into code or hiring a pro. The controls you use most, like changing font sizes, are in more places—right where you need them. And layout changes that should be simple, like full-height images, are even simpler to make.' );
 					?>
 				</p>
 			</div>
@@ -94,7 +90,7 @@ require_once ABSPATH . 'wp-admin/admin-header.php';
 			<div class="column about__image">
 				<video controls>
 					<source src="https://s.w.org/images/core/5.7/about-57-drag-drop-image.mp4" type="video/mp4" />
-					<source src="https://s.w.org/images/core/5.7/about-57-drag-drop-image.mp4" type="video/webm" />
+					<source src="https://s.w.org/images/core/5.7/about-57-drag-drop-image.webm" type="video/webm" />
 				</video>
 			</div>
 		</div>
@@ -111,7 +107,7 @@ require_once ABSPATH . 'wp-admin/admin-header.php';
 				</p>
 				<p>
 					<?php
-					_e( '<strong>Buttons block:</strong> now you can align the content in buttons vertically. And you can set the width of a button to a preset percentage.' );
+					_e( '<strong>Buttons block:</strong> now you can choose a vertical or a horizontal layout. And you can set the width of a button to a preset percentage.' );
 					?>
 				</p>
 				<p>
@@ -183,8 +179,8 @@ require_once ABSPATH . 'wp-admin/admin-header.php';
 		<div class="about__section has-subtle-background-color">
 			<div class="column about__image">
 				<picture>
-					<source media="(max-width: 600px)" srcset="images/about-color-palette-vert.svg" />
-					<img alt="" src="images/about-color-palette.svg" />
+					<source media="(max-width: 600px)" srcset="<?php echo admin_url( 'images/about-color-palette-vert.svg' ); ?>" />
+					<img alt="" src="<?php echo admin_url( 'images/about-color-palette.svg' ); ?>" />
 				</picture>
 			</div>
 		</div>
@@ -243,7 +239,7 @@ require_once ABSPATH . 'wp-admin/admin-header.php';
 <?php require_once ABSPATH . 'wp-admin/admin-footer.php'; ?>
 
 <script>
-	wp.domReady( function() {
+	window.addEventListener( 'load', function() {
 		var createElement = wp.element.createElement;
 		var Fragment = wp.element.Fragment;
 		var render = wp.element.render;
