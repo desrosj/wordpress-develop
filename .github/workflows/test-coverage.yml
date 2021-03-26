@@ -18,6 +18,7 @@ env:
   LOCAL_PHP_XDEBUG: true
   LOCAL_PHP_MEMCACHED: ${{ false }}
 
+
 jobs:
   # Sets up WordPress for testing or development use.
   #
