@@ -18,7 +18,6 @@ env:
   LOCAL_PHP_XDEBUG: true
   LOCAL_PHP_MEMCACHED: ${{ false }}
 
-
 jobs:
   # Sets up WordPress for testing or development use.
   #
@@ -46,7 +45,9 @@ jobs:
     runs-on: ubuntu-latest
 #    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
     strategy:
-      multisite: [ false, true ]
+      fail-fast: false
+      matrix:
+        multisite: [ false, true ]
 
     steps:
       - name: Configure environment variables
