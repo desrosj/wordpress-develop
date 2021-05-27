@@ -334,6 +334,19 @@ function wp_is_maintenance_mode() {
 }
 
 /**
+ * Get the time elapsed so far during this PHP script.
+ *
+ * Uses REQUEST_TIME_FLOAT that appeared in PHP 5.4.0.
+ *
+ * @since 5.8.0
+ *
+ * @return float Seconds since the PHP script started.
+ */
+function timer_float() {
+	return microtime( true ) - $_SERVER['REQUEST_TIME_FLOAT'];
+}
+
+/**
  * Start the WordPress micro-timer.
  *
  * @since 0.71
@@ -416,6 +429,24 @@ function wp_debug_mode() {
 	 * non-web run-times. Returning false causes the `WP_DEBUG` and related
 	 * constants to not be checked and the default PHP values for errors
 	 * will be used unless you take care to update them yourself.
+	 *
+	 * To use this filter you must define a `$wp_filter` global before
+	 * WordPress loads, usually in `wp-config.php`.
+	 *
+	 * Example:
+	 *
+	 *     $GLOBALS['wp_filter'] = array(
+	 *         'enable_wp_debug_mode_checks' => array(
+	 *             10 => array(
+	 *                 array(
+	 *                     'accepted_args' => 0,
+	 *                     'function'      => function() {
+	 *                         return false;
+	 *                     },
+	 *                 ),
+	 *             ),
+	 *         ),
+	 *     );
 	 *
 	 * @since 4.6.0
 	 *
@@ -919,6 +950,8 @@ function wp_is_recovery_mode() {
  * Determines whether we are currently on an endpoint that should be protected against WSODs.
  *
  * @since 5.2.0
+ *
+ * @global string $pagenow
  *
  * @return bool True if the current endpoint should be protected.
  */
@@ -1554,7 +1587,7 @@ function wp_start_scraping_edited_file_errors() {
 		echo wp_json_encode(
 			array(
 				'code'    => 'scrape_nonce_failure',
-				'message' => __( 'Scrape nonce check failed. Please try again.' ),
+				'message' => __( 'Scrape key check failed. Please try again.' ),
 			)
 		);
 		echo "###### wp_scraping_result_end:$key ######";
@@ -1684,4 +1717,48 @@ function wp_is_xml_request() {
 	}
 
 	return false;
+}
+
+/**
+ * Checks if this site is protected by HTTP Basic Auth.
+ *
+ * At the moment, this merely checks for the present of Basic Auth credentials. Therefore, calling
+ * this function with a context different from the current context may give inaccurate results.
+ * In a future release, this evaluation may be made more robust.
+ *
+ * Currently, this is only used by Application Passwords to prevent a conflict since it also utilizes
+ * Basic Auth.
+ *
+ * @since 5.6.1
+ *
+ * @global string $pagenow The current page.
+ *
+ * @param string $context The context to check for protection. Accepts 'login', 'admin', and 'front'.
+ *                        Defaults to the current context.
+ * @return bool Whether the site is protected by Basic Auth.
+ */
+function wp_is_site_protected_by_basic_auth( $context = '' ) {
+	global $pagenow;
+
+	if ( ! $context ) {
+		if ( 'wp-login.php' === $pagenow ) {
+			$context = 'login';
+		} elseif ( is_admin() ) {
+			$context = 'admin';
+		} else {
+			$context = 'front';
+		}
+	}
+
+	$is_protected = ! empty( $_SERVER['PHP_AUTH_USER'] ) || ! empty( $_SERVER['PHP_AUTH_PW'] );
+
+	/**
+	 * Filters whether a site is protected by HTTP Basic Auth.
+	 *
+	 * @since 5.6.1
+	 *
+	 * @param bool $is_protected Whether the site is protected by Basic Auth.
+	 * @param string $context    The context to check for protection. One of 'login', 'admin', or 'front'.
+	 */
+	return apply_filters( 'wp_is_site_protected_by_basic_auth', $is_protected, $context );
 }

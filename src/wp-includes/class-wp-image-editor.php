@@ -64,7 +64,7 @@ abstract class WP_Image_Editor {
 	 * @since 3.5.0
 	 * @abstract
 	 *
-	 * @return bool|WP_Error True if loaded; WP_Error on failure.
+	 * @return true|WP_Error True if loaded; WP_Error on failure.
 	 */
 	abstract public function load();
 
@@ -93,7 +93,7 @@ abstract class WP_Image_Editor {
 	 * @param int|null $max_w Image width.
 	 * @param int|null $max_h Image height.
 	 * @param bool     $crop
-	 * @return bool|WP_Error
+	 * @return true|WP_Error
 	 */
 	abstract public function resize( $max_w, $max_h, $crop = false );
 
@@ -129,7 +129,7 @@ abstract class WP_Image_Editor {
 	 * @param int  $dst_w   Optional. The destination width.
 	 * @param int  $dst_h   Optional. The destination height.
 	 * @param bool $src_abs Optional. If the source crop points are absolute.
-	 * @return bool|WP_Error
+	 * @return true|WP_Error
 	 */
 	abstract public function crop( $src_x, $src_y, $src_w, $src_h, $dst_w = null, $dst_h = null, $src_abs = false );
 
@@ -140,7 +140,7 @@ abstract class WP_Image_Editor {
 	 * @abstract
 	 *
 	 * @param float $angle
-	 * @return bool|WP_Error
+	 * @return true|WP_Error
 	 */
 	abstract public function rotate( $angle );
 
@@ -152,7 +152,7 @@ abstract class WP_Image_Editor {
 	 *
 	 * @param bool $horz Flip along Horizontal Axis
 	 * @param bool $vert Flip along Vertical Axis
-	 * @return bool|WP_Error
+	 * @return true|WP_Error
 	 */
 	abstract public function flip( $horz, $vert );
 
@@ -163,7 +163,7 @@ abstract class WP_Image_Editor {
 	 * @abstract
 	 *
 	 * @param string $mime_type The mime type of the image.
-	 * @return bool|WP_Error True on success, WP_Error object or false on failure.
+	 * @return true|WP_Error True on success, WP_Error object on failure.
 	 */
 	abstract public function stream( $mime_type = null );
 
@@ -314,6 +314,36 @@ abstract class WP_Image_Editor {
 		if ( ! $mime_type || ( $file_mime == $mime_type ) ) {
 			$mime_type = $file_mime;
 			$new_ext   = $file_ext;
+		}
+
+		/**
+		 * Filters the image editor output format mapping.
+		 *
+		 * Enables filtering the mime type used to save images. By default,
+		 * the mapping array is empty, so the mime type matches the source image.
+		 *
+		 * @see WP_Image_Editor::get_output_format()
+		 *
+		 * @since 5.8.0
+		 *
+		 * @param array $output_format {
+		 *     An array of mime type mappings. Maps a source mime type to a new
+		 *     destination mime type. Default empty array.
+		 *
+		 *     @type array $mime_type The source mime type {
+		 *         @type string $mime_type The new mime type.
+		 *     }
+		 * @param string $filename  Path to the image.
+		 * @param string $mime_type The source image mime type.
+		 * }
+		 */
+		$output_format = apply_filters( 'image_editor_output_format', array(), $filename, $mime_type );
+
+		if ( isset( $output_format[ $mime_type ] )
+			&& $this->supports_mime_type( $output_format[ $mime_type ] )
+		) {
+			$mime_type = $output_format[ $mime_type ];
+			$new_ext   = $this->get_extension( $mime_type );
 		}
 
 		// Double-check that the mime-type selected is supported by the editor.

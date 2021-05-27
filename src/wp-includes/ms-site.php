@@ -668,7 +668,7 @@ function wp_validate_site_data( $errors, $data, $old_site = null ) {
  *     @type array  $meta    Custom site metadata $key => $value pairs to use.
  *                           Default empty array.
  * }
- * @return bool|WP_Error True on success, or error object on failure.
+ * @return true|WP_Error True on success, or error object on failure.
  */
 function wp_initialize_site( $site_id, array $args = array() ) {
 	global $wpdb, $wp_roles;
@@ -799,7 +799,7 @@ function wp_initialize_site( $site_id, array $args = array() ) {
  * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param int|WP_Site $site_id Site ID or object.
- * @return bool|WP_Error True on success, or error object on failure.
+ * @return true|WP_Error True on success, or error object on failure.
  */
 function wp_uninitialize_site( $site_id ) {
 	global $wpdb;
@@ -1084,10 +1084,12 @@ function delete_site_meta( $site_id, $meta_key, $meta_value = '' ) {
  * @param string $key     Optional. The meta key to retrieve. By default,
  *                        returns data for all keys. Default empty.
  * @param bool   $single  Optional. Whether to return a single value.
- *                        This parameter has no effect if $key is not specified.
+ *                        This parameter has no effect if `$key` is not specified.
  *                        Default false.
- * @return mixed An array if $single is false. The value of meta data field
- *               if $single is true. False for an invalid $site_id.
+ * @return mixed An array of values if `$single` is false.
+ *               The value of meta data field if `$single` is true.
+ *               False for an invalid `$site_id` (non-numeric, zero, or negative value).
+ *               An empty string if a valid but non-existing site ID is passed.
  */
 function get_site_meta( $site_id, $key = '', $single = false ) {
 	return get_metadata( 'blog', $site_id, $key, $single );
