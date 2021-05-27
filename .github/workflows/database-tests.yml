@@ -60,7 +60,7 @@ jobs:
   # - Submit the test results to the WordPress.org host test results.
   # - todo: Configure Slack notifications for failing tests.
   test-mysql:
-    name: ${{ matrix.php }}${{ matrix.multisite && ' multisite' || '' }}${{ matrix.memcached && ' with memcached' || '' }} on ${{ matrix.os }}
+    name: ${{ matrix.php }}${{ matrix.multisite && ' multisite' || '' }}${{ matrix.memcached && ' with memcached' || '' }} with MySQL ${{ matrix.mysql }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
@@ -207,7 +207,7 @@ jobs:
   # - Submit the test results to the WordPress.org host test results.
   # - todo: Configure Slack notifications for failing tests.
   test-mariadb:
-    name: ${{ matrix.php }}${{ matrix.multisite && ' multisite' || '' }}${{ matrix.memcached && ' with memcached' || '' }} on ${{ matrix.os }}
+    name: ${{ matrix.php }}${{ matrix.multisite && ' multisite' || '' }}${{ matrix.memcached && ' with memcached' || '' }} with MariaDB ${{ matrix.mariadb }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
