@@ -99,6 +99,21 @@ jobs:
             memcached: false
             multisite: false
             report: true
+          - php: '8.1'
+            os: ubuntu-latest
+            memcached: false
+            multisite: false
+            experimental: true
+          - php: '8.1'
+            os: ubuntu-latest
+            memcached: false
+            multisite: true
+            experimental: true
+          - php: '8.1'
+            os: ubuntu-latest
+            memcached: true
+            multisite: false
+            experimental: true
     env:
       LOCAL_PHP: ${{ matrix.php }}-fpm
       LOCAL_PHP_MEMCACHED: ${{ matrix.memcached }}
