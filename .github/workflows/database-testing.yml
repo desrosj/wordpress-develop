@@ -57,7 +57,7 @@ jobs:
   # - Ensures version-controlled files are not modified or deleted.
   # - todo: Configure Slack notifications for failing tests.
   mysql-testing:
-    name: MySQL ${{ db }} on ${{ matrix.php }}${{ matrix.db }}${{ matrix.multisite && ' multisite' || '' }}${{ matrix.memcached && ' with memcached' || '' }}
+    name: MySQL ${{ matrix.db }} on ${{ matrix.php }}${{ matrix.multisite && ' multisite' || '' }}${{ matrix.memcached && ' with memcached' || '' }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
@@ -198,7 +198,7 @@ jobs:
   # - Ensures version-controlled files are not modified or deleted.
   # - todo: Configure Slack notifications for failing tests.
   mariadb-testing:
-    name: MariaDB ${{ db }} on ${{ matrix.php }}${{ matrix.db }}${{ matrix.multisite && ' multisite' || '' }}${{ matrix.memcached && ' with memcached' || '' }}
+    name: MariaDB ${{ matrix.db }} on ${{ matrix.php }}${{ matrix.multisite && ' multisite' || '' }}${{ matrix.memcached && ' with memcached' || '' }}
     runs-on: ${{ matrix.os }}
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
