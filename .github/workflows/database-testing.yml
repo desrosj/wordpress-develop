@@ -1,0 +1,319 @@
+name: PHPUnit Tests
+
+on:
+  push:
+    branches:
+      - master
+      - trunk
+      - '3.[7-9]'
+      - '[4-9].[0-9]'
+    tags:
+      - '3.[7-9]*'
+      - '[4-9].[0-9]*'
+  pull_request:
+    branches:
+      - master
+      - trunk
+      - '3.[7-9]'
+      - '[4-9].[0-9]'
+  workflow_dispatch:
+  # Once weekly On Sundays at 00:00 UTC.
+  schedule:
+    - cron: '0 0 * * 0'
+
+# Cancels all previous workflow runs for pull requests that have not completed.
+concurrency:
+  # The concurrency group contains the workflow name and the branch name for pull requests
+  # or the commit hash for any other events.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  cancel-in-progress: true
+
+env:
+  PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}
+  COMPOSER_INSTALL: ${{ false }}
+  # Controls which NPM script to use for running PHPUnit tests. Options ar `php` and `php-composer`.
+  PHPUNIT_SCRIPT: php
+  LOCAL_PHP_MEMCACHED: ${{ false }}
+
+jobs:
+  # Runs the database related PHPUnit tests for WordPress on a wider array of MySQL versions.
+  #
+  # Performs the following steps:
+  # - Set environment variables.
+  # - Sets up the environment variables needed for testing with memcached (if desired).
+  # - Installs NodeJS 14.
+  # - Installs NPM dependencies
+  # - Configures caching for Composer.
+  # - Installs Composer dependencies (if desired).
+  # - Logs Docker debug information (about both the Docker installation within the runner).
+  # - Starts the WordPress Docker container.
+  # - Starts the memcached server after the Docker network has been created (if desired).
+  # - Logs WordPress Docker container debug information.
+  # - Logs debug general information.
+  # - Logs the running Docker containers.
+  # - Logs debug information about what's installed within the WordPress Docker containers.
+  # - Install WordPress within the Docker container.
+  # - Run the database related PHPUnit tests.
+  # - Ensures version-controlled files are not modified or deleted.
+  # - todo: Configure Slack notifications for failing tests.
+  mysql-testing:
+    name: MySQL ${{ db }} on ${{ matrix.php }}${{ matrix.db }}${{ matrix.multisite && ' multisite' || '' }}${{ matrix.memcached && ' with memcached' || '' }}
+    runs-on: ${{ matrix.os }}
+    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '5.6.20', '7.0', '7.1', '7.2', '7.3', '7.4', '8.0' ]
+        os: [ ubuntu-latest ]
+        memcached: [ false ]
+        db: [ '5.6' '8.0' ]
+        multisite: [ false, true ]
+        include:
+          # Include jobs for PHP 7.4 with memcached.
+          - php: '7.4'
+            os: ubuntu-latest
+            memcached: true
+            db: '8.0'
+            multisite: false
+          - php: '7.4'
+            os: ubuntu-latest
+            memcached: true
+            db: '8.0'
+            multisite: true
+    env:
+      LOCAL_PHP: ${{ matrix.php }}-fpm
+      LOCAL_DB_VERSION: ${{ matrix.db }}
+      LOCAL_PHP_MEMCACHED: ${{ matrix.memcached }}
+      PHPUNIT_CONFIG: ${{ matrix.multisite && 'tests/phpunit/multisite.xml' || 'phpunit.xml.dist' }}
+
+    steps:
+      - name: Configure environment variables
+        run: |
+          echo "PHP_FPM_UID=$(id -u)" >> $GITHUB_ENV
+          echo "PHP_FPM_GID=$(id -g)" >> $GITHUB_ENV
+
+      - name: Checkout repository
+        uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f # v2.3.4
+
+      - name: Install NodeJS
+        uses: actions/setup-node@38d90ce44d5275ad62cc48384b3d8a58c500bb5f # v2.2.2
+        with:
+          node-version: 14
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Get composer cache directory
+        id: composer-cache
+        if: ${{ env.COMPOSER_INSTALL == true || env.LOCAL_PHP == '8.0-fpm' }}
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - name: Cache Composer dependencies
+        if: ${{ env.COMPOSER_INSTALL == true || env.LOCAL_PHP == '8.0-fpm' }}
+        uses: actions/cache@26968a09c0ea4f3e233fdddbafd1166051a095f6 # v2.1.4
+        env:
+          cache-name: cache-composer-dependencies
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
+
+      - name: Install Composer dependencies
+        if: ${{ env.COMPOSER_INSTALL == true || env.LOCAL_PHP == '8.0-fpm' }}
+        run: |
+          docker-compose run --rm php composer --version
+
+          # The PHPUnit 7.x phar is not compatible with PHP 8 and won't be updated,
+          # as PHPUnit 7 is no longer supported. The Composer-installed PHPUnit should be
+          # used for PHP 8 testing instead.
+          if [ ${{ env.LOCAL_PHP }} == '8.0-fpm' ]; then
+            docker-compose run --rm php composer install --ignore-platform-reqs
+            echo "PHPUNIT_SCRIPT=php-composer" >> $GITHUB_ENV
+          else
+            docker-compose run --rm php composer install
+          fi
+
+      - name: Docker debug information
+        run: |
+          docker -v
+          docker-compose -v
+
+      - name: Start Docker environment
+        run: |
+          npm run env:start
+
+      # The memcached server needs to start after the Docker network has been set up with `npm run env:start`.
+      - name: Start the Memcached server.
+        if: ${{ matrix.memcached }}
+        run: |
+          cp tests/phpunit/includes/object-cache.php src/wp-content/object-cache.php
+          docker run --name memcached --net $(basename "$PWD")_wpdevnet -d memcached
+
+      - name: General debug information
+        run: |
+          npm --version
+          node --version
+          curl --version
+          git --version
+          svn --version
+
+      - name: Log running Docker containers
+        run: docker ps -a
+
+      - name: WordPress Docker container debug information
+        run: |
+          docker-compose run --rm mysql mysql --version
+          docker-compose run --rm php php --version
+          docker-compose run --rm php php -m
+          docker-compose run --rm php php -i
+          docker-compose run --rm php locale -a
+
+      - name: Install WordPress
+        run: npm run env:install
+
+      - name: Run Database related tests
+        run: npm run test:${{ env.PHPUNIT_SCRIPT }} -- --verbose -c ${{ env.PHPUNIT_CONFIG }} --group database,schema
+
+      - name: Ensure version-controlled files are not modified or deleted
+        run: git diff --exit-code
+
+  # Runs the database related PHPUnit tests for WordPress.
+  #
+  # Performs the following steps:
+  # - Set environment variables.
+  # - Sets up the environment variables needed for testing with memcached (if desired).
+  # - Installs NodeJS 14.
+  # - Installs NPM dependencies
+  # - Configures caching for Composer.
+  # - Installs Composer dependencies (if desired).
+  # - Logs Docker debug information (about both the Docker installation within the runner).
+  # - Starts the WordPress Docker container.
+  # - Starts the memcached server after the Docker network has been created (if desired).
+  # - Logs WordPress Docker container debug information.
+  # - Logs debug general information.
+  # - Logs the running Docker containers.
+  # - Logs debug information about what's installed within the WordPress Docker containers.
+  # - Install WordPress within the Docker container.
+  # - Run the database related PHPUnit tests.
+  # - Ensures version-controlled files are not modified or deleted.
+  # - todo: Configure Slack notifications for failing tests.
+  mariadb-testing:
+    name: MariaDB ${{ db }} on ${{ matrix.php }}${{ matrix.db }}${{ matrix.multisite && ' multisite' || '' }}${{ matrix.memcached && ' with memcached' || '' }}
+    runs-on: ${{ matrix.os }}
+    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '5.6.20', '7.0', '7.1', '7.2', '7.3', '7.4', '8.0' ]
+        os: [ ubuntu-latest ]
+        memcached: [ false ]
+        db: [ '10.1' '10.2' '10.3' '10.4' '10.5' '10.6' ]
+        multisite: [ false, true ]
+        include:
+          # Include jobs for PHP 7.4 with memcached.
+          - php: '7.4'
+            os: ubuntu-latest
+            memcached: true
+            db: '10.6'
+            multisite: false
+          - php: '7.4'
+            os: ubuntu-latest
+            memcached: true
+            db: '10.6'
+            multisite: true
+    env:
+      LOCAL_PHP: ${{ matrix.php }}-fpm
+      LOCAL_DB_VERSION: ${{ matrix.db }}
+      LOCAL_PHP_MEMCACHED: ${{ matrix.memcached }}
+      PHPUNIT_CONFIG: ${{ matrix.multisite && 'tests/phpunit/multisite.xml' || 'phpunit.xml.dist' }}
+
+    steps:
+      - name: Configure environment variables
+        run: |
+          echo "PHP_FPM_UID=$(id -u)" >> $GITHUB_ENV
+          echo "PHP_FPM_GID=$(id -g)" >> $GITHUB_ENV
+
+      - name: Checkout repository
+        uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f # v2.3.4
+
+      - name: Install NodeJS
+        uses: actions/setup-node@38d90ce44d5275ad62cc48384b3d8a58c500bb5f # v2.2.2
+        with:
+          node-version: 14
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Get composer cache directory
+        id: composer-cache
+        if: ${{ env.COMPOSER_INSTALL == true || env.LOCAL_PHP == '8.0-fpm' }}
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - name: Cache Composer dependencies
+        if: ${{ env.COMPOSER_INSTALL == true || env.LOCAL_PHP == '8.0-fpm' }}
+        uses: actions/cache@26968a09c0ea4f3e233fdddbafd1166051a095f6 # v2.1.4
+        env:
+          cache-name: cache-composer-dependencies
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
+
+      - name: Install Composer dependencies
+        if: ${{ env.COMPOSER_INSTALL == true || env.LOCAL_PHP == '8.0-fpm' }}
+        run: |
+          docker-compose run --rm php composer --version
+
+          # The PHPUnit 7.x phar is not compatible with PHP 8 and won't be updated,
+          # as PHPUnit 7 is no longer supported. The Composer-installed PHPUnit should be
+          # used for PHP 8 testing instead.
+          if [ ${{ env.LOCAL_PHP }} == '8.0-fpm' ]; then
+            docker-compose run --rm php composer install --ignore-platform-reqs
+            echo "PHPUNIT_SCRIPT=php-composer" >> $GITHUB_ENV
+          else
+            docker-compose run --rm php composer install
+          fi
+
+      - name: Docker debug information
+        run: |
+          docker -v
+          docker-compose -v
+
+      - name: Start Docker environment
+        run: |
+          npm run env:start
+
+      # The memcached server needs to start after the Docker network has been set up with `npm run env:start`.
+      - name: Start the Memcached server.
+        if: ${{ matrix.memcached }}
+        run: |
+          cp tests/phpunit/includes/object-cache.php src/wp-content/object-cache.php
+          docker run --name memcached --net $(basename "$PWD")_wpdevnet -d memcached
+
+      - name: General debug information
+        run: |
+          npm --version
+          node --version
+          curl --version
+          git --version
+          svn --version
+
+      - name: Log running Docker containers
+        run: docker ps -a
+
+      - name: WordPress Docker container debug information
+        run: |
+          docker-compose run --rm mysql mysql --version
+          docker-compose run --rm php php --version
+          docker-compose run --rm php php -m
+          docker-compose run --rm php php -i
+          docker-compose run --rm php locale -a
+
+      - name: Install WordPress
+        run: npm run env:install
+
+      - name: Run Database related tests
+        run: npm run test:${{ env.PHPUNIT_SCRIPT }} -- --verbose -c ${{ env.PHPUNIT_CONFIG }} --group database,schema
+
+      - name: Ensure version-controlled files are not modified or deleted
+        run: git diff --exit-code
