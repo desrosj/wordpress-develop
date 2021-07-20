@@ -223,6 +223,7 @@ jobs:
             multisite: true
     env:
       LOCAL_PHP: ${{ matrix.php }}-fpm
+      LOCAL_DB_TYPE: mariadb
       LOCAL_DB_VERSION: ${{ matrix.db }}
       LOCAL_PHP_MEMCACHED: ${{ matrix.memcached }}
       PHPUNIT_CONFIG: ${{ matrix.multisite && 'tests/phpunit/multisite.xml' || 'phpunit.xml.dist' }}
