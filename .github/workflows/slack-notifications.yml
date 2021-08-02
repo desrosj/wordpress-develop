@@ -23,7 +23,7 @@ jobs:
     steps:
       - run: echo ${{ github.sha }}
       - run: echo ${{ github.ref }}
-      - run: echo ${{ toJson( github.event ) }}
+      - run: echo "${{ toJson( github.event ) }}"
 
 
   # Posts workflow status updates to the appropriate Slack channels.
