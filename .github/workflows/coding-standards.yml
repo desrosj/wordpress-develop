@@ -166,7 +166,7 @@ jobs:
         id: previous_workflow
 
       - name: Create payload
-        run: echo "WP_SLACK_PAYLOAD=\"{\"workflow_name\":\"${{ github.workflow }}\",\"branch_or_tag\":\"${{ contains( github.ref, 'branch' ) && 'branch' || 'tag' }}\",\"ref_name\":\"${{ env.BRANCH_NAME }}\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}\"" >> $GITHUB_ENV
+        run: echo "WP_SLACK_PAYLOAD=\"{\"workflow_name\":\"${{ github.workflow }}\",\"branch_or_tag\":\"${{ contains( 'branch', github.ref ) && 'branch' || 'tag' }}\",\"ref_name\":\"${{ env.BRANCH_NAME }}\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}\"" >> $GITHUB_ENV
 
       - name: Post failure notifications to Slack
         uses: slackapi/slack-github-action@d5d276d7ae0f38f29322b80da9baf985cc80f8b1 # v1.15.0
