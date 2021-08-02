@@ -23,7 +23,8 @@ jobs:
     steps:
       - run: echo ${{ github.sha }}
       - run: echo ${{ github.ref }}
-      - run: echo "${{ toJson( github.event ) }}"
+      - run: echo "${{ toJson( github.event.workflow_run ) }}"
+      - run: echo "${{ toJson( github.event.workflow_run.html_url ) }}"
 
 
   # Posts workflow status updates to the appropriate Slack channels.
@@ -31,7 +32,7 @@ jobs:
   prepare:
     name: Prepare notifications
     runs-on: ubuntu-latest
-    if: ${{ always() && github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' }}
+    if: ${{ always() && github.event.workflow_run.conclusion != 'skipped' && ' && github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' }}
 
     steps:
       # This also sets the env.BRANCH_NAME variable.
@@ -40,7 +41,7 @@ jobs:
         id: previous_workflow
 
       - name: Create payload
-        run: echo "WP_SLACK_PAYLOAD=\"{\"workflow_name\":\"${{ github.workflow }}\",\"branch_or_tag\":\"${{ startsWith( github.ref, 'refs/heads' ) && 'branch' || 'tag' }}\",\"ref_name\":\"${{ env.BRANCH_NAME }}\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}\"" >> $GITHUB_ENV
+        run: echo "WP_SLACK_PAYLOAD=\"{\"workflow_name\":\"${{ github.workflow }}\",\"branch_or_tag\":\"${{ startsWith( github.ref, 'refs/heads' ) && 'branch' || 'tag' }}\",\"ref_name\":\"${{ env.BRANCH_NAME }}\",\"run_url\":\"${{ github.event.workflow_run.html_url }}\"}\"" >> $GITHUB_ENV
 
 
   failure:
