@@ -32,7 +32,7 @@ jobs:
   prepare:
     name: Prepare notifications
     runs-on: ubuntu-latest
-    if: ${{ always() && github.event.workflow_run.conclusion != 'skipped' && ' && github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' }}
+    if: ${{ always() && github.event.workflow_run.conclusion != 'skipped' && github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' }}
 
     steps:
       # This also sets the env.BRANCH_NAME variable.
