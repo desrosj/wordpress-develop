@@ -1,0 +1,88 @@
+name: Slack Notifications
+
+on:
+  workflow_run:
+    workflows:
+      - "Code Coverage Report"
+      - "Coding Standards"
+      - "End-to-end Tests"
+      - "JavaScript Tests"
+      - "PHP Compatibility"
+      - "PHPUnit Tests"
+      - "Test NPM"
+      - "Test old branches"
+    types:
+      - completed
+
+jobs:
+  # Posts workflow status updates to the appropriate Slack channels.
+  #
+  prepare:
+    name: Prepare notifications
+    runs-on: ubuntu-latest
+    if: ${{ always() || github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' }}
+
+    steps:
+      # This also sets the env.BRANCH_NAME variable.
+      - name: Check previous workflow run outcome
+        uses: Mercymeilya/last-workflow-status@c746085d8a704757f5281cc0597e30009bcfcb6c # v0.2
+        id: previous_workflow
+
+      - name: Create payload
+        run: echo "WP_SLACK_PAYLOAD=\"{\"workflow_name\":\"${{ github.workflow }}\",\"branch_or_tag\":\"${{ startsWith( github.ref, 'refs/heads' ) && 'branch' || 'tag' }}\",\"ref_name\":\"${{ env.BRANCH_NAME }}\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}\"" >> $GITHUB_ENV
+
+  failure:
+    name: Failure notifications
+    runs-on: ubuntu-latest
+    needs: [ prepare ]
+    if: ${{ failure() }}
+
+    steps:
+      - name: Post failure notifications to Slack
+        uses: slackapi/slack-github-action@d5d276d7ae0f38f29322b80da9baf985cc80f8b1 # v1.15.0
+        with:
+          payload: ${{ env.WP_SLACK_PAYLOAD }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_GHA_FAILURE_WEBHOOK_URL }}
+
+  fixed:
+    name: Fixed notifications
+    runs-on: ubuntu-latest
+    needs: [ prepare ]
+    if: ${{ success() && steps.previous_workflow.outputs.last_status == 'failure' }}
+
+    steps:
+      - name: Post failure notifications to Slack
+        uses: slackapi/slack-github-action@d5d276d7ae0f38f29322b80da9baf985cc80f8b1 # v1.15.0
+        with:
+          payload: ${{ env.WP_SLACK_PAYLOAD }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_GHA_FIXED_WEBHOOK_URL }}
+
+  success:
+    name: Success notifications
+    runs-on: ubuntu-latest
+    needs: [ prepare ]
+    if: ${{ success() }}
+
+    steps:
+      - name: Post failure notifications to Slack
+        uses: slackapi/slack-github-action@d5d276d7ae0f38f29322b80da9baf985cc80f8b1 # v1.15.0
+        with:
+          payload: ${{ env.WP_SLACK_PAYLOAD }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_GHA_SUCCESS_WEBHOOK_URL }}
+
+  cancelled:
+    name: Cancelled notifications
+    runs-on: ubuntu-latest
+    needs: [ prepare ]
+    if: ${{ cancelled() }}
+
+    steps:
+      - name: Post cancelled notifications to Slack
+        uses: slackapi/slack-github-action@d5d276d7ae0f38f29322b80da9baf985cc80f8b1 # v1.15.0
+        with:
+          payload: ${{ env.WP_SLACK_PAYLOAD }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_GHA_CANCELLED_WEBHOOK_URL }}
