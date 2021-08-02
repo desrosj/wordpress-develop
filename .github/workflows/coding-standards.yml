@@ -161,7 +161,7 @@ jobs:
 
     steps:
       - name: Check previous workflow run outcome
-        uses: Mercymeilya/last-workflow-status@vc746085d8a704757f5281cc0597e30009bcfcb6c # v0.2
+        uses: Mercymeilya/last-workflow-status@c746085d8a704757f5281cc0597e30009bcfcb6c # v0.2
         id: previous_workflow
 
       - name: Create payload
