@@ -160,42 +160,41 @@ jobs:
     if: ${{ always() || github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' }}
 
     steps:
-      - name: Post failure notification to Slack
+      - name: Check previous workflow run outcome
+        uses: Mercymeilya/last-workflow-status@vc746085d8a704757f5281cc0597e30009bcfcb6c # v0.2
+        id: previous_workflow
+
+      - name: Create payload
+        run: echo "WP_SLACK_PAYLOAD=\"{\"workflow_name\":\"${{ github.workflow }}\",\"branch_or_tag\":\"${{ contains( github.ref, 'branch' ) && 'branch' || 'tag' }}\",\"ref_name\":\"$($GITHUB_REF | cut -d'/' -f 3)\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}\" >> $GITHUB_ENV
+
+      - name: Post failure notifications to Slack
         uses: slackapi/slack-github-action@d5d276d7ae0f38f29322b80da9baf985cc80f8b1 # v1.15.0
-        if: failure()
         with:
-          payload: "{\"workflow_name\":\"${{ github.workflow }}\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+          payload: ${{ env.WP_SLACK_PAYLOAD }}
+        if: ${{ failure() }}
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_GHA_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_GHA_FAILURE_WEBHOOK_URL }}
 
-      - name: Check for previous failure
-        uses: actions/github-script@47f7cf65b5ced0830a325f705cad64f2f58dddf7 # v3.1.0
-        if: success()
+      - name: Post fixed notifications to Slack
+        uses: slackapi/slack-github-action@d5d276d7ae0f38f29322b80da9baf985cc80f8b1 # v1.15.0
         with:
-          github-token: ${{ secrets.FORK_TEST_TOKEN }}
-          script: |
-            # Retrieve a list of previous commits
-            const commits = await github.request.listCommits({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: github.sha,
-              per_page: 2
-            });
+          payload: ${{ env.WP_SLACK_PAYLOAD }}
+        if: ${{ success() && steps.previous_workflow.outputs.last_status == 'failure' }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_GHA_FIXED_WEBHOOK_URL }}
 
-            const previous_sha = commits[1].sha;
+      - name: Post success notifications to Slack
+        uses: slackapi/slack-github-action@d5d276d7ae0f38f29322b80da9baf985cc80f8b1 # v1.15.0
+        with:
+          payload: ${{ env.WP_SLACK_PAYLOAD }}
+        if: ${{ success() }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_GHA_SUCCESS_WEBHOOK_URL }}
 
-            echo previous_sha;
-
-            const workflow_runs = github.actions.listWorkflowRuns({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'coding-standards.yml',
-              branch: '${{ github.ref }}',
-              per_page: 10
-            });
-
-            echo workflow_runs;
-
-            echo workflow_runs[1].sha;
-
-
+      - name: Post cancelled notifications to Slack
+        uses: slackapi/slack-github-action@d5d276d7ae0f38f29322b80da9baf985cc80f8b1 # v1.15.0
+        with:
+          payload: ${{ env.WP_SLACK_PAYLOAD }}
+        if: ${{ cancelled() }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_GHA_CANCELLED_WEBHOOK_URL }}
