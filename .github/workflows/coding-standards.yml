@@ -160,42 +160,5 @@ jobs:
     if: ${{ always() || github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' }}
 
     steps:
-      # This also sets the env.BRANCH_NAME variable.
-      - name: Check previous workflow run outcome
-        uses: Mercymeilya/last-workflow-status@c746085d8a704757f5281cc0597e30009bcfcb6c # v0.2
-        id: previous_workflow
-
-      - name: Create payload
-        run: echo "WP_SLACK_PAYLOAD=\"{\"workflow_name\":\"${{ github.workflow }}\",\"branch_or_tag\":\"${{ startsWith( github.ref, 'refs/heads' ) && 'branch' || 'tag' }}\",\"ref_name\":\"${{ env.BRANCH_NAME }}\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}\"" >> $GITHUB_ENV
-
-      - name: Post failure notifications to Slack
-        uses: slackapi/slack-github-action@d5d276d7ae0f38f29322b80da9baf985cc80f8b1 # v1.15.0
-        with:
-          payload: ${{ env.WP_SLACK_PAYLOAD }}
-        if: ${{ failure() }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_GHA_FAILURE_WEBHOOK_URL }}
-
-      - name: Post fixed notifications to Slack
-        uses: slackapi/slack-github-action@d5d276d7ae0f38f29322b80da9baf985cc80f8b1 # v1.15.0
-        with:
-          payload: ${{ env.WP_SLACK_PAYLOAD }}
-        if: ${{ success() && steps.previous_workflow.outputs.last_status == 'failure' }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_GHA_FIXED_WEBHOOK_URL }}
-
-      - name: Post success notifications to Slack
-        uses: slackapi/slack-github-action@d5d276d7ae0f38f29322b80da9baf985cc80f8b1 # v1.15.0
-        with:
-          payload: ${{ env.WP_SLACK_PAYLOAD }}
-        if: ${{ success() }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_GHA_SUCCESS_WEBHOOK_URL }}
-
-      - name: Post cancelled notifications to Slack
-        uses: slackapi/slack-github-action@d5d276d7ae0f38f29322b80da9baf985cc80f8b1 # v1.15.0
-        with:
-          payload: ${{ env.WP_SLACK_PAYLOAD }}
-        if: ${{ cancelled() }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_GHA_CANCELLED_WEBHOOK_URL }}
+      - name: Post notifications to Slack.
+        uses: desrosj/wordpress-GHA-slack-notifications@c8cc2e774183beceb6bceedb362982f8c66a98c0
