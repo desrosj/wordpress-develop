@@ -15,7 +15,7 @@ on:
       - '[4-9].[0-9]*'
   pull_request:
     branches:
-      - master
+      - test-non-primary
       - trunk
       - '3.[89]'
       - '[4-9].[0-9]'
