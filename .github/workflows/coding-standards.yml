@@ -7,6 +7,7 @@ on:
     branches:
       - master
       - trunk
+      - test-slack-branch
       - '3.[89]'
       - '[4-9].[0-9]'
       - 'trac/52644'
