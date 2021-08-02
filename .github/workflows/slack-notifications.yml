@@ -15,6 +15,17 @@ on:
       - completed
 
 jobs:
+  debug:
+    name: Debug info
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - run: echo ${{ github.sha }}
+      - run: echo ${{ github.ref }}
+      - run: echo ${{ toJson( github.event }}
+
+
   # Posts workflow status updates to the appropriate Slack channels.
   #
   prepare:
@@ -31,8 +42,6 @@ jobs:
       - name: Create payload
         run: echo "WP_SLACK_PAYLOAD=\"{\"workflow_name\":\"${{ github.workflow }}\",\"branch_or_tag\":\"${{ startsWith( github.ref, 'refs/heads' ) && 'branch' || 'tag' }}\",\"ref_name\":\"${{ env.BRANCH_NAME }}\",\"run_url\":\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}\"" >> $GITHUB_ENV
 
-      - run: echo ${{ github.sha }}
-      - run: echo ${{ github.ref }}
 
   failure:
     name: Failure notifications
