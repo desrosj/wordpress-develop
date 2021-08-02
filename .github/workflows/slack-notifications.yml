@@ -20,7 +20,7 @@ jobs:
   prepare:
     name: Prepare notifications
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' }}
+    if: ${{ always() && github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' }}
 
     steps:
       # This also sets the env.BRANCH_NAME variable.
