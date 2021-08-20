@@ -6,6 +6,7 @@ on:
     branches:
       - master
       - trunk
+      - test-branch
       - '5.[5-9]'
       - '[6-9].[0-9]'
     tags:
@@ -15,7 +16,6 @@ on:
     branches:
       - master
       - trunk
-      - test-branch
       - '5.[5-9]'
       - '[6-9].[0-9]'
     paths:
