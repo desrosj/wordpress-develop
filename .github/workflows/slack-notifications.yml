@@ -20,6 +20,7 @@ on:
     branches:
       - master
       - trunk
+      - test-branch
       - '[3-9].[0-9]'
 
 jobs:
@@ -35,7 +36,7 @@ jobs:
   prepare:
     name: Prepare notifications
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event.workflow_run.event != 'pull_request' }}
+    if: ${{ github.event.workflow_run.event != 'pull_request' }}
     outputs:
       previous_conclusion: ${{ steps.previous-conclusion.outputs.previous_conclusion }}
       payload: ${{ steps.create-payload.outputs.payload }}
@@ -62,7 +63,7 @@ jobs:
 
       - name: Construct payload and store as an output
         id: create-payload
-        run: echo "::set-output name=payload::{\"workflow_name\":\"${{ github.event.workflow_run.name }}\",\"ref_name\":\"${{ github.event.workflow_run.head_branch }}\",\"run_url\":\"${{ github.event.workflow_run.html_url }}\"}"
+        run: echo "::set-output name=payload::{\"workflow_name\":\"${{ github.event.workflow_run.name }}\",\"ref_name\":\"${{ github.event.workflow_run.head_branch }}\",\"run_url\":\"${{ github.event.workflow_run.html_url }}\",\"commit_message\":\"${{ toJSON( github.event.workflow_run.head_commit.message }}\"}"
 
   # Posts notifications when a workflow fails.
   failure:
