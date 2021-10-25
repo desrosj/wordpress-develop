@@ -91,7 +91,7 @@ jobs:
 
   slack-notifications:
     name: Slack Notifications
-    uses: WordPress/wordpress-develop/.github/workflows/slack-notifications.yml@testing
+    uses: desrosj/wordpress-develop/.github/workflows/slack-notifications.yml@testing
     needs: [ phpcs, jshint ]
     if: ${{ always() }}
     secrets:
