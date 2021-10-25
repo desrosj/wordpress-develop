@@ -18,10 +18,6 @@ on:
       - Test old branches
     types:
       - completed
-    branches:
-      - testing
-      - '[3-4].[0-9]'
-      - '5.[0-8]'
 
   workflow_call:
     secrets:
