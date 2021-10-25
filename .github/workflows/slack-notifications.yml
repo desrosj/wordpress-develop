@@ -124,7 +124,7 @@ jobs:
     name: Failure notifications
     runs-on: ubuntu-latest
     needs: [ prepare ]
-    if: ${{ failure() }}
+    if: ${{ ( 'push' == github.event_name && failure() ) || ( 'workflow_run' == github.event_name && github.event.workflow_run.conclusion == 'failure' ) }}
 
     steps:
       - name: Post failure notifications to Slack
@@ -139,7 +139,7 @@ jobs:
     name: Fixed notifications
     runs-on: ubuntu-latest
     needs: [ prepare ]
-    if: ${{ needs.prepare.outputs.previous_conclusion == 'failure' && success() }}
+    if: ${{ needs.prepare.outputs.previous_conclusion == 'failure' && ( 'push' == github.event_name && success() ) || ( 'workflow_run' == github.event_name && github.event.workflow_run.conclusion == 'success' ) }}
 
     steps:
       - name: Post failure notifications to Slack
@@ -154,7 +154,7 @@ jobs:
     name: Success notifications
     runs-on: ubuntu-latest
     needs: [ prepare ]
-    if: ${{ success() }}
+    if: ${{ ( 'push' == github.event_name && success() ) || ( 'workflow_run' == github.event_name && github.event.workflow_run.conclusion == 'success' ) }}
 
     steps:
       - name: Post success notifications to Slack
@@ -169,7 +169,7 @@ jobs:
     name: Cancelled notifications
     runs-on: ubuntu-latest
     needs: [ prepare ]
-    if: ${{ cancelled() }}
+    if: ${{ ( 'push' == github.event_name && cancelled() ) || ( 'workflow_run' == github.event_name && github.event.workflow_run.conclusion == 'cancelled' ) }}
 
     steps:
       - name: Post cancelled notifications to Slack
