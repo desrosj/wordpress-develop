@@ -38,8 +38,9 @@ on:
       SLACK_GHA_FAILURE_WEBHOOK:
         description: 'The Slack webhook URL for a failed build.'
         required: true
+
 env:
-  TEST_REF: ${{ github.ref_name }}
+  CURRENT_REF_NAME: ${{ 'workflow_run' == github.event_name && github.event.workflow_run.head_branch || github.ref_name }}
 
 jobs:
   # Gathers the details needed for Slack notifications.
@@ -95,7 +96,7 @@ jobs:
               owner: '${{ github.repository_owner }}',
               repo: 'wordpress-develop',
               workflow_id: ${{ 'workflow_run' == github.event_name && github.event.workflow_run.workflow_id || steps.current-workflow-id.outputs.result }},
-              branch: '${{ 'workflow_run' == github.event_name && github.event.workflow_run.head_branch || github.ref_name }}',
+              branch: '${{ env.CURRENT_REF_NAME }}',
               per_page: 1,
               page: 2,
             });
@@ -109,14 +110,14 @@ jobs:
         id: commit-message
         run: |
           COMMIT_MESSAGE=$(cat <<'EOF' | awk 'NR==1' | sed 's/`/\\`/g' | sed 's/\"/\\\\"/g'
-          ${{ github.event.head_commit.message }}
+          ${{ 'workflow_run' == github.event_name && github.event.workflow_run.head_commit.message || github.event.head_commit.message }}
           EOF
           )
           echo "::set-output name=commit_message_escaped::${COMMIT_MESSAGE}"
 
       - name: Construct payload and store as an output
         id: create-payload
-        run: echo "::set-output name=payload::{\"workflow_name\":\"${{ github.workflow }}\",\"ref_name\":\"${{ github.ref_name }}\",\"run_url\":\"${{ steps.current-workflow-url.outputs.result }}\",\"commit_message\":\"${{ steps.commit-message.outputs.commit_message_escaped }}\"}"
+        run: echo "::set-output name=payload::{\"workflow_name\":\"${{ github.workflow }}\",\"ref_name\":\"${{ env.CURRENT_REF_NAME }}\",\"run_url\":\"${{ steps.current-workflow-url.outputs.result }}\",\"commit_message\":\"${{ steps.commit-message.outputs.commit_message_escaped }}\"}"
 
   # Posts notifications when a workflow fails.
   failure:
