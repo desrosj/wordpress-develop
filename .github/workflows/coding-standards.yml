@@ -88,14 +88,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f # v2.3.4
-
-  slack-notifications:
-    name: Slack Notifications
-    uses: desrosj/wordpress-develop/.github/workflows/slack-notifications.yml@testing
-    needs: [ phpcs, jshint ]
-    if: ${{ always() }}
-    secrets:
-      SLACK_GHA_SUCCESS_WEBHOOK: ${{ secrets.SLACK_GHA_SUCCESS_WEBHOOK }}
-      SLACK_GHA_CANCELLED_WEBHOOK: ${{ secrets.SLACK_GHA_CANCELLED_WEBHOOK }}
-      SLACK_GHA_FIXED_WEBHOOK: ${{ secrets.SLACK_GHA_FIXED_WEBHOOK }}
-      SLACK_GHA_FAILURE_WEBHOOK: ${{ secrets.SLACK_GHA_FAILURE_WEBHOOK }}
+#
+#  slack-notifications:
+#    name: Slack Notifications
+#    uses: desrosj/wordpress-develop/.github/workflows/slack-notifications.yml@testing
+#    needs: [ phpcs, jshint ]
+#    if: ${{ always() }}
+#    secrets:
+#      SLACK_GHA_SUCCESS_WEBHOOK: ${{ secrets.SLACK_GHA_SUCCESS_WEBHOOK }}
+#      SLACK_GHA_CANCELLED_WEBHOOK: ${{ secrets.SLACK_GHA_CANCELLED_WEBHOOK }}
+#      SLACK_GHA_FIXED_WEBHOOK: ${{ secrets.SLACK_GHA_FIXED_WEBHOOK }}
+#      SLACK_GHA_FAILURE_WEBHOOK: ${{ secrets.SLACK_GHA_FAILURE_WEBHOOK }}
