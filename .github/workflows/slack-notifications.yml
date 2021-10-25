@@ -61,7 +61,7 @@ jobs:
     steps:
       - name: Get the workflow ID
         id: current-workflow-id
-        if: {{ 'workflow_call' == github.event_name }}
+        if: ${{ 'workflow_call' == github.event_name }}
         uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
         with:
           script: |
@@ -75,7 +75,7 @@ jobs:
       - name: Get the workflow URL
         id: current-workflow-url
         uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
-        if: {{ 'workflow_call' == github.event_name }}
+        if: ${{ 'workflow_call' == github.event_name }}
         with:
           script: |
             const workflow_run = await github.rest.actions.getWorkflowRun({
