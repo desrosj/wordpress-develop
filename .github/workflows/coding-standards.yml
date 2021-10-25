@@ -16,6 +16,7 @@ on:
     branches:
       - master
       - trunk
+      - testing
       - '3.[89]'
       - '[4-9].[0-9]'
     paths:
@@ -59,7 +60,7 @@ jobs:
   phpcs:
     name: PHP coding standards
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
+    if: ${{ github.ref == 'refs/heads/testing' || github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
 
     steps:
       - name: Checkout repository
@@ -112,7 +113,7 @@ jobs:
   jshint:
     name: JavaScript coding standards
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
+    if: ${{ github.ref == 'refs/heads/testing' || github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     env:
       PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}
 
