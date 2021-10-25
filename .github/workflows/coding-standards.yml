@@ -7,6 +7,7 @@ on:
     branches:
       - master
       - trunk
+      - testing
       - '3.[89]'
       - '[4-9].[0-9]'
     tags:
@@ -16,7 +17,6 @@ on:
     branches:
       - master
       - trunk
-      - testing
       - '3.[89]'
       - '[4-9].[0-9]'
     paths:
