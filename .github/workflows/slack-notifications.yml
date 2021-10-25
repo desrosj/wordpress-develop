@@ -91,9 +91,9 @@ jobs:
         with:
           script: |
             const previous_runs = await github.rest.actions.listWorkflowRuns({
-              owner: '${{ 'workflow_run' == github.event_name && context.repo.owner || github.repository_owner }}',
+              owner: '${{ github.repository_owner }}',
               repo: 'wordpress-develop',
-              workflow_id: ${{ 'workflow_run' == github.event_name && context.repo.owner || steps.current-workflow-id.outputs.result }},
+              workflow_id: ${{ 'workflow_run' == github.event_name && github.event.workflow_run.workflow_id || steps.current-workflow-id.outputs.result }},
               branch: '${{ 'workflow_run' == github.event_name && github.event.workflow_run.head_branch || github.ref_name }}',
               per_page: 1,
               page: 2,
