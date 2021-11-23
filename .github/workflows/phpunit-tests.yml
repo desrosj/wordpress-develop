@@ -124,7 +124,7 @@ jobs:
             os: ubuntu-latest
             memcached: false
             multisite: true
-            split_slow: false
+            split_slow: true
             db_type: 'mariadb'
             db_version: '10.1'
 
