@@ -217,7 +217,7 @@ class WP_Customize_Date_Time_Control extends WP_Customize_Control {
 	 * @return array {
 	 *     Timezone info. All properties are optional.
 	 *
-	 *     @type string $abbr        Timezone abbreviation, eg. PST or CEST.
+	 *     @type string $abbr        Timezone abbreviation. Examples: PST or CEST.
 	 *     @type string $description Human-readable timezone description as HTML.
 	 * }
 	 */
@@ -227,7 +227,7 @@ class WP_Customize_Date_Time_Control extends WP_Customize_Control {
 
 		if ( $tz_string ) {
 			try {
-				$tz = new DateTimezone( $tz_string );
+				$tz = new DateTimeZone( $tz_string );
 			} catch ( Exception $e ) {
 				$tz = '';
 			}

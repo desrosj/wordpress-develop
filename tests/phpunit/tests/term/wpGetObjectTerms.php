@@ -7,8 +7,8 @@
 class Tests_Term_WpGetObjectTerms extends WP_UnitTestCase {
 	private $taxonomy = 'wptests_tax';
 
-	public function setUp() {
-		parent::setUp();
+	public function set_up() {
+		parent::set_up();
 		register_taxonomy( 'wptests_tax', 'post' );
 	}
 
@@ -953,7 +953,7 @@ class Tests_Term_WpGetObjectTerms extends WP_UnitTestCase {
 		$this->assertSame( implode( ',', $terms ), $terms_to_edit );
 	}
 
-	function filter_wp_get_object_terms_args( $args, $object_ids, $taxonomies ) {
+	public function filter_wp_get_object_terms_args( $args, $object_ids, $taxonomies ) {
 		$args['orderby'] = 'term_order';
 		return $args;
 	}

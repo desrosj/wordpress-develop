@@ -577,7 +577,7 @@ function wp_iframe( $content_func, ...$args ) {
 		 * Fires in the admin header for each specific form tab in the legacy
 		 * (pre-3.5.0) media upload popup.
 		 *
-		 * The dynamic portion of the hook, `$content_func`, refers to the form
+		 * The dynamic portion of the hook name, `$content_func`, refers to the form
 		 * callback for the media upload type.
 		 *
 		 * @since 2.5.0
@@ -1521,7 +1521,7 @@ function get_attachment_fields_to_edit( $post, $errors = null ) {
  *
  * @global WP_Query $wp_the_query WordPress Query object.
  *
- * @param int   $post_id Optional. Post ID.
+ * @param int   $post_id Post ID.
  * @param array $errors  Errors for attachment, if any.
  * @return string
  */
@@ -2577,7 +2577,6 @@ function media_upload_gallery_form( $errors ) {
 	</div>
 	<form enctype="multipart/form-data" method="post" action="<?php echo esc_url( $form_action_url ); ?>" class="<?php echo $form_class; ?>" id="gallery-form">
 		<?php wp_nonce_field( 'media-form' ); ?>
-		<?php // media_upload_form( $errors ); ?>
 	<table class="widefat">
 	<thead><tr>
 	<th><?php _e( 'Media' ); ?></th>
@@ -2879,7 +2878,6 @@ function media_upload_library_form( $errors ) {
 
 	<form enctype="multipart/form-data" method="post" action="<?php echo esc_url( $form_action_url ); ?>" class="<?php echo $form_class; ?>" id="library-form">
 	<?php wp_nonce_field( 'media-form' ); ?>
-	<?php // media_upload_form( $errors ); ?>
 
 	<script type="text/javascript">
 	jQuery(function($){
@@ -3230,7 +3228,7 @@ function edit_form_image_editor( $post ) {
 
 		printf(
 			/* translators: 1: Link to tutorial, 2: Additional link attributes, 3: Accessibility text. */
-			__( '<a href="%1$s" %2$s>Describe the purpose of the image%3$s</a>. Leave empty if the image is purely decorative.' ),
+			__( '<a href="%1$s" %2$s>Learn how to describe the purpose of the image%3$s</a>. Leave empty if the image is purely decorative.' ),
 			esc_url( 'https://www.w3.org/WAI/tutorials/images/decision-tree' ),
 			'target="_blank" rel="noopener"',
 			sprintf(
@@ -3643,7 +3641,7 @@ function wp_read_video_metadata( $file ) {
 	 * @param array  $metadata       Filtered Video metadata.
 	 * @param string $file           Path to video file.
 	 * @param string $file_format    File format of video, as analyzed by getID3.
-	 * @param string $data           Raw metadata from getID3.
+	 * @param array  $data           Raw metadata from getID3.
 	 */
 	return apply_filters( 'wp_read_video_metadata', $metadata, $file, $file_format, $data );
 }

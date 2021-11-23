@@ -6,13 +6,13 @@
  */
 class Tests_XMLRPC_wp_uploadFile extends WP_XMLRPC_UnitTestCase {
 
-	public function tearDown() {
+	public function tear_down() {
 		$this->remove_added_uploads();
 
-		parent::tearDown();
+		parent::tear_down();
 	}
 
-	function test_valid_attachment() {
+	public function test_valid_attachment() {
 		$this->make_user_by_role( 'editor' );
 
 		// Create attachment.

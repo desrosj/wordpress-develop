@@ -74,8 +74,8 @@ class WP_Test_REST_Tags_Controller extends WP_Test_REST_Controller_Testcase {
 		}
 	}
 
-	public function setUp() {
-		parent::setUp();
+	public function set_up() {
+		parent::set_up();
 
 		register_meta(
 			'term',
@@ -135,6 +135,7 @@ class WP_Test_REST_Tags_Controller extends WP_Test_REST_Controller_Testcase {
 		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/tags' );
 		$response = rest_get_server()->dispatch( $request );
 		$data     = $response->get_data();
+		$this->assertSame( array( 'v1' => true ), $data['endpoints'][0]['allow_batch'] );
 		$this->assertSame( 'view', $data['endpoints'][0]['args']['context']['default'] );
 		$this->assertSameSets( array( 'view', 'embed', 'edit' ), $data['endpoints'][0]['args']['context']['enum'] );
 		// Single.
@@ -142,6 +143,7 @@ class WP_Test_REST_Tags_Controller extends WP_Test_REST_Controller_Testcase {
 		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/tags/' . $tag1 );
 		$response = rest_get_server()->dispatch( $request );
 		$data     = $response->get_data();
+		$this->assertSame( array( 'v1' => true ), $data['endpoints'][0]['allow_batch'] );
 		$this->assertSame( 'view', $data['endpoints'][0]['args']['context']['default'] );
 		$this->assertSameSets( array( 'view', 'embed', 'edit' ), $data['endpoints'][0]['args']['context']['enum'] );
 	}
@@ -591,7 +593,7 @@ class WP_Test_REST_Tags_Controller extends WP_Test_REST_Controller_Testcase {
 			rest_url( 'wp/v2/tags' )
 		);
 		$this->assertStringNotContainsString( 'rel="prev"', $headers['Link'] );
-		$this->assertContains( '<' . $next_link . '>; rel="next"', $headers['Link'] );
+		$this->assertStringContainsString( '<' . $next_link . '>; rel="next"', $headers['Link'] );
 
 		// 3rd page.
 		$this->factory->tag->create();
@@ -609,14 +611,14 @@ class WP_Test_REST_Tags_Controller extends WP_Test_REST_Controller_Testcase {
 			),
 			rest_url( 'wp/v2/tags' )
 		);
-		$this->assertContains( '<' . $prev_link . '>; rel="prev"', $headers['Link'] );
+		$this->assertStringContainsString( '<' . $prev_link . '>; rel="prev"', $headers['Link'] );
 		$next_link = add_query_arg(
 			array(
 				'page' => 4,
 			),
 			rest_url( 'wp/v2/tags' )
 		);
-		$this->assertContains( '<' . $next_link . '>; rel="next"', $headers['Link'] );
+		$this->assertStringContainsString( '<' . $next_link . '>; rel="next"', $headers['Link'] );
 
 		// Last page.
 		$request = new WP_REST_Request( 'GET', '/wp/v2/tags' );
@@ -631,7 +633,7 @@ class WP_Test_REST_Tags_Controller extends WP_Test_REST_Controller_Testcase {
 			),
 			rest_url( 'wp/v2/tags' )
 		);
-		$this->assertContains( '<' . $prev_link . '>; rel="prev"', $headers['Link'] );
+		$this->assertStringContainsString( '<' . $prev_link . '>; rel="prev"', $headers['Link'] );
 		$this->assertStringNotContainsString( 'rel="next"', $headers['Link'] );
 
 		// Out of bounds.
@@ -647,7 +649,7 @@ class WP_Test_REST_Tags_Controller extends WP_Test_REST_Controller_Testcase {
 			),
 			rest_url( 'wp/v2/tags' )
 		);
-		$this->assertContains( '<' . $prev_link . '>; rel="prev"', $headers['Link'] );
+		$this->assertStringContainsString( '<' . $prev_link . '>; rel="prev"', $headers['Link'] );
 		$this->assertStringNotContainsString( 'rel="next"', $headers['Link'] );
 	}
 
@@ -759,7 +761,7 @@ class WP_Test_REST_Tags_Controller extends WP_Test_REST_Controller_Testcase {
 		$this->assertSame( 201, $response->get_status() );
 		$headers = $response->get_headers();
 		$data    = $response->get_data();
-		$this->assertContains( '/wp/v2/tags/' . $data['id'], $headers['Location'] );
+		$this->assertStringContainsString( '/wp/v2/tags/' . $data['id'], $headers['Location'] );
 		$this->assertSame( 'My Awesome Term', $data['name'] );
 		$this->assertSame( 'This term is so awesome.', $data['description'] );
 		$this->assertSame( 'so-awesome', $data['slug'] );
@@ -776,7 +778,7 @@ class WP_Test_REST_Tags_Controller extends WP_Test_REST_Controller_Testcase {
 		$this->assertSame( 201, $response->get_status() );
 		$headers = $response->get_headers();
 		$data    = $response->get_data();
-		$this->assertContains( '/wp/v2/tags/' . $data['id'], $headers['Location'] );
+		$this->assertStringContainsString( '/wp/v2/tags/' . $data['id'], $headers['Location'] );
 		$this->assertSame( 'My Awesome Term', $data['name'] );
 		$this->assertSame( 'This term is so awesome.', $data['description'] );
 		$this->assertSame( 'so-awesome', $data['slug'] );
@@ -819,7 +821,7 @@ class WP_Test_REST_Tags_Controller extends WP_Test_REST_Controller_Testcase {
 		$this->assertSame( 201, $response->get_status() );
 		$headers = $response->get_headers();
 		$data    = $response->get_data();
-		$this->assertContains( '/wp/v2/tags/' . $data['id'], $headers['Location'] );
+		$this->assertStringContainsString( '/wp/v2/tags/' . $data['id'], $headers['Location'] );
 		$this->assertSame( 'My Awesome Term', $data['name'] );
 		$this->assertSame( 'hello', get_term_meta( $data['id'], 'test_tag_single', true ) );
 	}
@@ -837,7 +839,7 @@ class WP_Test_REST_Tags_Controller extends WP_Test_REST_Controller_Testcase {
 		$this->assertSame( 201, $response->get_status() );
 		$headers = $response->get_headers();
 		$data    = $response->get_data();
-		$this->assertContains( '/wp/v2/tags/' . $data['id'], $headers['Location'] );
+		$this->assertStringContainsString( '/wp/v2/tags/' . $data['id'], $headers['Location'] );
 		$this->assertSame( 'My Awesome Term', $data['name'] );
 		$this->assertSame( '', get_term_meta( $existing_tag_id, 'test_tag_single', true ) );
 		$this->assertSame( 'hello', get_term_meta( $data['id'], 'test_tag_single', true ) );
@@ -1439,7 +1441,7 @@ class WP_Test_REST_Tags_Controller extends WP_Test_REST_Controller_Testcase {
 			$expected_links[] = 'up';
 		}
 		$this->assertSameSets( $expected_links, array_keys( $links ) );
-		$this->assertContains( 'wp/v2/taxonomies/' . $term->taxonomy, $links['about'][0]['href'] );
+		$this->assertStringContainsString( 'wp/v2/taxonomies/' . $term->taxonomy, $links['about'][0]['href'] );
 		$this->assertSame( add_query_arg( 'tags', $term->term_id, rest_url( 'wp/v2/posts' ) ), $links['https://api.w.org/post_type'][0]['href'] );
 	}
 
