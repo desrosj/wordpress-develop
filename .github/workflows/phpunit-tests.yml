@@ -58,7 +58,7 @@ jobs:
   # - Reconnect the directory to the Git repository.
   # - Submit the test results to the WordPress.org host test results.
   test-php:
-    name: ${{ matrix.php }}${{ matrix.multisite && ' multisite' || '' }}${{ matrix.split_slow && ' slow tests' || '' }}${{ matrix.memcached && ' with memcached' || '' }} (${{ matrix.db_type == 'mariadb' && 'MariaDB' || 'MySQL' }} ${{ matrix.db_version || '5.7' }})
+    name: PHP ${{ matrix.php }}${{ matrix.multisite && ' multisite' || 'single site' }}${{ matrix.split_slow && ' slow tests' || '' }}${{ matrix.memcached && ' with memcached' || '' }} (${{ matrix.db_type == 'mariadb' && 'MariaDB' || 'MySQL' }} ${{ matrix.db_version || '5.7' }})
     runs-on: ${{ matrix.os }}
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
@@ -127,6 +127,31 @@ jobs:
             split_slow: true
             db_type: 'mariadb'
             db_version: '10.1'
+          # Test latest versions of MySQL and MariaDB
+          - php: '8.0'
+            os: ubuntu-latest
+            memcached: false
+            multisite: false
+            db_type: 'mysql'
+            db_version: '8.0'
+          - php: '8.0'
+            os: ubuntu-latest
+            memcached: false
+            multisite: true
+            db_type: 'mysql'
+            db_version: '8.0'
+          - php: '8.0'
+            os: ubuntu-latest
+            memcached: false
+            multisite: false
+            db_type: 'mariadb'
+            db_version: '10.7'
+          - php: '8.0'
+            os: ubuntu-latest
+            memcached: false
+            multisite: true
+            db_type: 'mariadb'
+            db_version: '10.7'
 
     env:
       LOCAL_PHP: ${{ matrix.php }}-fpm
