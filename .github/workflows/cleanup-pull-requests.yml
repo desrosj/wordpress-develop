@@ -32,9 +32,9 @@ jobs:
         uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
         with:
           script: |
-            const fixesReg = new RegExp( 'Fixes(.*)\.','g' ),
-            const numbersReg = new RegExp( '[0-9]+', 'g' ),
-            const fixesLine = fixesReg.exec( ${{ github.event.head_commit.message }} ),
+            const fixesReg = new RegExp( 'Fixes(.*)\.','g' );
+            const numbersReg = new RegExp( '[0-9]+', 'g' );
+            const fixesLine = fixesReg.exec( ${{ github.event.head_commit.message }} );
             const ticketList = numbersReg.exec( fixesLine );
 
-            console.log(
+            console.log( ticketList );
