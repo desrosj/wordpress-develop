@@ -37,5 +37,4 @@ jobs:
             const fixesLine = fixesReg.exec( "${{ github.event.head_commit.message }}" );
             const ticketList = numbersReg.exec( fixesLine );
 
-            console.log( fixesLine );
             console.log( ticketList );
