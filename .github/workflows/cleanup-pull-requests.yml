@@ -36,4 +36,5 @@ jobs:
             const fixesLine = commitMessage.match( '/Fixes(.*)\./' );
             const ticketList = fixesLine.match( '/[0-9]+/g' );
 
+
             console.log( ticketList );
