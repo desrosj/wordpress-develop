@@ -44,6 +44,7 @@ jobs:
             const related_prs = await github.rest.search.issuesAndPullRequests({
               q: 'https://core.trac.wordpress.org/ticket/52951 is:pr is:open repo:WordPress/wordpress-develop',
             });
+            console.log( related_prs );
             return related_prs.data;
 
       - name: Extract ticket numbers
