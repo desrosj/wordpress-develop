@@ -41,7 +41,8 @@ jobs:
         uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
         with:
           script: |
-            if ( null !== '${{ steps.fixed-tickets.outputs.fixed_list }}' ) {
+            const fixesLine = "${{ steps.fixed-tickets.outputs.fixed_list }}"
+            if ( null !== fixesLine' ) {
               let ticketList = fixesLine.match( '/[0-9]+/g' );
             }
 
