@@ -62,7 +62,7 @@ jobs:
         with:
           script: |
             const related_prs = await github.rest.search.issuesAndPullRequests({
-              q: encodeURIComponent( steps.pr-query.outputs.result ),
+              q: encodeURIComponent( ${{ steps.pr-query.outputs.result }} ),
             });
 
             console.log( related_prs.data.items );
