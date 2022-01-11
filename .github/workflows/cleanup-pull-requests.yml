@@ -38,6 +38,7 @@ jobs:
           echo "::set-output name=fixed_list::${COMMIT_MESSAGE}"
 
       - name: Create search query
+        id: pr-query
         uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
         with:
           script: |
@@ -54,24 +55,23 @@ jobs:
               });
             }
 
-            console.log( query );
+            return query;
 
+      - name: Find pull requests
+        uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
+        with:
+          script: |
+            const related_prs = await github.rest.search.issuesAndPullRequests({
+              q: encodeURIComponent( steps.pr-query.outputs.result ),
+            });
 
-#      - name: Find pull requests
-#        uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
-#        with:
-#          script: |
-#            const related_prs = await github.rest.search.issuesAndPullRequests({
-#              q: encodeURIComponent( query ),
-#            });
-#
-#            console.log( related_prs.data.items );
-#            console.log( related_prs );
-#
-#            related_prs.data.items.forEach(function callback(value, index) {
-#              console.log( value );
-#              console.log( value.number );
-#            })
-#
-#            return related_prs.data;
-#
+            console.log( related_prs.data.items );
+            console.log( related_prs );
+
+            related_prs.data.items.forEach(function callback(value, index) {
+              console.log( value );
+              console.log( value.number );
+            })
+
+            return related_prs.data;
+
