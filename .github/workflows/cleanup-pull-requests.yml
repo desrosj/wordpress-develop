@@ -46,7 +46,7 @@ jobs:
             });
 
             related_prs.data.items.forEach(function callback(value, index) {
-              consolelog( value );
+              console.log( value );
               console.log( value.number );
             })
 
