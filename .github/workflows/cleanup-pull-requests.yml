@@ -50,7 +50,11 @@ jobs:
             if ( 0 < ticketList.length ) {
               query += 'is:pr is:open repo:WordPress/wordpress-develop';
 
-              ticketList.forEach( function buildTracURL( value ){
+              ticketList.forEach( function buildTracURL( value, index ){
+                if ( 0 === index ) {
+                  query += ' OR';
+                }
+
                 query += ' https://core.trac.wordpress.org/ticket/' + value;
               });
             }
