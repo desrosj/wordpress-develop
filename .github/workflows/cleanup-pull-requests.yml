@@ -28,14 +28,20 @@ jobs:
 #    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name == 'push' }}
 
     steps:
+      - name: Parse commit message
+        id: fixed-tickets
+        run: |
+          COMMIT_MESSAGE=$(cat <<'EOF' | sed -e '/Fixes(.*)\./g'
+          ${{ github.event.head_commit.message }}
+          EOF
+          )
+          echo "::set-output name=fixed_list::${COMMIT_MESSAGE}"
+
       - name: Extract ticket numbers
         uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
         with:
           script: |
-            const commitMessage = "${{ github.event.head_commit.message }}";
-            let fixesLine = commitMessage.match( '/Fixes(.*)\./' );
-
-            if ( null !== fixesLine ) {
+            if ( null !== '${{ ${{ steps.fixed-tickets.outputs.fixed_list }}' ) {
               let ticketList = fixesLine.match( '/[0-9]+/g' );
             }
 
