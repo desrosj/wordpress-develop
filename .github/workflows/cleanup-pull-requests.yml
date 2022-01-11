@@ -42,8 +42,14 @@ jobs:
         with:
           script: |
             const related_prs = await github.rest.search.issuesAndPullRequests({
-              q: 'https://core.trac.wordpress.org/ticket/52951 is:pr is:open repo:WordPress/wordpress-develop',
+              q: encodeURIComponent( 'https://core.trac.wordpress.org/ticket/5295142 is:pr is:open repo:WordPress/wordpress-develop' ),
             });
+
+            forEach(function comment_and_close(value, index) {
+              consolelog( value );
+              console.log( value.number);
+            });
+
             console.log( related_prs );
             return related_prs.data;
 
