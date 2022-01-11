@@ -37,31 +37,41 @@ jobs:
           )
           echo "::set-output name=fixed_list::${COMMIT_MESSAGE}"
 
-      - name: Find pull requests
+      - name: Create search query
         uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
         with:
           script: |
-            const related_prs = await github.rest.search.issuesAndPullRequests({
-              q: encodeURIComponent( 'https://core.trac.wordpress.org/ticket/5295142 is:pr is:open repo:WordPress/wordpress-develop' ),
-            });
+            const fixesLine = "${{ steps.fixed-tickets.outputs.fixed_list }}",
+            let ticketList = false,
+            let query = '';
+            ticketList = fixesLine.match( /[0-9]+/g );
 
-            console.log( related_prs.data.items );
-            console.log( related_prs );
+            if ( 0 < ticketList.length ) {
+              query += 'is:pr is:open repo:WordPress/wordpress-develop';
 
-            related_prs.data.items.forEach(function callback(value, index) {
-              console.log( value );
-              console.log( value.number );
-            })
+              ticketList.forEach( function buildTracURL( value ){
+                query += ' https://core.trac.wordpress.org/ticket/' + value;
+              });
+            }
 
-            return related_prs.data;
+            console.log( query );
 
-      - name: Extract ticket numbers
-        uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
-        with:
-          script: |
-            const fixesLine = "${{ steps.fixed-tickets.outputs.fixed_list }}"
-            let ticketList = false;
-            ticketList = fixesLine.match( '/[0-9]+/g' );
 
-            console.log( ticketList );
-
+#      - name: Find pull requests
+#        uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
+#        with:
+#          script: |
+#            const related_prs = await github.rest.search.issuesAndPullRequests({
+#              q: encodeURIComponent( query ),
+#            });
+#
+#            console.log( related_prs.data.items );
+#            console.log( related_prs );
+#
+#            related_prs.data.items.forEach(function callback(value, index) {
+#              console.log( value );
+#              console.log( value.number );
+#            })
+#
+#            return related_prs.data;
+#
