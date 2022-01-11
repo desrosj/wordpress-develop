@@ -45,12 +45,14 @@ jobs:
               q: encodeURIComponent( 'https://core.trac.wordpress.org/ticket/5295142 is:pr is:open repo:WordPress/wordpress-develop' ),
             });
 
+            console.log( related_prs.data.items );
+            console.log( related_prs );
+
             related_prs.data.items.forEach(function callback(value, index) {
               console.log( value );
               console.log( value.number );
             })
 
-            console.log( related_prs );
             return related_prs.data;
 
       - name: Extract ticket numbers
