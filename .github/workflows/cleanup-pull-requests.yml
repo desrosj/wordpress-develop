@@ -33,8 +33,10 @@ jobs:
         with:
           script: |
             const commitMessage = "${{ github.event.head_commit.message }}";
-            const fixesLine = commitMessage.match( '/Fixes(.*)\./' );
-            const ticketList = fixesLine.match( '/[0-9]+/g' );
+            let fixesLine = commitMessage.match( '/Fixes(.*)\./' );
 
+            if ( null !== fixesLine ) {
+              let ticketList = fixesLine.match( '/[0-9]+/g' );
+            }
 
             console.log( ticketList );
