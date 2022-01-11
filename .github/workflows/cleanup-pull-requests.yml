@@ -60,8 +60,9 @@ jobs:
         with:
           script: |
             const fixesLine = "${{ steps.fixed-tickets.outputs.fixed_list }}"
+            let ticketList = '';
             if ( null !== fixesLine ) {
-              let ticketList = fixesLine.match( '/[0-9]+/g' );
+              ticketList = fixesLine.match( '/[0-9]+/g' );
             }
 
             console.log( ticketList );
