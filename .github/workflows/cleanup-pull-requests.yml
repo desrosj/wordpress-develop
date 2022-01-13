@@ -25,7 +25,7 @@ jobs:
   close-prs-push:
     name: Close pull requests on commit
     runs-on: ubuntu-latest
-#    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name == 'push' }}
+    #    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name == 'push' }}
 
     steps:
       - name: Parse commit message
@@ -36,7 +36,6 @@ jobs:
           EOF
           )
           echo "::set-output name=fixed_list::${COMMIT_MESSAGE}"
-
       - name: Create search query
         id: pr-query
         uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
@@ -46,36 +45,64 @@ jobs:
             let ticketList = false;
             let query = '';
             ticketList = fixesLine.match( /[0-9]+/g );
-
-            if ( 0 < ticketList.length ) {
+            if ( ticketList && ticketList.length > 0 ) {
               query += 'is:pr is:open in:title,body repo:WordPress/wordpress-develop';
-
-              ticketList.forEach( function buildTracURL( value, index ){
-                if ( 0 === index ) {
-                  query += ' OR';
+              let tempQuery = query;
+              ticketList.every( ( value, index ) => {
+                if ( 0 !== index ) {
+                  tempQuery += ' OR';
                 }
-
-                query += ' https://core.trac.wordpress.org/ticket/' + value;
+                tempQuery += ` https://core.trac.wordpress.org/ticket/${value}`;
+                if ( tempQuery.length <= 256 ) {
+                  query = tempQuery;
+                  return true;
+                } else {
+                  return false;
+                }
               });
             }
-
             return query;
-
       - name: Find pull requests
+        id: pr-results
         uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
         with:
           script: |
             const related_prs = await github.rest.search.issuesAndPullRequests({
-              q: encodeURIComponent( ${{ steps.pr-query.outputs.result }} ),
+              q: ${{ steps.pr-query.outputs.result }},
             });
-
-            console.log( related_prs.data.items );
-            console.log( related_prs );
-
-            related_prs.data.items.forEach(function callback(value, index) {
-              console.log( value );
-              console.log( value.number );
-            })
-
-            return related_prs.data;
-
+            return related_prs && related_prs.items;
+      - name: Get git-svn-id
+        id: git-svn-id
+        run: |
+          COMMIT_MESSAGE=$(cat <<'EOF' | sed -n '$p'
+          ${{ github.event.head_commit.message }}
+          EOF
+          )
+          echo "::set-output name=svn_revision_number::${COMMIT_MESSAGE}"
+      - name: Close pull requests
+        uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
+        with:
+          script: |
+            const gitSVNIDString = '${{ steps.git-svn-id.outputs.svn_revision_number }}';
+            const revisionRegExp = new RegExp( 'trunk@([0-9]+)' );
+            const revisionMatch = gitSVNIDString.match( revisionRegExp );
+            if ( ! revisionMatch || ! revisionMatch[1] ) {
+              return;
+            }
+            const svnRevision = revisionMatch[1];
+            const closeMessage = `Merged into WordPress core in changeset https://core.trac.wordpress.org/changeset/${svnRevision}`;
+            // const prsToClose = ${{ steps.pr-results.outputs.result }}
+            // prsToClose.forEach( ( { owner, repo, number } ) => {
+              // const comment = await github.rest.issues.createComment( {
+                // owner,
+                // repo,
+                // pull_number: number,
+                // body: closeMessage
+              // } );
+              // const close = await github.rest.pulls.update( {
+                // owner: pr.owner,
+                // repo: pr.repo,
+                // pull_number: pr.number,
+                // state: 'closed'
+              // } )
+            // } );
