@@ -18,7 +18,7 @@ jobs:
   option1:
     name: Scan for viruses (Scan Virus action full)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
 #    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
     env:
       PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}
@@ -59,7 +59,7 @@ jobs:
   option2:
     name: Scan for viruses (Scan Virus action)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
 #    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
     env:
       PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}
@@ -100,7 +100,7 @@ jobs:
   option3:
     name: Scan for viruses (Git Anti Virus Scan)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
 #    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
     env:
       PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}
@@ -139,7 +139,7 @@ jobs:
   option4:
     name: Scan for viruses (Git Anti Virus Scan full)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
 #    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
     env:
       PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}
