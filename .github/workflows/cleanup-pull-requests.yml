@@ -62,7 +62,6 @@ jobs:
                 }
               });
             }
-            print query;
             return query;
 
       - name: Find pull requests
@@ -83,7 +82,6 @@ jobs:
           EOF
           )
           echo "::set-output name=svn_revision_number::${COMMIT_MESSAGE}"
-
       - name: Close pull requests
         uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
         with:
