@@ -36,6 +36,7 @@ jobs:
           EOF
           )
           echo "::set-output name=fixed_list::${COMMIT_MESSAGE}"
+
       - name: Create search query
         id: pr-query
         uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
@@ -61,16 +62,19 @@ jobs:
                 }
               });
             }
+            print query;
             return query;
+
       - name: Find pull requests
         id: pr-results
         uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
         with:
           script: |
             const related_prs = await github.rest.search.issuesAndPullRequests({
-              q: ${{ steps.pr-query.outputs.result }},
+              q: "${{ steps.pr-query.outputs.result }}",
             });
             return related_prs && related_prs.items;
+
       - name: Get git-svn-id
         id: git-svn-id
         run: |
@@ -79,6 +83,7 @@ jobs:
           EOF
           )
           echo "::set-output name=svn_revision_number::${COMMIT_MESSAGE}"
+
       - name: Close pull requests
         uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
         with:
