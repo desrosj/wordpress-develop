@@ -3761,7 +3761,7 @@ mockedApiResponse.Schema = {
                             "required": false
                         },
                         "object": {
-                            "description": "The type of object originally represented, such as \"category,\" \"post\", or \"attachment.\"",
+                            "description": "The type of object originally represented, such as \"category\", \"post\", or \"attachment\".",
                             "type": "string",
                             "required": false
                         },
@@ -3949,7 +3949,7 @@ mockedApiResponse.Schema = {
                             "required": false
                         },
                         "object": {
-                            "description": "The type of object originally represented, such as \"category,\" \"post\", or \"attachment.\"",
+                            "description": "The type of object originally represented, such as \"category\", \"post\", or \"attachment\".",
                             "type": "string",
                             "required": false
                         },
@@ -4134,7 +4134,7 @@ mockedApiResponse.Schema = {
                             "required": false
                         },
                         "object": {
-                            "description": "The type of object originally represented, such as \"category,\" \"post\", or \"attachment.\"",
+                            "description": "The type of object originally represented, such as \"category\", \"post\", or \"attachment\".",
                             "type": "string",
                             "required": false
                         },
@@ -9418,6 +9418,26 @@ mockedApiResponse.Schema = {
                                 "edit"
                             ],
                             "default": "view",
+                            "required": false
+                        }
+                    }
+                }
+            ]
+        },
+        "/wp/v2/global-styles/themes/(?P<stylesheet>[\\/\\s%\\w\\.\\(\\)\\[\\]\\@_\\-]+)/variations": {
+            "namespace": "wp/v2",
+            "methods": [
+                "GET"
+            ],
+            "endpoints": [
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "args": {
+                        "stylesheet": {
+                            "description": "The theme identifier",
+                            "type": "string",
                             "required": false
                         }
                     }
