@@ -117,7 +117,7 @@ jobs:
             // Find the workflow run for the commit that immediately preceded this one.
             for ( let i = 0; i < previous_runs.data.length; i++ ) {
               if ( previous_runs.data[ i ] == workflow_run.data.run_number ) {
-                return JSON.stringify( previous_runs.data[ i + 1 ];
+                return JSON.stringify( previous_runs.data[ i + 1 ] );
                 return previous_runs.data[ i + 1 ].conclusion;
               }
             }
