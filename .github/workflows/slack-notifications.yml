@@ -77,22 +77,43 @@ jobs:
             const workflow_run = await github.rest.actions.getWorkflowRun({
               owner: 'WordPress',
               repo: 'wordpress-develop',
-              run_id: 2108723308,
+              run_id: 2095259831,
             });
 
-            // The first workflow run attempt does not have a previous attempt.
-            if ( workflow_run.data.run_attempt == 1 ) {
+            // When a workflow has been restarted to fix a failure, check the previous run attempt.
+            if ( workflow_run.data.run_attempt > 1 ) {
+              const previous_run = await github.rest.actions.getWorkflowRunAttempt({
+                owner: 'WordPress',
+                repo: 'wordpress-develop',
+                run_id: 2095259831,
+                attempt_number: workflow_run.data.run_attempt - 1
+              });
+
+              return previous_run.data.conclusion;
+            }
+
+            // Otherwise, check the previous workflow run.
+            const previous_runs = await github.rest.actions.listWorkflowRuns({
+              workflow_id: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.workflow_id || workflow_run.data.workflow_id }},
+              branch: 'trunk',
+              per_page: 100,
+              exclude_pull_requests: true,
+            });
+
+            // This is the first workflow run for this branch or tag.
+            if ( previous_runs.data.length == 0 ) {
               return 'none';
             }
 
-            const previous_run = await github.rest.actions.getWorkflowRunAttempt({
-              owner: 'WordPress',
-              repo: 'wordpress-develop',
-              run_id: 2108723308,
-              attempt_number: workflow_run.data.run_attempt - 1
-            });
+            // Find the workflow run for the commit that immediately preceded this one.
+            for ( let i = 0; i < previous_runs.data.length; i++ ) {
+              if ( previous_runs.data[ i ] == workflow_run.data.run_number ) {
+                return previous_runs.data[ i + 1 ].conclusion;
+              }
+            }
 
-            return previous_run.data.conclusion;
+            return '';
+
 
       - name: Store previous conclusion as an output
         id: previous-conclusion
