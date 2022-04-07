@@ -101,6 +101,8 @@ jobs:
 
             // Otherwise, check the previous workflow run.
             const previous_runs = await github.rest.actions.listWorkflowRuns({
+              owner: 'WordPress',
+              repo: 'wordpress-develop',
               workflow_id: workflow_id,
               branch: 'trunk',
               per_page: 100,
