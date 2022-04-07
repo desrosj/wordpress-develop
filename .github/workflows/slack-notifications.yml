@@ -106,7 +106,6 @@ jobs:
               workflow_id: workflow_id,
               branch: 'trunk',
               per_page: 100,
-              page: 2,
               exclude_pull_requests: true,
             });
 
