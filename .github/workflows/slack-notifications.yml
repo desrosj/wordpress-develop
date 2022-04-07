@@ -98,7 +98,7 @@ jobs:
             } else {
               workflow_id = workflow_run.data.workflow_id;
             }
-
+            return workflow_id;
             // Otherwise, check the previous workflow run.
             const previous_runs = await github.rest.actions.listWorkflowRuns({
               owner: 'WordPress',
