@@ -146,7 +146,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: [ prepare ]
-    if: ${{ needs.prepare.outputs.previous_conclusion == 'failure' && ( github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' || inputs.calling_status == 'success' ) && success() }}
+    if: ${{ contains( fromJson( '["failure", "none"]' ), needs.prepare.outputs.previous_conclusion ) && ( github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' || inputs.calling_status == 'success' ) && success() }}
 
     steps:
       - name: Post failure notifications to Slack
