@@ -93,7 +93,7 @@ jobs:
             }
 
             if ( ${{ github.event_name == 'workflow_run' }} ) {
-              const workflow_id = ${{ github.event.workflow_run.workflow_id }};
+              const workflow_id = '${{ github.event.workflow_run.workflow_id }}';
             } else {
               const workflow_id = workflow_run.data.workflow_id;
             }
