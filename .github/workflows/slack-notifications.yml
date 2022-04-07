@@ -106,20 +106,19 @@ jobs:
               workflow_id: workflow_id,
               branch: 'trunk',
               per_page: 100,
-              page: 2,
               exclude_pull_requests: true,
             });
 
             // This is the first workflow run for this branch or tag.
-            if ( previous_runs.data.length == 0 ) {
+            if ( previous_runs.data.workflow_runs.length == 0 ) {
               return 'none';
             }
 
             // Find the workflow run for the commit that immediately preceded this one.
-            for ( let i = 0; i < previous_runs.data.length; i++ ) {
-              if ( previous_runs.data[ i ] == workflow_run.data.run_number ) {
-                return JSON.stringify( previous_runs.data[ i + 1 ] );
-                return previous_runs.data[ i + 1 ].conclusion;
+            for ( let i = 0; i < previous_runs.data.workflow_runs.length; i++ ) {
+              if ( previous_runs.workflow_runs.data[ i ] == workflow_run.data.run_number ) {
+                return JSON.stringify( previous_runs.workflow_runs.data[ i + 1 ] );
+                return previous_runs.data.workflow_runs[ i + 1 ].conclusion;
               }
             }
 
