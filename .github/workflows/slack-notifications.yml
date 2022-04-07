@@ -77,7 +77,7 @@ jobs:
             const workflow_run = await github.rest.actions.getWorkflowRun({
               owner: 'WordPress',
               repo: 'wordpress-develop',
-              run_id: 2095259831,
+              run_id: 2108723308,
             });
 
             // When a workflow has been restarted to fix a failure, check the previous run attempt.
@@ -85,7 +85,7 @@ jobs:
               const previous_run = await github.rest.actions.getWorkflowRunAttempt({
                 owner: 'WordPress',
                 repo: 'wordpress-develop',
-                run_id: 2095259831,
+                run_id: 2108723308,
                 attempt_number: workflow_run.data.run_attempt - 1
               });
 
