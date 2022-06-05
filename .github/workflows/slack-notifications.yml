@@ -61,7 +61,7 @@ jobs:
     name: Prepare notifications
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event.workflow_run.event != 'pull_request' }}
+#    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event.workflow_run.event != 'pull_request' }}
     outputs:
       previous_conclusion: ${{ steps.previous-conclusion.outputs.previous_conclusion }}
       payload: ${{ steps.create-payload.outputs.payload }}
@@ -114,6 +114,7 @@ jobs:
 
             // Find the workflow run for the commit that immediately preceded this one.
             for ( let i = 0; i < previous_runs.data.workflow_runs.length; i++ ) {
+              console.log( previous_runs.data.workflow_runs[ i ] );
               // Protects against false notifications when contributors use similar head_ref names.
               if ( previous_runs.data.workflow_runs[ i ].event !== "push" ) {
                 continue;
