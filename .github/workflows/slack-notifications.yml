@@ -119,6 +119,7 @@ jobs:
               }
 
               if ( previous_runs.data.workflow_runs[ i ].run_number == workflow_run.data.run_number ) {
+                console.log( previous_runs.data.workflow_runs[ i + 1 ] );
                 return previous_runs.data.workflow_runs[ i + 1 ].conclusion;
               }
             }
