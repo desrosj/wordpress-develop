@@ -162,6 +162,7 @@ jobs:
     name: Slack Notifications
     uses: desrosj/wordpress-develop/.github/workflows/slack-notifications.yml@trunk
     needs: [ phpcs, jshint ]
+    if: ${{ always() }}
     with:
       calling_status: ${{ needs.phpcs.result == 'success' && needs.jshint.result == 'success' && 'success' || ( needs.phpcs.result == 'cancelled' || needs.jshint.result == 'cancelled' ) && 'cancelled' || 'failure' }}
     secrets:
