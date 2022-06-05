@@ -110,6 +110,7 @@ jobs:
               return 'none';
             }
 
+
             console.log( previous_runs.data );
 
             // Find the workflow run for the commit that immediately preceded this one.
