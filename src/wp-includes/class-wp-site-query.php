@@ -139,6 +139,11 @@ class WP_Site_Query {
 	 *                                                   - 'path_length'
 	 *                                                   - 'site__in'
 	 *                                                   - 'network__in'
+	 *                                                   - 'deleted'
+	 *                                                   - 'mature'
+	 *                                                   - 'spam'
+	 *                                                   - 'archived'
+	 *                                                   - 'public'
 	 *                                                   - false, an empty array, or 'none' to disable `ORDER BY` clause.
 	 *                                                   Default 'id'.
 	 *     @type string          $order                  How to order retrieved sites. Accepts 'ASC', 'DESC'. Default 'ASC'.
@@ -168,15 +173,15 @@ class WP_Site_Query {
 	 *     @type string|string[] $meta_key               Meta key or keys to filter by.
 	 *     @type string|string[] $meta_value             Meta value or values to filter by.
 	 *     @type string          $meta_compare           MySQL operator used for comparing the meta value.
-	 *                                                   See WP_Meta_Query::__construct for accepted values and default value.
+	 *                                                   See WP_Meta_Query::__construct() for accepted values and default value.
 	 *     @type string          $meta_compare_key       MySQL operator used for comparing the meta key.
-	 *                                                   See WP_Meta_Query::__construct for accepted values and default value.
+	 *                                                   See WP_Meta_Query::__construct() for accepted values and default value.
 	 *     @type string          $meta_type              MySQL data type that the meta_value column will be CAST to for comparisons.
-	 *                                                   See WP_Meta_Query::__construct for accepted values and default value.
+	 *                                                   See WP_Meta_Query::__construct() for accepted values and default value.
 	 *     @type string          $meta_type_key          MySQL data type that the meta_key column will be CAST to for comparisons.
-	 *                                                   See WP_Meta_Query::__construct for accepted values and default value.
+	 *                                                   See WP_Meta_Query::__construct() for accepted values and default value.
 	 *     @type array           $meta_query             An associative array of WP_Meta_Query arguments.
-	 *                                                   See WP_Meta_Query::__construct for accepted values.
+	 *                                                   See WP_Meta_Query::__construct() for accepted values.
 	 * }
 	 */
 	public function __construct( $query = '' ) {
@@ -345,8 +350,8 @@ class WP_Site_Query {
 		// $args can include anything. Only use the args defined in the query_var_defaults to compute the key.
 		$_args = wp_array_slice_assoc( $this->query_vars, array_keys( $this->query_var_defaults ) );
 
-		// Ignore the $fields argument as the queried result will be the same regardless.
-		unset( $_args['fields'] );
+		// Ignore the $fields, $update_site_cache, $update_site_meta_cache argument as the queried result will be the same regardless.
+		unset( $_args['fields'], $_args['update_site_cache'], $_args['update_site_meta_cache'] );
 
 		$key          = md5( serialize( $_args ) );
 		$last_changed = wp_cache_get_last_changed( 'sites' );
@@ -641,7 +646,7 @@ class WP_Site_Query {
 
 		$where = implode( ' AND ', $this->sql_clauses['where'] );
 
-		$clauses = compact( 'fields', 'join', 'where', 'orderby', 'limits', 'groupby' );
+		$pieces = array( 'fields', 'join', 'where', 'orderby', 'limits', 'groupby' );
 
 		/**
 		 * Filters the site query clauses.
@@ -651,7 +656,7 @@ class WP_Site_Query {
 		 * @param string[]      $clauses An associative array of site query clauses.
 		 * @param WP_Site_Query $query   Current instance of WP_Site_Query (passed by reference).
 		 */
-		$clauses = apply_filters_ref_array( 'sites_clauses', array( $clauses, &$this ) );
+		$clauses = apply_filters_ref_array( 'sites_clauses', array( compact( $pieces ), &$this ) );
 
 		$fields  = isset( $clauses['fields'] ) ? $clauses['fields'] : '';
 		$join    = isset( $clauses['join'] ) ? $clauses['join'] : '';
@@ -734,17 +739,17 @@ class WP_Site_Query {
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
-	 * @param string   $string  Search string.
+	 * @param string   $search  Search string.
 	 * @param string[] $columns Array of columns to search.
 	 * @return string Search SQL.
 	 */
-	protected function get_search_sql( $string, $columns ) {
+	protected function get_search_sql( $search, $columns ) {
 		global $wpdb;
 
-		if ( false !== strpos( $string, '*' ) ) {
-			$like = '%' . implode( '%', array_map( array( $wpdb, 'esc_like' ), explode( '*', $string ) ) ) . '%';
+		if ( false !== strpos( $search, '*' ) ) {
+			$like = '%' . implode( '%', array_map( array( $wpdb, 'esc_like' ), explode( '*', $search ) ) ) . '%';
 		} else {
-			$like = '%' . $wpdb->esc_like( $string ) . '%';
+			$like = '%' . $wpdb->esc_like( $search ) . '%';
 		}
 
 		$searches = array();
@@ -783,6 +788,11 @@ class WP_Site_Query {
 			case 'last_updated':
 			case 'path':
 			case 'registered':
+			case 'deleted':
+			case 'spam':
+			case 'mature':
+			case 'archived':
+			case 'public':
 				$parsed = $orderby;
 				break;
 			case 'network_id':
