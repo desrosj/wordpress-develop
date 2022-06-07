@@ -83,6 +83,7 @@ jobs:
           EOF
           )
           echo "::set-output name=svn_revision_number::${COMMIT_MESSAGE}"
+
       - name: Close pull requests
         uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
         with:
@@ -90,6 +91,10 @@ jobs:
             const gitSVNIDString = '${{ steps.git-svn-id.outputs.svn_revision_number }}';
             const revisionRegExp = new RegExp( 'trunk@([0-9]+)' );
             const revisionMatch = gitSVNIDString.match( revisionRegExp );
+
+            console.log( revisionRegExp );
+            console.log( revisionMatch );
+
             if ( ! revisionMatch || ! revisionMatch[1] ) {
               return;
             }
