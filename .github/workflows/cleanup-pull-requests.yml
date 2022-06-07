@@ -73,6 +73,7 @@ jobs:
             const related_prs = await github.rest.search.issuesAndPullRequests({
               q: '${{ steps.pr-query.outputs.result }}',
             });
+            console.log( related_prs.items );
             return related_prs && related_prs.items;
 
       - name: Get git-svn-id
@@ -92,7 +93,6 @@ jobs:
             const revisionRegExp = new RegExp( 'trunk@([0-9]+)' );
             const revisionMatch = gitSVNIDString.match( revisionRegExp );
 
-            console.log( revisionRegExp );
             console.log( revisionMatch );
 
             if ( ! revisionMatch || ! revisionMatch[1] ) {
