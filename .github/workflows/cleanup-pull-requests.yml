@@ -27,6 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     #    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name == 'push' }}
 
+
     steps:
       - name: Parse commit message
         id: fixed-tickets
