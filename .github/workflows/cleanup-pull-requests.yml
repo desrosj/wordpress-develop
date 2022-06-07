@@ -90,9 +90,9 @@ jobs:
         with:
           script: |
             const gitSVNIDString = '${{ steps.git-svn-id.outputs.svn_revision_number }}';
-            const revisionMatch = gitSVNIDString.match( /trunk@([0-9]+)/g );
+            const revisionMatch = gitSVNIDString.match( /trunk@([0-9]+)/ );
 
-            console.log( revisionMatch );
+            console.log( revisionMatch[1] );
 
             if ( ! revisionMatch || ! revisionMatch[1] ) {
               return;
