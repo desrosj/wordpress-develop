@@ -71,7 +71,7 @@ jobs:
         with:
           script: |
             const related_prs = await github.rest.search.issuesAndPullRequests({
-              q: "${{ steps.pr-query.outputs.result }}",
+              q: '${{ steps.pr-query.outputs.result }}',
             });
             return related_prs && related_prs.items;
 
