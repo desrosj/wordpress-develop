@@ -37,8 +37,8 @@ jobs:
           )
           echo "::set-output name=fixed_list::${COMMIT_MESSAGE}"
 
-      - name: Create search query
-        id: pr-query
+      - name: Find pull requests
+        id: pr-results
         uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
         with:
           script: |
@@ -52,7 +52,7 @@ jobs:
                 if ( 0 !== index ) {
                   tempQuery += ' OR';
                 }
-                tempQuery += ` https://core.trac.wordpress.org/ticket/${value}`;
+                tempQuery += `https://core.trac.wordpress.org/ticket/${value}`;
                 if ( tempQuery.length <= 256 ) {
                   query = tempQuery;
                   return true;
@@ -63,15 +63,9 @@ jobs:
 
               query += 'is:pr is:open in:title,body repo:WordPress/wordpress-develop';
             }
-            return query;
 
-      - name: Find pull requests
-        id: pr-results
-        uses: actions/github-script@441359b1a30438de65712c2fbca0abe4816fa667 # v5.0.0
-        with:
-          script: |
             const related_prs = await github.rest.search.issuesAndPullRequests({
-              q: '${{ steps.pr-query.outputs.result }}',
+              q: query,
             });
             console.log( related_prs );
             return related_prs && related_prs.items;
