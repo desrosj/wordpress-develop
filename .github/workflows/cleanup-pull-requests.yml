@@ -47,7 +47,6 @@ jobs:
             let query = '';
             ticketList = fixesLine.match( /[0-9]+/g );
             if ( ticketList && ticketList.length > 0 ) {
-              query += 'is:pr is:open in:title,body repo:WordPress/wordpress-develop';
               let tempQuery = query;
               ticketList.every( ( value, index ) => {
                 if ( 0 !== index ) {
@@ -61,6 +60,8 @@ jobs:
                   return false;
                 }
               });
+
+              query += 'is:pr is:open in:title,body repo:WordPress/wordpress-develop';
             }
             return query;
 
