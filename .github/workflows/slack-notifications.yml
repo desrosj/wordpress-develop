@@ -82,7 +82,7 @@ jobs:
               exclude_pull_requests: true,
             });
 
-            console.log( previous_runs );
+            console.log( previous_runs.data.workflow_runs );
 
             // This is the first workflow run for this branch or tag.
             if ( previous_runs.data.workflow_runs.length == 0 ) {
