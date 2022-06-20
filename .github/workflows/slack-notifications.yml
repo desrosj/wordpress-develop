@@ -94,7 +94,7 @@ jobs:
               console.log( 'Index: ' + i );
               console.log( previous_runs.data.workflow_runs );
 
-              if ( previous_runs.data.workflow_runs[ i ].run_number == 568 ) {
+              if ( previous_runs.data.workflow_runs[ i ].run_number == '568' ) {
                 let next_index = i;
                 do {
                   next_index++;
