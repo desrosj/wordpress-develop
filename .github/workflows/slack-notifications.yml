@@ -89,7 +89,7 @@ jobs:
 
             // Find the workflow run for the commit that immediately preceded this one.
             for ( let i = 0; i < previous_runs.data.workflow_runs.length; i++ ) {
-              if ( previous_runs.data.workflow_runs[ i ].run_number == '2525794981' ) {
+              if ( previous_runs.data.workflow_runs[ i ].run_number == 2525794981 ) {
                 let next_index = i;
                 do {
                   next_index++;
