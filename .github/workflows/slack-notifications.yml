@@ -100,7 +100,7 @@ jobs:
                   next_index++;
 
                   // Protects against a false notification when contributors use the trunk branch as the pull request head_ref.
-                  if ( expected_events.indexOf( previous_runs.data.workflow_runs[ next_index ].event ) !== -1 ) {
+                  if ( expected_events.indexOf( previous_runs.data.workflow_runs[ next_index ].event ) == -1 ) {
                     continue;
                   }
 
