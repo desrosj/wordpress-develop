@@ -9,8 +9,8 @@ on:
       - '3.[89]'
       - '[4-9].[0-9]'
     tags:
-      - '3.[89]*'
-      - '[4-9].[0-9]*'
+      - '[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+'
   pull_request:
     branches:
       - trunk
@@ -59,7 +59,7 @@ jobs:
     name: PHP coding standards
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
+    if: ${{ true }}
 
     steps:
       - name: Checkout repository
