@@ -53,7 +53,6 @@ jobs:
     name: Check PHP compatibility
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
 
     steps:
       - name: Checkout repository
@@ -104,7 +103,7 @@ jobs:
     name: Slack Notifications
     uses: WordPress/wordpress-develop/.github/workflows/slack-notifications.yml@trunk
     needs: [ php-compatibility ]
-    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' && always() }}
+    if: ${{ github.event_name != 'pull_request' && always() }}
     with:
       calling_status: ${{ needs.php-compatibility.result == 'success' && 'success' || needs.php-compatibility.result == 'cancelled' && 'cancelled' || 'failure' }}
     secrets:
