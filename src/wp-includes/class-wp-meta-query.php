@@ -338,12 +338,15 @@ class WP_Meta_Query {
 	 *
 	 * @since 3.2.0
 	 *
-	 * @param string $type              Type of meta, eg 'user', 'post'.
+	 * @param string $type              Type of meta. Possible values include but are not limited
+	 *                                  to 'post', 'comment', 'blog', 'term', and 'user'.
 	 * @param string $primary_table     Database table where the object being filtered is stored (eg wp_users).
 	 * @param string $primary_id_column ID column for the filtered object in $primary_table.
-	 * @param object $context           Optional. The main query object.
-	 * @return array|false {
-	 *     Array containing JOIN and WHERE SQL clauses to append to the main query.
+	 * @param object $context           Optional. The main query object that corresponds to the type, for
+	 *                                  example a `WP_Query`, `WP_User_Query`, or `WP_Site_Query`.
+	 * @return string[]|false {
+	 *     Array containing JOIN and WHERE SQL clauses to append to the main query,
+	 *     or false if no table exists for the requested meta type.
 	 *
 	 *     @type string $join  SQL fragment to append to the main JOIN clause.
 	 *     @type string $where SQL fragment to append to the main WHERE clause.
@@ -378,12 +381,14 @@ class WP_Meta_Query {
 		 *
 		 * @since 3.1.0
 		 *
-		 * @param array  $sql               Array containing the query's JOIN and WHERE clauses.
-		 * @param array  $queries           Array of meta queries.
-		 * @param string $type              Type of meta.
-		 * @param string $primary_table     Primary table.
-		 * @param string $primary_id_column Primary column ID.
-		 * @param object $context           The main query object.
+		 * @param string[] $sql               Array containing the query's JOIN and WHERE clauses.
+		 * @param array    $queries           Array of meta queries.
+		 * @param string   $type              Type of meta. Possible values include but are not limited
+		 *                                    to 'post', 'comment', 'blog', 'term', and 'user'.
+		 * @param string   $primary_table     Primary table.
+		 * @param string   $primary_id_column Primary column ID.
+		 * @param object   $context           The main query object that corresponds to the type, for
+		 *                                    example a `WP_Query`, `WP_User_Query`, or `WP_Site_Query`.
 		 */
 		return apply_filters_ref_array( 'get_meta_sql', array( $sql, $this->queries, $type, $primary_table, $primary_id_column, $context ) );
 	}
@@ -396,7 +401,7 @@ class WP_Meta_Query {
 	 *
 	 * @since 4.1.0
 	 *
-	 * @return array {
+	 * @return string[] {
 	 *     Array containing JOIN and WHERE SQL clauses to append to the main query.
 	 *
 	 *     @type string $join  SQL fragment to append to the main JOIN clause.
@@ -429,7 +434,7 @@ class WP_Meta_Query {
 	 * @param array $query Query to parse (passed by reference).
 	 * @param int   $depth Optional. Number of tree levels deep we currently are.
 	 *                     Used to calculate indentation. Default 0.
-	 * @return array {
+	 * @return string[] {
 	 *     Array containing JOIN and WHERE SQL clauses to append to a single query array.
 	 *
 	 *     @type string $join  SQL fragment to append to the main JOIN clause.
@@ -515,7 +520,7 @@ class WP_Meta_Query {
 	 * @param array  $parent_query Parent query array.
 	 * @param string $clause_key   Optional. The array key used to name the clause in the original `$meta_query`
 	 *                             parameters. If not provided, a key will be generated automatically.
-	 * @return array {
+	 * @return string[] {
 	 *     Array containing JOIN and WHERE SQL clauses to append to a first-order query.
 	 *
 	 *     @type string $join  SQL fragment to append to the main JOIN clause.
@@ -843,7 +848,7 @@ class WP_Meta_Query {
 			$clause_compare  = strtoupper( $clause['compare'] );
 			$sibling_compare = strtoupper( $sibling['compare'] );
 			if ( in_array( $clause_compare, $compatible_compares, true ) && in_array( $sibling_compare, $compatible_compares, true ) ) {
-				$alias = $sibling['alias'];
+				$alias = preg_replace( '/\W/', '_', $sibling['alias'] );
 				break;
 			}
 		}
