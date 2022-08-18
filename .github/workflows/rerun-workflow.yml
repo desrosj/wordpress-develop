@@ -16,7 +16,6 @@ jobs:
     name: Prepare notifications
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event.workflow_run.event != 'pull_request' }}
 
     steps:
       - name: Fetch the current workflow
