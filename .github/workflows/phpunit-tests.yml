@@ -249,6 +249,6 @@ jobs:
 
   maybe-rerun-workflow:
     name: Maybe Rerun Workflow
-    uses: desrosj/wordpress-develop/.github/workflows/rerun-workflow.yml@try/automatic-workflow-rerunning
+    uses: WordPress/wordpress-develop/.github/workflows/rerun-workflow.yml@trunk
     needs: [ test-php, slack-notifications ]
-    if: ${{ ( needs.test-php.result == 'cancelled' || needs.test-php.result == 'failure' ) && always() }}
+    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' && ( needs.test-php.result == 'cancelled' || needs.test-php.result == 'failure' ) && always() }}
