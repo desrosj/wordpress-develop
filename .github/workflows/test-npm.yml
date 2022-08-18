@@ -176,4 +176,4 @@ jobs:
     name: Maybe Rerun Workflow
     uses: desrosj/wordpress-develop/.github/workflows/rerun-workflow.yml@try/automatic-workflow-rerunning
     needs: [ test-npm, test-npm-macos, slack-notifications ]
-    if: ${{ needs.test-php.result == 'cancelled' || needs.test-php.result == 'failure' }}
+    if: ${{ ( needs.test-npm.result == 'cancelled' || needs.test-npm.result == 'failure' || needs.test-npm-macos.result == 'cancelled' || needs.test-npm-macos.result == 'failure' ) && always() }}
