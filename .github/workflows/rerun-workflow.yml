@@ -16,12 +16,12 @@ jobs:
     name: Rerun Workflow
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event.workflow_run.event != 'pull_request' }}
 
     steps:
       - name: Fetch the current workflow
         uses: actions/github-script@d50f485531ba88479582bc2da03ff424389af5c1 # v6.1.1
         with:
+          github-token: ${{ secrets.TEST_RERUN_WORKFLOW }}
           script: |
             const workflow_run = await github.rest.actions.getWorkflowRun({
               owner: context.repo.owner,
