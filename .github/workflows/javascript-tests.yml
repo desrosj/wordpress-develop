@@ -104,12 +104,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ test-js, slack-notifications ]
     if: ${{ ( needs.test-js.result == 'cancelled' || needs.test-js.result == 'failure' ) && always() }}
+    permissions:
+      actions: write
 
     steps:
       - name: Dispatch workflow run
         uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # v6.1.0
         with:
-          github-token: ${{ secrets.TEST_RERUN_WORKFLOW }}
           script: |
             github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
