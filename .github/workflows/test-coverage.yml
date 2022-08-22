@@ -193,3 +193,24 @@ jobs:
       SLACK_GHA_CANCELLED_WEBHOOK: ${{ secrets.SLACK_GHA_CANCELLED_WEBHOOK }}
       SLACK_GHA_FIXED_WEBHOOK: ${{ secrets.SLACK_GHA_FIXED_WEBHOOK }}
       SLACK_GHA_FAILURE_WEBHOOK: ${{ secrets.SLACK_GHA_FAILURE_WEBHOOK }}
+
+  maybe-rerun-workflow:
+    name: Rerun Workflow
+    runs-on: ubuntu-latest
+    needs: [ test-coverage-report, slack-notifications ]
+    if: ${{ ( needs.test-coverage-report.result == 'cancelled' || needs.test-coverage-report.result == 'failure' ) && always() }}
+
+    steps:
+      - name: Dispatch workflow run
+        uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # v6.1.0
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'rerun-workflow.yml',
+              ref: '${{ github.ref }}',
+              inputs: {
+                run_id: '${{ github.run_id }}'
+              }
+            });
