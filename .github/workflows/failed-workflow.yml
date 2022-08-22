@@ -1,7 +1,7 @@
 ##
-# Automatically attempts to rerun a workflow.
+# Performs any needed follow-up tasks when a workflow fails or is manually cancelled.
 ##
-name: Rerun Workflow
+name: Failed Workflow
 
 on:
   workflow_dispatch:
@@ -12,18 +12,18 @@ on:
         type: 'number'
 
 jobs:
-  # Reruns the current workflow.
+  # Attempts to rerun a workflow.
   #
   # Performs the following steps:
-  # - Retrieves the current workflow run.
-  # - Restarts all failed jobs when a workflow fails for the first time.
+  # - Retrieves the workflow run that dispatched this workflow.
+  # - Restarts all failed jobs when the workflow fails or is cancelled for the first time.
   rerun-workflow:
-    name: Rerun Workflow
+    name: Rerun a workflow
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
-      - name: Fetch the current workflow
+      - name: Rerun a workflow
         uses: desrosj/github-script@update/plugin-rest-endpoint-methods # v6.1.1
         with:
           script: |
