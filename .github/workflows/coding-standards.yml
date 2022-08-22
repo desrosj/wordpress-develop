@@ -191,6 +191,6 @@ jobs:
             workflow_id: 'rerun-workflow.yml',
             ref: '${{ github.ref }}'
             inputs: {
-              run_id: ${{ github.run_id }}
+              run_id: '${{ github.run_id }}'
             }
           });
