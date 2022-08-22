@@ -116,7 +116,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'rerun-workflow.yml',
-              ref: '${{ github.event_name == 'pull_request' && github.base_ref || github.ref }}',
+              ref: '${{ github.ref_name }}',
               inputs: {
                 run_id: '${{ github.run_id }}'
               }
