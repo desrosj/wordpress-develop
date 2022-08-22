@@ -33,7 +33,7 @@ jobs:
               return;
             }
 
-            const rerun = await github.rest.actions.reRunWorkflowFailedJobs({
+            const rerun = await github.rest.actions.reRunWorkflow({
               owner: context.repo.owner,
               repo: context.repo.repo,
               run_id: ${{ github.run_id }},
