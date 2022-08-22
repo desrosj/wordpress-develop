@@ -132,7 +132,22 @@ jobs:
       SLACK_GHA_FAILURE_WEBHOOK: ${{ secrets.SLACK_GHA_FAILURE_WEBHOOK }}
 
   maybe-rerun-workflow:
-    name: Maybe Rerun Workflow
-    uses: desrosj/wordpress-develop/.github/workflows/rerun-workflow.yml@try/automatic-workflow-rerunning
+    name: Rerun Workflow
+    runs-on: ubuntu-latest
     needs: [ e2e-tests, slack-notifications ]
     if: ${{ ( needs.e2e-tests.result == 'cancelled' || needs.e2e-tests.result == 'failure' ) && always() }}
+
+    steps:
+      - name: Dispatch workflow run
+        uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # v6.1.0
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'rerun-workflow.yml',
+              ref: '${{ github.ref }}',
+              inputs: {
+                run_id: '${{ github.run_id }}'
+              }
+            });
