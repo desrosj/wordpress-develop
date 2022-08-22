@@ -4,7 +4,12 @@
 name: Rerun Workflow
 
 on:
-  workflow_call:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'GitHub Action run ID to rerun'
+        required: true
+        type: 'string'
 
 jobs:
   # Reruns the current workflow.
@@ -25,7 +30,7 @@ jobs:
             const workflow_run = await github.rest.actions.getWorkflowRun({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              run_id: ${{ github.run_id }},
+              run_id: ${{ inputs.run_id }},
             });
 
             // Only automatically rerun after the first run attempt.
@@ -33,8 +38,8 @@ jobs:
               return;
             }
 
-            const rerun = await github.rest.actions.reRunWorkflow({
+            const rerun = await github.rest.actions.reRunWorkflowFailedJobs({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              run_id: ${{ github.run_id }},
+              run_id: ${{ inputs.run_id }},
             });
