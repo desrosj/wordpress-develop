@@ -9,7 +9,7 @@ on:
       run_id:
         description: 'GitHub Action run ID to rerun'
         required: true
-        type: 'string'
+        type: 'number'
 
 jobs:
   # Reruns the current workflow.
