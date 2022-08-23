@@ -189,8 +189,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'failed-workflow.yml',
-              ref: '${{ github.ref_name }}',
-              inputs: {
-                run_id: '${{ github.run_id }}'
-              }
+              ref: '${{ github.ref_name }}'
             });
