@@ -185,9 +185,14 @@ jobs:
         uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # v6.1.0
         with:
           script: |
-            github.rest.actions.createWorkflowDispatch({
+            result = github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'failed-workflow.yml',
-              ref: '${{ github.ref_name }}'
+              ref: '${{ github.ref_name }}',
+              inputs: {
+                run_id: '${{ github.run_id }}'
+              }
             });
+
+            console.debug( result );

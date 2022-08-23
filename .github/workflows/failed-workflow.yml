@@ -5,6 +5,11 @@ name: Failed Workflow
 
 on:
   workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'GitHub Action run ID to rerun'
+        required: true
+        type: 'string'
 
 jobs:
   # Attempts to rerun a workflow.
