@@ -185,7 +185,7 @@ jobs:
         uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # v6.1.0
         with:
           script: |
-            result = github.rest.actions.createWorkflowDispatch({
+            const result = await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'failed-workflow.yml',
