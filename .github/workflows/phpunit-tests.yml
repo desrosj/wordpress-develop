@@ -174,6 +174,13 @@ jobs:
         continue-on-error: ${{ matrix.php == '8.1' || matrix.php == '8.2' }}
         run: ./vendor/bin/phpunit --verbose -c phpunit.xml.dist --group external-http
 
+      - name: Set up PHP
+        uses: shivammathur/setup-php@e04e1d97f0c0481c6e1ba40f8a538454fe5d7709 # v2.21.2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: xdebug
+          tools: composer
+
       # __fakegroup__ is excluded to force PHPUnit to ignore the <exclude> settings in phpunit.xml.dist.
       - name: Run (Xdebug) tests
         if: ${{ ! matrix.split_slow && matrix.php != '8.2' }}
