@@ -134,6 +134,12 @@ jobs:
             multisite: false
             db_type: 'mysql'
             db_version: '8.0'
+          - php: '7.2'
+            os: ubuntu-latest
+            memcached: false
+            multisite: false
+            db_type: 'mysql'
+            db_version: '8.0'
           - php: '8.0'
             os: ubuntu-latest
             memcached: false
