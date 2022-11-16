@@ -57,7 +57,7 @@ jobs:
     name: Test npm on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || ( github.event_name == 'pull_request' && matrix.os != 'macos-latest' }}
+    if: ${{ github.repository == 'WordPress/wordpress-develop' || ( github.event_name == 'pull_request' && runner.os != 'macOS' }}
     strategy:
       fail-fast: false
       matrix:
