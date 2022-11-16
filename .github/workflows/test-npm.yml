@@ -39,6 +39,9 @@ env:
 jobs:
   # Verifies that installing npm dependencies and building WordPress works as expected.
   #
+  # MacOS runs under more strict conditions to avoid unintentionally consuming
+  # excessive minutes (MacOS jobs consume minutes at a 10x rate).
+  #
   # Performs the following steps:
   # - Checks out the repository.
   # - Sets up Node.js.
@@ -53,73 +56,17 @@ jobs:
   test-npm:
     name: Test npm on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
+    timeout-minutes: 30
+    if: ${{ github.repository == 'WordPress/wordpress-develop' || ( github.event_name == 'pull_request' && matrix.os != 'macos-latest' }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest ]
+        os: [
+            'ubuntu-latest',
+            'windows-latest',
+            'macos-latest'
+        ]
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@8c91899e586c5b171469028077307d293428b516 # v3.5.1
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
-      - name: Log debug information
-        run: |
-          npm --version
-          node --version
-          curl --version
-          git --version
-          svn --version
-
-      - name: Install npm Dependencies
-        run: npm ci
-
-      - name: Build WordPress in /src
-        run: npm run build:dev
-
-      - name: Clean after building in /src
-        run: npm run grunt clean -- --dev
-
-      - name: Ensure version-controlled files are not modified or deleted during building and cleaning
-        run: git diff --exit-code
-
-      - name: Build WordPress
-        run: npm run build
-
-      - name: Clean after building
-        run: npm run grunt clean
-
-      - name: Ensure version-controlled files are not modified or deleted during building and cleaning
-        run: git diff --exit-code
-
-  # Verifies that installing npm dependencies and building WordPress works as expected on MacOS.
-  #
-  # This is separate from the job above in order to use stricter conditions about when to run.
-  # This avoids unintentionally consuming excessive minutes, as MacOS jobs consume minutes at a 10x rate.
-  #
-  # Performs the following steps:
-  # - Checks out the repository.
-  # - Sets up Node.js.
-  # - Logs debug information about the GitHub Action runner.
-  # - Installs npm dependencies.
-  # - Builds WordPress to run from the `build` directory.
-  # - Cleans up after building WordPress to the `build` directory.
-  # - Ensures version-controlled files are not modified or deleted.
-  # - Builds WordPress to run from the `src` directory.
-  # - Cleans up after building WordPress to the `src` directory.
-  # - Ensures version-controlled files are not modified or deleted.
-  test-npm-macos:
-    name: Test npm on MacOS
-    runs-on: macos-latest
-    timeout-minutes: 30
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
@@ -162,10 +109,10 @@ jobs:
   slack-notifications:
     name: Slack Notifications
     uses: WordPress/wordpress-develop/.github/workflows/slack-notifications.yml@trunk
-    needs: [ test-npm, test-npm-macos ]
+    needs: [ test-npm ]
     if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' && always() }}
     with:
-      calling_status: ${{ needs.test-npm.result == 'success' && needs.test-npm-macos.result == 'success' && 'success' || ( needs.test-npm.result == 'cancelled' || needs.test-npm-macos.result == 'cancelled' ) && 'cancelled' || 'failure' }}
+      calling_status: ${{ needs.test-npm.result == 'success' && 'success' || needs.test-npm.result == 'cancelled' && 'cancelled' || 'failure' }}
     secrets:
       SLACK_GHA_SUCCESS_WEBHOOK: ${{ secrets.SLACK_GHA_SUCCESS_WEBHOOK }}
       SLACK_GHA_CANCELLED_WEBHOOK: ${{ secrets.SLACK_GHA_CANCELLED_WEBHOOK }}
@@ -175,7 +122,7 @@ jobs:
   failed-workflow:
     name: Failed workflow tasks
     runs-on: ubuntu-latest
-    needs: [ test-npm, test-npm-macos, slack-notifications ]
+    needs: [ test-npm, slack-notifications ]
     if: |
       always() &&
       github.repository == 'WordPress/wordpress-develop' &&
@@ -183,7 +130,6 @@ jobs:
       github.run_attempt < 2 &&
       (
         needs.test-npm.result == 'cancelled' || needs.test-npm.result == 'failure' ||
-        needs.test-npm-macos.result == 'cancelled' || needs.test-npm-macos.result == 'failure'
       )
 
     steps:
