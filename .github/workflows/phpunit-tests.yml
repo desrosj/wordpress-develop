@@ -34,6 +34,9 @@ env:
 jobs:
   # Runs the PHPUnit tests for WordPress.
   #
+  # Testing environment variables within YAML comments:
+  # - SLOW_TESTS: ${{ env.SLOW_TESTS }}
+  #
   # Performs the following steps:
   # - Sets environment variables.
   # - Checks out the repository.
