@@ -53,7 +53,7 @@ jobs:
   # - Submit the test results to the WordPress.org host test results.
   test-with-mysql:
     name: PHP ${{ matrix.php }}/${{ matrix.db-type }} ${{ matrix.db-version }}${{ matrix.multisite && ' multisite' || '' }}${{ matrix.split_slow && ' slow tests' || '' }}${{ matrix.memcached && ' with memcached' || '' }}
-    uses: desrosj/wordpress-develop/.github/workflows/run-phpunit-tests.yml@experiment/db-testing
+    uses: desrosj/wordpress-develop/.github/workflows/run-phpunit-tests.yml@expanded-db-testing/callable-action
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
       fail-fast: false
@@ -79,7 +79,7 @@ jobs:
 
   test-with-mariadb:
     name: PHP ${{ matrix.php }}/${{ matrix.db-type }} ${{ matrix.db-version }}${{ matrix.multisite && ' multisite' || '' }}${{ matrix.split_slow && ' slow tests' || '' }}${{ matrix.memcached && ' with memcached' || '' }}
-    uses: desrosj/wordpress-develop/.github/workflows/run-phpunit-tests.yml@experiment/db-testing
+    uses: desrosj/wordpress-develop/.github/workflows/run-phpunit-tests.yml@expanded-db-testing/callable-action
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
       fail-fast: false
