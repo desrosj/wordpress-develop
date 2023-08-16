@@ -1,0 +1,111 @@
+name: Test old branches
+
+on:
+  # Verify the workflow is successful when this file is updated.
+  push:
+    branches:
+      - upgrade-testing-strategy
+
+# Disable permissions for all available scopes by default.
+# Any needed permissions should be configured at the job level.
+permissions: {}
+
+jobs:
+  #
+  # These WordPress versions cannot be tested on PHP 8.0+ because of fatal errors related to using
+  # __autoload() or array/string offset with curly braces.
+  #
+  wp-4-5-through-4-9:
+    name: ${{ matrix.wp }}-${{ inputs.new_version }} (MS - Subdir) on PHP ${{ matrix.php }}, MySQL ${{ matrix.mysql }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '7.0', '7.1', '7.2', '7.3', '7.4' ]
+        mysql: [ '5.7', '8.0' ]
+        wp: [ '4.6', '4.7', '4.8', '4.9' ]
+        multisite: [ false, true ]
+
+    services:
+      mysql:
+        image: mysql:${{ matrix.mysql }}
+        ports:
+          - 3306
+        options: --health-cmd="mysqladmin ping" --health-interval=30s --health-timeout=10s --health-retries=5 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=test_db --entrypoint sh mysql:${{ matrix.mysql }} -c "exec docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"
+
+  dispatch-workflows-for-old-branches:
+    name: ${{ matrix.workflow }} for ${{ matrix.branch }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    timeout-minutes: 20
+    if: ${{ false }}
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [
+          '6.3', '6.2', '6.1','6.0',
+          '5.9', '5.8', '5.7', '5.6', '5.5', '5.4', '5.3', '5.2', '5.1', '5.0',
+          '4.9', '4.8', '4.7', '4.6', '4.5', '4.4', '4.3', '4.2', '4.1'
+        ]
+        include:
+          # PHP Compatibility testing was introduced in 5.5.
+          - branch: '6.3'
+            workflow: 'php-compatibility.yml'
+          - branch: '6.2'
+            workflow: 'php-compatibility.yml'
+          - branch: '6.1'
+            workflow: 'php-compatibility.yml'
+          - branch: '6.0'
+            workflow: 'php-compatibility.yml'
+          - branch: '5.9'
+            workflow: 'php-compatibility.yml'
+          - branch: '5.8'
+            workflow: 'php-compatibility.yml'
+          - branch: '5.7'
+            workflow: 'php-compatibility.yml'
+          - branch: '5.6'
+            workflow: 'php-compatibility.yml'
+          - branch: '5.5'
+            workflow: 'php-compatibility.yml'
+
+          # End-to-end testing was introduced in 5.3 but was later removed as there were no meaningful assertions.
+          # Starting in 5.8 with #52905, some additional tests with real assertions were introduced.
+          # Branches 5.8 and newer should be tested to confirm no regressions are introduced.
+          - branch: '6.3'
+            workflow: 'end-to-end-tests.yml'
+          - branch: '6.2'
+            workflow: 'end-to-end-tests.yml'
+          - branch: '6.1'
+            workflow: 'end-to-end-tests.yml'
+          - branch: '6.0'
+            workflow: 'end-to-end-tests.yml'
+          - branch: '5.9'
+            workflow: 'end-to-end-tests.yml'
+          - branch: '5.8'
+            workflow: 'end-to-end-tests.yml'
+
+          # Performance testing was introduced in 6.2.
+          - branch: '6.3'
+            workflow: 'performance.yml'
+          - branch: '6.2'
+            workflow: 'performance.yml'
+
+    # Run all branches monthly, but only the currently supported one twice per month.
+    steps:
+      - name: Dispatch workflow run
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
+        if: ${{ github.event_name == 'push' || github.event.schedule == '0 0 15 * *' || matrix.branch == '6.3' }}
+        with:
+          retries: 2
+          retry-exempt-status-codes: 418
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: '${{ matrix.workflow }}',
+              ref: '${{ matrix.branch }}'
+            });
