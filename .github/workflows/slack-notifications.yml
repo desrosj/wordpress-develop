@@ -52,7 +52,7 @@ jobs:
       actions: read
       contents: read
     timeout-minutes: 5
-    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event.workflow_run.event != 'pull_request' }}
+    if: ${{ always() || github.repository == 'WordPress/wordpress-develop' && github.event.workflow_run.event != 'pull_request' }}
     outputs:
       previous_conclusion: ${{ steps.previous-conclusion.outputs.previous_conclusion }}
       payload: ${{ steps.create-payload.outputs.payload }}
@@ -162,7 +162,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: [ prepare ]
-    if: ${{ ( inputs.calling_status == 'failure' || failure() ) && steps.previous-attempt-result.outputs.result != 'first-failure' }}
+    if: ${{ ( inputs.calling_status == 'failure' || failure() ) && needs.prepare.previous-attempt-result.outputs.result != 'first-failure' }}
 
     steps:
       - name: Post failure notifications to Slack

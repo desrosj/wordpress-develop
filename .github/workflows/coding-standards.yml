@@ -176,7 +176,7 @@ jobs:
       actions: read
       contents: read
     needs: [ phpcs, jshint ]
-    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' && always() }}
+    if: ${{ github.repository == 'desrosj/wordpress-develop' && github.event_name == 'pull_request' && always() }}
     with:
       calling_status: ${{ needs.phpcs.result == 'success' && needs.jshint.result == 'success' && 'success' || ( needs.phpcs.result == 'cancelled' || needs.jshint.result == 'cancelled' ) && 'cancelled' || 'failure' }}
     secrets:
