@@ -69,6 +69,7 @@ jobs:
   # - Logs the running Docker containers.
   # - Logs debug information about what's installed within the WordPress Docker containers.
   # - Install WordPress within the Docker container.
+  # - Configure PHPUnit caching.
   # - Run the PHPUnit tests.
   # - Ensures version-controlled files are not modified or deleted.
   # - Checks out the WordPress Test reporter repository.
@@ -150,6 +151,14 @@ jobs:
 
       - name: Install WordPress
         run: npm run env:install
+
+      - name: Configure PHPUnit caching
+        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        with:
+          path: .phpunit.cache/
+          key: phpunit-cache-php-${{ inputs.php }}-${{ inputs.db-type }}-${{ inputs.db-version }}-${{ inputs.multisite && 'multisite-' || '' }}${{ inputs.memcached && 'memcached-' || '' }}${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            phpunit-cache-php-${{ inputs.php }}-${{ inputs.db-type }}-${{ inputs.db-version }}-${{ inputs.multisite && 'multisite-' || '' }}${{ inputs.memcached && 'memcached-' || '' }}${{ github.ref }}-
 
       - name: Run PHPUnit tests
         run: node ./tools/local-env/scripts/docker.js run php ./vendor/bin/phpunit --verbose -c ${{ env.PHPUNIT_CONFIG }}
