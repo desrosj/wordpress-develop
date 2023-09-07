@@ -156,9 +156,9 @@ jobs:
         uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: .cache/phpunit/
-          key: phpunit-cache-php-${{ matrix.php-version }}-${{ inputs.db-type }}-${{ inputs.db-version }}-${{ inputs.multisite && 'multisite-' || '' }}-${{ inputs.memcached && 'memcached-' || '' }}${{ github.ref }}-${{ github.sha }}
+          key: phpunit-cache-php-${{ inputs.php }}-${{ inputs.db-type }}-${{ inputs.db-version }}-${{ inputs.multisite && 'multisite-' || '' }}-${{ inputs.memcached && 'memcached-' || '' }}${{ github.ref }}-${{ github.sha }}
           restore-keys: |
-            phpunit-cache-php-${{ matrix.php-version }}-${{ inputs.db-type }}-${{ inputs.db-version }}-${{ inputs.multisite && 'multisite-' || '' }}-${{ inputs.memcached && 'memcached-' || '' }}${{ github.ref }}-
+            phpunit-cache-php-${{ inputs.php }}-${{ inputs.db-type }}-${{ inputs.db-version }}-${{ inputs.multisite && 'multisite-' || '' }}-${{ inputs.memcached && 'memcached-' || '' }}${{ github.ref }}-
 
       - name: Run PHPUnit tests
         run: node ./tools/local-env/scripts/docker.js run php ./vendor/bin/phpunit --verbose -c ${{ env.PHPUNIT_CONFIG }}
