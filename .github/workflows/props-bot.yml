@@ -27,5 +27,5 @@ jobs:
     # - Leaves the list in a comment on the pull request. If a comment already exists, the previous one is updated.
     steps:
       - name: Compile contributor list
-        uses: desrosj/wordpress-props@ca72e0fc5c5944fec15ed821333938e6615044fe
-        
+        uses: desrosj/wordpress-props@main
+
