@@ -1,0 +1,31 @@
+name: Props Bot
+
+on:
+  # Gathers all participants for pull requests to assist in giving proper credit.
+  pull_request:
+  pull_request_review:
+
+# Cancels all previous workflow runs for pull requests that have not completed.
+concurrency:
+  # The concurrency group contains the workflow name and the branch name for pull requests
+  # or the commit hash for any other events.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  pull_request_participants:
+    name: Collect props
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # Collects a list of contributors for a pull request and shares a list of
+    # Co-authored-by: trailers for merging contributors.
+    #
+    # Performs the following steps:
+    # - Checks out the repository.
+    # - Compiles a list of contributors.
+    # - Leaves the list in a comment on the pull request. If a comment already exists, the previous one is updated.
+    steps:
+      - name: Compile contributor list
+        uses: desrosj/wordpress-props@ca72e0fc5c5944fec15ed821333938e6615044fe
+        
