@@ -135,7 +135,7 @@ jobs:
     needs: [ test-with-mysql, test-with-mariadb ]
     if: ${{ always() }}
     with:
-      calling_status: ${{ success() && 'success' || cancelled() && 'cancelled' || 'failure' }}
+      calling_status: ${{ contains( needs.*.result, 'cancelled' ) && 'cancelled' || contains( needs.*.result, 'failure' ) && 'failure' || 'success' }}
     secrets:
       SLACK_GHA_SUCCESS_WEBHOOK: ${{ secrets.SLACK_GHA_SUCCESS_WEBHOOK }}
       SLACK_GHA_CANCELLED_WEBHOOK: ${{ secrets.SLACK_GHA_CANCELLED_WEBHOOK }}
@@ -150,6 +150,7 @@ jobs:
     needs: [ slack-notifications ]
     if: |
       always() &&
+      github.repository == 'WordPress/wordpress-develop' &&
       github.event_name != 'pull_request' &&
       github.run_attempt < 2 &&
       (
