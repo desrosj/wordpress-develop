@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - trunk
-      - 'try/simplify-gha-logic'
+      - 'test/simplify-gha-logic'
       - '3.[7-9]'
       - '[4-9].[0-9]'
     tags:
