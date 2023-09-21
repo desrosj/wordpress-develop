@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - trunk
+      - 'try/simplify-gha-logic'
       - '3.[7-9]'
       - '[4-9].[0-9]'
     tags:
@@ -40,7 +41,6 @@ jobs:
     permissions:
       contents: read
     secrets: inherit
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
       fail-fast: false
       matrix:
@@ -92,7 +92,6 @@ jobs:
     permissions:
       contents: read
     secrets: inherit
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
       fail-fast: false
       matrix:
@@ -134,9 +133,9 @@ jobs:
       actions: read
       contents: read
     needs: [ test-with-mysql, test-with-mariadb ]
-    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' && always() }}
+    if: ${{ always() }}
     with:
-      calling_status: ${{ needs.test-with-mysql.result == 'success' && needs.test-with-mariadb.result == 'success' && 'success' || ( needs.test-with-mysql.result == 'cancelled' || needs.test-with-mariadb.result == 'cancelled' ) && 'cancelled' || 'failure' }}
+      calling_status: ${{ success() && 'success' || cancelled() && 'cancelled' || 'failure' }}
     secrets:
       SLACK_GHA_SUCCESS_WEBHOOK: ${{ secrets.SLACK_GHA_SUCCESS_WEBHOOK }}
       SLACK_GHA_CANCELLED_WEBHOOK: ${{ secrets.SLACK_GHA_CANCELLED_WEBHOOK }}
@@ -151,12 +150,11 @@ jobs:
     needs: [ slack-notifications ]
     if: |
       always() &&
-      github.repository == 'WordPress/wordpress-develop' &&
       github.event_name != 'pull_request' &&
       github.run_attempt < 2 &&
       (
-        needs.test-with-mysql.result == 'cancelled' || needs.test-with-mysql.result == 'failure' ||
-        needs.test-with-mariadb.result == 'cancelled' || needs.test-with-mariadb.result == 'failure'
+        contains( needs.*.result, 'cancelled' ) ||
+        contains( needs.*.result, 'failure' )
       )
 
     steps:
