@@ -174,7 +174,7 @@ jobs:
 
   slack-notifications:
     name: Slack Notifications
-    uses: WordPress/wordpress-develop/.github/workflows/slack-notifications.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/slack-notifications.yml@test/simplify-gha-logic
     permissions:
       actions: read
       contents: read
