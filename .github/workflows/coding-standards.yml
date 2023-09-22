@@ -67,7 +67,6 @@ jobs:
     permissions:
       contents: read
     timeout-minutes: 20
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
 
     steps:
       - name: Checkout repository
@@ -142,7 +141,6 @@ jobs:
     permissions:
       contents: read
     timeout-minutes: 20
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     env:
       PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}
 
