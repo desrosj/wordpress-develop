@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - trunk
+      - 'test/simplify-gha-logic'
       - '3.[89]'
       - '[4-9].[0-9]'
     tags:
@@ -180,7 +181,7 @@ jobs:
       actions: read
       contents: read
     needs: [ phpcs, jshint ]
-    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' && always() }}
+    if: ${{ always() }}
     with:
       calling_status: ${{ contains( needs.*.result, 'cancelled' ) && 'cancelled' || contains( needs.*.result, 'failure' ) && 'failure' || 'success' }}
     secrets:
@@ -194,15 +195,14 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: write
-    needs: [ phpcs, jshint, slack-notifications ]
+    needs: [ slack-notifications ]
     if: |
       always() &&
-      github.repository == 'WordPress/wordpress-develop' &&
       github.event_name != 'pull_request' &&
       github.run_attempt < 2 &&
       (
-        needs.phpcs.result == 'cancelled' || needs.phpcs.result == 'failure' ||
-        needs.jshint.result == 'cancelled' || needs.jshint.result == 'failure'
+        contains( needs.*.result, 'cancelled' ) ||
+        contains( needs.*.result, 'failure' )
       )
 
     steps:
