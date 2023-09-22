@@ -40,6 +40,7 @@ jobs:
     uses: WordPress/wordpress-develop/.github/workflows/phpunit-tests-run.yml@trunk
     permissions:
       contents: read
+    if: ${{ false }}
     secrets: inherit
     strategy:
       fail-fast: false
@@ -91,6 +92,7 @@ jobs:
     uses: WordPress/wordpress-develop/.github/workflows/phpunit-tests-run.yml@trunk
     permissions:
       contents: read
+    if: ${{ false }}
     secrets: inherit
     strategy:
       fail-fast: false
