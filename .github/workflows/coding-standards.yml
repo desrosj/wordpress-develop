@@ -66,7 +66,7 @@ jobs:
     permissions:
       contents: read
     timeout-minutes: 20
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
+    #if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
 
     steps:
       - name: Checkout repository
@@ -141,7 +141,7 @@ jobs:
     permissions:
       contents: read
     timeout-minutes: 20
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
+    #if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     env:
       PUPPETEER_SKIP_DOWNLOAD: ${{ true }}
 
@@ -175,12 +175,12 @@ jobs:
 
   slack-notifications:
     name: Slack Notifications
-    uses: WordPress/wordpress-develop/.github/workflows/slack-notifications.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/slack-notifications.yml@test/slack-changes
     permissions:
       actions: read
       contents: read
     needs: [ phpcs, jshint ]
-    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' && always() }}
+    if: ${{ always() }}
     with:
       calling_status: ${{ contains( needs.*.result, 'cancelled' ) && 'cancelled' || contains( needs.*.result, 'failure' ) && 'failure' || 'success' }}
     secrets:
