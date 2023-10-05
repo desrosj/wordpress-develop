@@ -35,8 +35,8 @@ jobs:
   # Creates a PHPUnit test job for each PHP/MySQL combination.
   #
   test-with-mysql:
-    name: PHP ${{ matrix.php }}
-    uses: WordPress/wordpress-develop/.github/workflows/phpunit-tests-run.yml@trunk
+    name: PHP ${{ matrix.php }} on ${{ matrix.os }}
+    uses: desrosj/wordpress-develop/.github/workflows/phpunit-tests-run.yml@try/windows-testing
     permissions:
       contents: read
     secrets: inherit
@@ -88,7 +88,7 @@ jobs:
   #
   test-with-mariadb:
     name: PHP ${{ matrix.php }}
-    uses: WordPress/wordpress-develop/.github/workflows/phpunit-tests-run.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/phpunit-tests-run.yml@try/windows-testing
     permissions:
       contents: read
     secrets: inherit
@@ -96,7 +96,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ 'ubuntu-latest', 'windows-latest' ]
         php: [ '7.0', '7.1', '7.2', '7.3', '7.4', '8.0', '8.1', '8.2', '8.3' ]
         db-type: [ 'mariadb' ]
         db-version: [ '10.4', '10.6', '10.11', '11.0' ]
