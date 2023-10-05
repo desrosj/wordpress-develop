@@ -87,7 +87,7 @@ jobs:
   # Creates a PHPUnit test job for each PHP/MariaDB combination.
   #
   test-with-mariadb:
-    name: PHP ${{ matrix.php }}
+    name: PHP ${{ matrix.php }} on ${{ matrix.os }}
     uses: desrosj/wordpress-develop/.github/workflows/phpunit-tests-run.yml@try/windows-testing
     permissions:
       contents: read
