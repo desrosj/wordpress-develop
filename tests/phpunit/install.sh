@@ -31,21 +31,7 @@ fi
 
 set -ex
 
-install_wp_and_test_suite() {
-	# setup up WordPress
-	if [ ! -d $WP_CORE_DIR ]; then
-		mkdir -p $WP_CORE_DIR
-		svn co --quiet https://develop.svn.wordpress.org/${WP_TESTS_TAG}/src/ $WP_CORE_DIR
-	fi
-
-	# set up testing suite if it doesn't yet exist
-	if [ ! -d $WP_TESTS_DIR ]; then
-		# set up testing suite
-		mkdir -p $WP_TESTS_DIR
-		svn co --quiet https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/includes/ $WP_TESTS_DIR/includes
-		svn co --quiet https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/data/ $WP_TESTS_DIR/data
-	fi
-
+install_test_suite() {
 	if [ ! -f wp-tests-config.php ]; then
 		curl -s https://develop.svn.wordpress.org/${WP_TESTS_TAG}/wp-tests-config-sample.php > "$WP_TESTS_DIR"/wp-tests-config.php
 		# remove all forward slashes in the end
@@ -56,7 +42,6 @@ install_wp_and_test_suite() {
 		sed -i "s/yourpasswordhere/$DB_PASS/" "$WP_TESTS_DIR"/wp-tests-config.php
 		sed -i "s|localhost|${DB_HOST}|" "$WP_TESTS_DIR"/wp-tests-config.php
 	fi
-
 }
 
 install_db() {
@@ -80,5 +65,5 @@ install_db() {
 	mysqladmin create $DB_NAME --user="$DB_USER" --password="$DB_PASS"$EXTRA
 }
 
-install_wp_and_test_suite
+install_test_suite
 install_db
