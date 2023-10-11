@@ -59,16 +59,10 @@ jobs:
   # Performs the following steps:
   # - Sets environment variables.
   # - Checks out the repository.
-  # - Sets up Node.js.
   # - Sets up PHP.
   # - Installs Composer dependencies.
-  # - Installs npm dependencies
   # - Logs general debug information about the runner.
-  # - Logs Docker debug information (about the Docker installation within the runner).
-  # - Starts the WordPress Docker container.
-  # - Logs the running Docker containers.
-  # - Logs debug information about what's installed within the WordPress Docker containers.
-  # - Install WordPress within the Docker container.
+  # - Installs WordPress.
   # - Run the PHPUnit tests.
   # - Ensures version-controlled files are not modified or deleted.
   # - Checks out the WordPress Test reporter repository.
@@ -91,12 +85,6 @@ jobs:
         with:
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
 
-      - name: Set up Node.js
-        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
       - name: Set up PHP
         uses: shivammathur/setup-php@4bd44f22a98a19e0950cbad5f31095157cc9621b # v2.25.4
         with:
@@ -110,13 +98,8 @@ jobs:
         with:
           custom-cache-suffix: $(/bin/date -u --date='last Mon' "+%F")
 
-      - name: Install npm dependencies
-        run: npm ci
-
       - name: General debug information
         run: |
-          npm --version
-          node --version
           curl --version
           git --version
           svn --version
