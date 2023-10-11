@@ -3,6 +3,7 @@ name: PHPUnit Tests
 on:
   push:
     branches:
+      - 'try/dockerless-testing'
       - trunk
       - '3.[7-9]'
       - '[4-9].[0-9]'
@@ -36,11 +37,11 @@ jobs:
   #
   test-with-mysql:
     name: PHP ${{ matrix.php }}
-    uses: WordPress/wordpress-develop/.github/workflows/phpunit-tests-run.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/phpunit-tests-run.yml@try/dockerless-testing
     permissions:
       contents: read
     secrets: inherit
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
+    if: ${{ github.repository == 'desrosj/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
       fail-fast: false
       matrix:
@@ -92,7 +93,7 @@ jobs:
     permissions:
       contents: read
     secrets: inherit
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
+    if: ${{ false && github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
       fail-fast: false
       matrix:

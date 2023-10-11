@@ -78,12 +78,14 @@ jobs:
     runs-on: ${{ inputs.os }}
     timeout-minutes: 20
 
-    steps:
-      - name: Configure environment variables
-        run: |
-          echo "PHP_FPM_UID=$(id -u)" >> $GITHUB_ENV
-          echo "PHP_FPM_GID=$(id -g)" >> $GITHUB_ENV
+    services:
+      database:
+        image: ${{ inputs.db-type }}:${{ inputs.db-version }}
+        ports:
+          - 3306
+        options: --health-cmd="mysqladmin ping" --health-interval=30s --health-timeout=10s --health-retries=5 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=test_db --entrypoint sh ${{ inputs.db-type }}:${{ inputs.db-version }} -c "exec docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"
 
+    steps:
       - name: Checkout repository
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
         with:
@@ -95,13 +97,6 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
 
-      ##
-      # This allows Composer dependencies to be installed using a single step.
-      #
-      # Since the tests are currently run within the Docker containers where the PHP version varies,
-      # the same PHP version needs to be configured for the action runner machine so that the correct
-      # dependency versions are installed and cached.
-      ##
       - name: Set up PHP
         uses: shivammathur/setup-php@4bd44f22a98a19e0950cbad5f31095157cc9621b # v2.25.4
         with:
@@ -128,38 +123,18 @@ jobs:
           composer --version
           locale -a
 
-      - name: Docker debug information
-        run: |
-          docker -v
-          docker-compose -v
-
-      - name: Start Docker environment
-        run: |
-          npm run env:start
-
-      - name: Log running Docker containers
-        run: docker ps -a
-
-      - name: WordPress Docker container debug information
-        run: |
-          docker-compose run --rm mysql ${{ env.LOCAL_DB_TYPE }} --version
-          docker-compose run --rm php php --version
-          docker-compose run --rm php php -m
-          docker-compose run --rm php php -i
-          docker-compose run --rm php locale -a
-
       - name: Install WordPress
-        run: npm run env:install
+        run: tests/phpunit/install.sh wordpress_test root '' 127.0.0.1:3306
 
       - name: Run PHPUnit tests
-        run: node ./tools/local-env/scripts/docker.js run php ./vendor/bin/phpunit --verbose -c ${{ env.PHPUNIT_CONFIG }}
+        run: vendor/bin/phpunit --verbose -c ${{ env.PHPUNIT_CONFIG }}
 
       - name: Run AJAX tests
-        run: node ./tools/local-env/scripts/docker.js run php ./vendor/bin/phpunit --verbose -c ${{ env.PHPUNIT_CONFIG }} --group ajax
+        run: vendor/bin/phpunit --verbose -c ${{ env.PHPUNIT_CONFIG }} --group ajax
 
       - name: Run ms-files tests as a multisite install
         if: ${{ inputs.multisite }}
-        run: node ./tools/local-env/scripts/docker.js run php ./vendor/bin/phpunit --verbose -c tests/phpunit/multisite.xml --group ms-files
+        run: vendor/bin/phpunit --verbose -c tests/phpunit/multisite.xml --group ms-files
 
       - name: Run external HTTP tests
         if: ${{ ! inputs.multisite }}
@@ -168,7 +143,7 @@ jobs:
       # __fakegroup__ is excluded to force PHPUnit to ignore the <exclude> settings in phpunit.xml.dist.
       - name: Run (Xdebug) tests
         if: ${{ inputs.php != '8.3' }}
-        run: LOCAL_PHP_XDEBUG=true node ./tools/local-env/scripts/docker.js run php ./vendor/bin/phpunit -v --group xdebug --exclude-group __fakegroup__
+        run: vendor/bin/phpunit -v --group xdebug --exclude-group __fakegroup__
 
       - name: Ensure version-controlled files are not modified or deleted
         run: git diff --exit-code
