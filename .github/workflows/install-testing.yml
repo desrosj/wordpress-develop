@@ -45,9 +45,6 @@ jobs:
         with:
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
 
-      - name: Install jq
-        run: sudo apt-get install jq
-
       - name: Get supported PHP versions
         id: php
         run: |
