@@ -67,7 +67,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
-        php: ${{ fromJSON( needs.build-matrix.outputs.php }}
+        php: ${{ fromJSON( needs.build-matrix.outputs.php ) }}
         db-type: [ 'mysql' ]
         db-version: [ '5.7', '8.0' ]
         multisite: [ false, true ]
