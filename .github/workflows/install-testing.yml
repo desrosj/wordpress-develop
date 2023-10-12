@@ -3,6 +3,7 @@ name: Installation Tests
 on:
   push:
     branches:
+      - 'try/install-upgrade-testing-older-branches'
       - trunk
     # Always test the workflow after it's updated.
     paths:
@@ -30,6 +31,23 @@ concurrency:
 permissions: {}
 
 jobs:
+
+  build-matrix:
+    name: Determine PHP Versions to test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      php: ${{ steps.php.outputs.versions }}
+
+    steps:
+      - name: Install jq
+        run: sudo apt-get install jq
+
+      - name: Get supported PHP versions
+        id: php
+        run: echo "versions=$(jq '.["6-3"]' php-version-support.json)" >> $GITHUB_OUTPUT
+
+
   # Test the WordPress installation process through WP-CLI.
   #
   # Performs the following steps:
@@ -44,11 +62,12 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: [ build-matrix ]
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
-        php: [ '7.0', '7.1', '7.2', '7.3', '7.4', '8.0', '8.1', '8.2', '8.3' ]
+        php: ${{ fromJSON( needs.build-matrix.outputs.php }}
         db-type: [ 'mysql' ]
         db-version: [ '5.7', '8.0' ]
         multisite: [ false, true ]
