@@ -11,36 +11,20 @@ DB_PASS=$3
 DB_HOST=${4-localhost}
 WP_VERSION=${5-latest}
 
-TMPDIR=${TMPDIR-/tmp}
-TMPDIR=$(echo $TMPDIR | sed -e "s/\/$//")
-WP_TESTS_DIR=${WP_TESTS_DIR-$TMPDIR/wordpress-tests-lib}
-WP_CORE_DIR=${WP_CORE_DIR-$TMPDIR/wordpress/}
-
-if [[ $WP_VERSION =~ ^[0-9]+\.[0-9]+$ ]]; then
-	WP_TESTS_TAG="branches/$WP_VERSION"
-elif [[ $WP_VERSION == 'trunk' ]]; then
-	WP_TESTS_TAG="trunk"
-else
-	LATEST_VERSION=$( curl -s https://api.wordpress.org/core/version-check/1.1/ | tail -1 )
-	if [[ -z "$LATEST_VERSION" ]]; then
-		echo "Latest WordPress version could not be found"
-		exit 1
-	fi
-	WP_TESTS_TAG="tags/$LATEST_VERSION"
-fi
-
 set -ex
+
+install_importer() {
+	git clone https://github.com/WordPress/wordpress-importer.git tests/phpunit/data/plugins/wordpress-importer --depth=1
+}
 
 install_test_suite() {
 	if [ ! -f wp-tests-config.php ]; then
-		curl -s https://develop.svn.wordpress.org/${WP_TESTS_TAG}/wp-tests-config-sample.php > "$WP_TESTS_DIR"/wp-tests-config.php
+		cp wp-tests-config-sample.php wp-tests-config.php
 		# remove all forward slashes in the end
-		WP_CORE_DIR=$(echo $WP_CORE_DIR | sed "s:/\+$::")
-		sed -i "s:dirname( __FILE__ ) . '/src/':'$WP_CORE_DIR/':" "$WP_TESTS_DIR"/wp-tests-config.php
-		sed -i "s/youremptytestdbnamehere/$DB_NAME/" "$WP_TESTS_DIR"/wp-tests-config.php
-		sed -i "s/yourusernamehere/$DB_USER/" "$WP_TESTS_DIR"/wp-tests-config.php
-		sed -i "s/yourpasswordhere/$DB_PASS/" "$WP_TESTS_DIR"/wp-tests-config.php
-		sed -i "s|localhost|${DB_HOST}|" "$WP_TESTS_DIR"/wp-tests-config.php
+		sed -i "s/youremptytestdbnamehere/$DB_NAME/" wp-tests-config.php
+		sed -i "s/yourusernamehere/$DB_USER/" wp-tests-config.php
+		sed -i "s/yourpasswordhere/$DB_PASS/" wp-tests-config.php
+		sed -i "s|localhost|${DB_HOST}|" wp-tests-config.php
 	fi
 }
 
@@ -65,5 +49,6 @@ install_db() {
 	mysqladmin create $DB_NAME --user="$DB_USER" --password="$DB_PASS"$EXTRA
 }
 
+install_importer
 install_test_suite
 install_db
