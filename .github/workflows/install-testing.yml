@@ -59,8 +59,8 @@ jobs:
 
       - name: Create matrix
         run: |
-          echo "matrix={\"os\":[ubuntu-latest],\"php\":${{ env.PHP_VERSIONS }},\"multisite\":[false,true],\"db-type":['mysql'],\"db-version":${{ env.MYSQL_VERSIONS }}} >> $GITHUB_OUTPUT
-          
+          echo "matrix={\"os\":[ubuntu-latest],\"php\":${{ env.PHP_VERSIONS }},\"multisite\":[false,true],\"db-type":['mysql'],\"db-version":${{ env.MYSQL_VERSIONS }}}" >> $GITHUB_OUTPUT
+
   # Test the WordPress installation process through WP-CLI.
   #
   # Performs the following steps:
