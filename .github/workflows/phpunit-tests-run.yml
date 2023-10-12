@@ -107,7 +107,7 @@ jobs:
           locale -a
 
       - name: Install WordPress
-        run: tests/phpunit/install.sh wordpress_test root '' 127.0.0.1:${{ job.services.database.ports['3306'] }}
+        run: tests/phpunit/install.sh wordpress_test root '' 127.0.0.1:3306
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --verbose -c ${{ env.PHPUNIT_CONFIG }}
