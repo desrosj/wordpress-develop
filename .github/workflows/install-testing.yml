@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      php: ${{ steps.php.outputs.versions }}
+      matrix: ${{ steps.create-matrix.outputs.matrix }}
 
     steps:
       - name: Checkout repository
@@ -48,9 +48,19 @@ jobs:
       - name: Get supported PHP versions
         id: php
         run: |
-          versions=$(jq '.["6-3"] | @json' php-version-support.json)
-          echo "versions=$versions" >> $GITHUB_OUTPUT
+          versions=$(jq '.["6-3"] | @json' version-support-mysql.json)
+          echo "PHP_VERSIONS=$versions" >> $GITHUB_ENV
 
+      - name: Get supported MySQL versions
+        id: mysql
+        run: |
+          versions=$(jq '.["6-3"] | @json' version-support-mysql.json)
+          echo "MYSQL_VERSIONS=$versions" >> $GITHUB_ENV
+
+      - name: Create matrix
+        run: |
+          echo "matrix={\"os\":[ubuntu-latest],\"php\":${{ env.PHP_VERSIONS }},\"multisite\":[false,true],\"db-type":['mysql'],\"db-version":${{ env.MYSQL_VERSIONS }}} >> $GITHUB_OUTPUT
+          
   # Test the WordPress installation process through WP-CLI.
   #
   # Performs the following steps:
@@ -68,12 +78,7 @@ jobs:
     needs: [ build-matrix ]
     strategy:
       fail-fast: false
-      matrix:
-        os: [ ubuntu-latest ]
-        php: ${{ fromJSON( needs.build-matrix.outputs.php ) }}
-        db-type: [ 'mysql' ]
-        db-version: [ '5.7', '8.0' ]
-        multisite: [ false, true ]
+      matrix: ${{ fromJSON( needs.build-matrix.outputs.matrix ) }}
 
     services:
       database:
