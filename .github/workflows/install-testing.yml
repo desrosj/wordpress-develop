@@ -50,7 +50,7 @@ jobs:
 
       - name: Get supported PHP versions
         id: php
-        run: echo "versions=$(jq '.["6-3"]' php-version-support.json)" >> $GITHUB_OUTPUT
+        run: echo "versions=$(jq '.[63]' php-version-support.json)" >> $GITHUB_OUTPUT
 
 
   # Test the WordPress installation process through WP-CLI.
