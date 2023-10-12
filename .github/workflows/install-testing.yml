@@ -46,18 +46,17 @@ jobs:
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
 
       - name: Get supported PHP versions
-        id: php
         run: |
           versions=$(jq '.["6-3"] | @json' version-support-mysql.json)
           echo "PHP_VERSIONS=$versions" >> $GITHUB_ENV
 
       - name: Get supported MySQL versions
-        id: mysql
         run: |
           versions=$(jq '.["6-3"] | @json' version-support-mysql.json)
           echo "MYSQL_VERSIONS=$versions" >> $GITHUB_ENV
 
       - name: Create matrix
+        id: create-matrix
         run: |
           echo "matrix={\"os\":[ubuntu-latest],\"php\":${{ env.PHP_VERSIONS }},\"multisite\":[false,true],\"db-type":['mysql'],\"db-version":${{ env.MYSQL_VERSIONS }}}" >> $GITHUB_OUTPUT
 
