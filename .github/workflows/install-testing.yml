@@ -57,7 +57,8 @@ jobs:
         id: php-versions
         run: |
           if [ "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
-            echo "versions=$(jq '.["$(echo "5.1.8" | tr '.' '-' | cut -d- -f1-2)"] | @json' version-support-php.json)" >> $GITHUB_OUTPUT
+            test_version=$(echo "${{ inputs.wp-version }}" | tr '.' '-' | cut -d- -f1-2)
+            echo "versions=$(jq '.["$test_version"] | @json' version-support-php.json)" >> $GITHUB_OUTPUT
           else
             echo "versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-php.json)" >> $GITHUB_OUTPUT
           fi
