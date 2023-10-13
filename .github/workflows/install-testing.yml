@@ -89,7 +89,7 @@ jobs:
     needs: [ build-matrix ]
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON( needs.build-matrix.outputs.matrix_mysql ) }}
+      matrix: ${{ fromJSON( needs.build-matrix.outputs.matrix-mysql ) }}
 
     services:
       database:
