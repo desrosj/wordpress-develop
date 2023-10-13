@@ -67,6 +67,7 @@ jobs:
         run: |
           if  [ "${{ inputs.wp-version }}" != "latest" ]; then
             echo "versions=$(jq '.["${{ inputs.wp-version }}"] | @json' version-support-mysql.json)" >> $GITHUB_OUTPUT
+            echo "TEST_MYSQL=$(jq '.["${{ inputs.wp-version }}"] | @json' version-support-mysql.json)" >> $GITHUB_ENV
           else
             echo "versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-mysql.json)" >> $GITHUB_OUTPUT
           fi
