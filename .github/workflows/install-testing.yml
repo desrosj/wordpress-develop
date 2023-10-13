@@ -51,14 +51,14 @@ jobs:
             versions=$(jq '.["${{ inputs.wp-version }}"] | @json' version-support-php.json)
             echo "PHP_VERSIONS=$versions" >> $GITHUB_ENV
           else
-            versions=$(jq -r '.["4-1"] | @json' version-support-php.json)
+            versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-php.json)
             echo "PHP_VERSIONS=$versions" >> $GITHUB_ENV
           fi
 
       - name: Get supported MySQL versions
         run: |
           if  -n "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
-            versions=$(jq '.["${{ inputs.wp-version }}"] | @json' version-support-mysql.json)
+            versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-mysql.json)
             echo "MYSQL_VERSIONS=$versions" >> $GITHUB_ENV
           else
             versions=$(jq -r '.["4-1"] | @json' version-support-mysql.json)
@@ -94,7 +94,7 @@ jobs:
         image: ${{ matrix.db-type }}:${{ matrix.db-version }}
         ports:
           - 3306
-        options: --health-cmd="mysqladmin ping" --health-interval=30s --health-timeout=10s --health-retries=5 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=test_db --entrypoint sh ${{ matrix.db-type }}:${{ matrix.db-version }} -c "exec docker-entrypoint.sh mysqld ${{ matrix.db-version != '5.5' && ' --default-authentication-plugin=mysql_native_password"' || '' }}
+        options: --health-cmd="mysqladmin ping" --health-interval=30s --health-timeout=10s --health-retries=5 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=test_db --entrypoint sh ${{ matrix.db-type }}:${{ matrix.db-version }} -c "exec docker-entrypoint.sh mysqld${{ matrix.db-version != '5.5' && ' --default-authentication-plugin=mysql_native_password"' || '' }}
 
     steps:
       - name: Set up PHP ${{ matrix.php }}
@@ -109,7 +109,7 @@ jobs:
           sudo systemctl start ${{ matrix.db-type }}
 
       - name: Download WordPress
-        run: wp core download --version=4.1.20
+        run: wp core download ${{ inputs.wp-version && 'latest' != inputs.wp-version && format( '--version={0}', inputs.wp-version ) || '' }}
 
       - name: Create wp-config.php file
         run: wp config create --dbname=test_db --dbuser=root --dbpass=root --dbhost=127.0.0.1:${{ job.services.database.ports['3306'] }}
