@@ -37,8 +37,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      mysql-matrix: ${{ steps.create-matrix.outputs.matrix_mysql }}
-      mariadb-matrix: ${{ steps.create-matrix.outputs.matrix_mariadb }}
+      matrix-mysql: ${{ steps.create-matrix.outputs.matrix_mysql }}
+      matrix-mariadb: ${{ steps.create-matrix.outputs.matrix_mariadb }}
 
     steps:
       - name: Checkout repository
