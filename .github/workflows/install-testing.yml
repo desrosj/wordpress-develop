@@ -47,13 +47,13 @@ jobs:
 
       - name: Get supported PHP versions
         run: |
-          php_versions=$(jq '.["6-3"] | @json' version-support-mysql.json)
-          echo "PHP_VERSIONS=$php_versions" >> $GITHUB_ENV
+          versions=$(jq '.["6-3"] | @json' version-support-php.json)
+          echo "PHP_VERSIONS=$versions" >> $GITHUB_ENV
 
       - name: Get supported MySQL versions
         run: |
-          mysql_versions=$(jq '.["6-3"] | @json' version-support-mysql.json)
-          echo "MYSQL_VERSIONS=$mysql_versions" >> $GITHUB_ENV
+          versions=$(jq '.["6-3"] | @json' version-support-mysql.json)
+          echo "MYSQL_VERSIONS=$versions" >> $GITHUB_ENV
 
       - name: Create matrix
         id: create-matrix
