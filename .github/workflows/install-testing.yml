@@ -51,14 +51,19 @@ jobs:
             versions=$(jq '.["${{ inputs.wp-version }}"] | @json' version-support-php.json)
             echo "PHP_VERSIONS=$versions" >> $GITHUB_ENV
           else
-            versions=$(jq '. | (keys[-1]) | @json' version-support-php.json)
+            versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-php.json)
             echo "PHP_VERSIONS=$versions" >> $GITHUB_ENV
           fi
 
       - name: Get supported MySQL versions
         run: |
-          versions=$(jq '.["6-3"] | @json' version-support-mysql.json)
-          echo "MYSQL_VERSIONS=$versions" >> $GITHUB_ENV
+          if  -n "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
+            versions=$(jq '.["${{ inputs.wp-version }}"] | @json' version-support-mysql.json)
+            echo "MYSQL_VERSIONS=$versions" >> $GITHUB_ENV
+          else
+            versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-mysql.json)
+            echo "MYSQL_VERSIONS=$versions" >> $GITHUB_ENV
+          fi
 
       - name: Create matrix
         id: create-matrix
