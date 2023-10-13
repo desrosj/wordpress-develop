@@ -61,7 +61,7 @@ jobs:
             versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-mysql.json)
             echo "MYSQL_VERSIONS=$versions" >> $GITHUB_ENV
           else
-            versions=$(jq -r '.["4-1"] | @json' version-support-mysql.json)
+            versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-mysql.json)
             echo "MYSQL_VERSIONS=$versions" >> $GITHUB_ENV
           fi
 
