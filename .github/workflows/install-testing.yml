@@ -60,21 +60,17 @@ jobs:
         id: mysql-versions
         run: |
           if  -n "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
-            versions=$(jq -r '.["${{ inputs.wp-version }}"] | @json' version-support-mysql.json)
-            echo "MYSQL_VERSIONS=$versions" >> $GITHUB_OUTPUT
+            echo "versions=$(jq -r '.["${{ inputs.wp-version }}"] | @json' version-support-mysql.json)" >> $GITHUB_OUTPUT
           else
-            versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-mysql.json)
-            echo "MYSQL_VERSIONS=$versions" >> $GITHUB_OUTPUT
+            echo "versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-mysql.json)" >> $GITHUB_OUTPUT
           fi
 
       - name: Get supported MariaDB versions
         run: |
           if  -n "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
-            versions=$(jq -r '.["${{ inputs.wp-version }}"] | @json' version-support-mariadb.json)
-            echo "MARIADB_VERSIONS=$versions" >> $GITHUB_OUTPUT
+            echo "versions=$(jq -r '.["${{ inputs.wp-version }}"] | @json' version-support-mariadb.json)" >> $GITHUB_OUTPUT
           else
-            versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-mariadb.json)
-            echo "MARIADB_VERSIONS=$versions" >> $GITHUB_OUTPUT
+            echo "versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-mariadb.json)" >> $GITHUB_OUTPUT
           fi
 
   # Test the WordPress installation process through WP-CLI.
