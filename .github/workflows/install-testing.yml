@@ -110,7 +110,7 @@ jobs:
         image: ${{ matrix.db-type }}:${{ matrix.db-version }}
         ports:
           - 3306
-        options: --health-cmd="${{ matrix.db-type == 'mysql' && 'mysqladmin' || 'mariadb-admin' }} ping" --health-interval=30s --health-timeout=10s --health-retries=5 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=test_db --entrypoint sh ${{ matrix.db-type }}:${{ matrix.db-version }} -c "exec docker-entrypoint.sh mysqld${{ matrix.db-version != '5.5' && ' --default-authentication-plugin=mysql_native_password"' || '' }}
+        options: --health-cmd="mysqladmin ping" --health-interval=30s --health-timeout=10s --health-retries=5 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=test_db --entrypoint sh ${{ matrix.db-type }}:${{ matrix.db-version }} -c "exec docker-entrypoint.sh mysqld${{ matrix.db-version != '5.5' && ' --default-authentication-plugin=mysql_native_password"' || '' }}
 
     steps:
       - name: Set up PHP ${{ matrix.php }}
@@ -118,7 +118,7 @@ jobs:
         with:
           php-version: '${{ matrix.php }}'
           coverage: none
-          tools: wp-cli
+          tools: wp-cli:2.4.0
 
       - name: Start the database server
         run: |
@@ -163,7 +163,7 @@ jobs:
         image: ${{ matrix.db-type }}:${{ matrix.db-version }}
         ports:
           - 3306
-        options: --health-cmd="mysqladmin ping" --health-interval=30s --health-timeout=10s --health-retries=5 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=test_db --entrypoint sh ${{ matrix.db-type }}:${{ matrix.db-version }} -c "exec docker-entrypoint.sh mysqld${{ matrix.db-version != '5.5' && ' --default-authentication-plugin=mysql_native_password"' || '' }}
+        options: --health-cmd="mariadb-admin ping" --health-interval=30s --health-timeout=10s --health-retries=5 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=test_db --entrypoint sh ${{ matrix.db-type }}:${{ matrix.db-version }} -c "exec docker-entrypoint.sh mariadbd${{ matrix.db-version != '5.5' && ' --default-authentication-plugin=mysql_native_password"' || '' }}
 
     steps:
       - name: Set up PHP ${{ matrix.php }}
@@ -171,16 +171,7 @@ jobs:
         with:
           php-version: '${{ matrix.php }}'
           coverage: none
-          tools: wp-cli
-
-      - name: Downgrade WP-CLI, if necessary
-        if: ${{ true }}
-        run: |
-          curl -O https://github.com/wp-cli/wp-cli/releases/download/v2.4.0/wp-cli-2.4.0.phar
-          php wp-cli-2.4.0.phar --info
-          chmod +x wp-cli-2.4.0.phar
-          sudo mv wp-cli-2-4.0.phar /usr/local/bin/wp
-          wp --info
+          tools: wp-cli:2.4.0
 
       - name: Start the database server
         run: |
