@@ -38,8 +38,8 @@ jobs:
     timeout-minutes: 5
     outputs:
       php-versions: ${{ steps.php-versions.outputs.versions }}
-      matrix-mysql: ${{ steps.mysql-versions.outputs.matrix_mysql }}
-      matrix-mariadb: ${{ steps.create-matrix.outputs.matrix_mariadb }}
+      mysql-versions: ${{ steps.mysql-versions.outputs.versions }}
+      mariadb-versions: ${{ steps.mariadb-versions.outputs.versions }}
 
     steps:
       - name: Checkout repository
@@ -66,6 +66,7 @@ jobs:
           fi
 
       - name: Get supported MariaDB versions
+        id: mariadb-versions
         run: |
           if  -n "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
             echo "versions=$(jq -r '.["${{ inputs.wp-version }}"] | @json' version-support-mariadb.json)" >> $GITHUB_OUTPUT
