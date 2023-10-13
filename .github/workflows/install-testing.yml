@@ -63,7 +63,7 @@ jobs:
             versions_json=$(jq --arg key "$test_version" '.[$key]' version-support-php.json)
             echo $versions_json
 
-            echo "versions=$versions_json" >> $GITHUB_OUTPUT
+            echo "versions=$(echo $versions_json)" >> $GITHUB_OUTPUT
           else
             echo "versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-php.json)" >> $GITHUB_OUTPUT
           fi
