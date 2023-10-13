@@ -173,6 +173,15 @@ jobs:
           coverage: none
           tools: wp-cli
 
+      - name: Downgrade WP-CLI, if necessary
+        if: ${{ true }}
+        run: |
+          curl -O https://github.com/wp-cli/wp-cli/releases/download/v2.4.0/wp-cli-2.4.0.phar
+          php wp-cli-2.4.0.phar --info
+          chmod +x wp-cli-2.4.0.phar
+          sudo mv wp-cli-2-4.0.phar /usr/local/bin/wp
+          wp --info
+
       - name: Start the database server
         run: |
           sudo systemctl start ${{ matrix.db-type }}
