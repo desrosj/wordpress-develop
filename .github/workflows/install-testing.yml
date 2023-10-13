@@ -48,10 +48,10 @@ jobs:
       - name: Get supported PHP versions
         run: |
           if [ "${{ matrix.php }}" == "latest" ]; then
-            versions=$(jq '.[0:1] | @json' version-support-php.json)
+            versions=$(jq '. | (keys[-1]) | @json' version-support-php.json)
             echo "PHP_VERSIONS=$versions" >> $GITHUB_ENV
           else
-            versions=$(jq '.["${{ matrix.php }}"] | @json' version-support-php.json)
+            versions=$(jq '.["${{ inputs.wp-version }}"] | @json' version-support-php.json)
             echo "PHP_VERSIONS=$versions" >> $GITHUB_ENV
           fi
 
