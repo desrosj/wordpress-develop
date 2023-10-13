@@ -56,7 +56,7 @@ jobs:
       - name: Get supported PHP versions
         id: php-versions
         run: |
-          if  -n "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
+          if  -n [ "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
             echo "versions=$(jq '.["${{ inputs.wp-version }}"] | @json' version-support-php.json)" >> $GITHUB_OUTPUT
           else
             echo "versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-php.json)" >> $GITHUB_OUTPUT
@@ -65,7 +65,7 @@ jobs:
       - name: Get supported MySQL versions
         id: mysql-versions
         run: |
-          if  -n "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
+          if  -n [ "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
             echo "versions=$(jq -r '.["${{ inputs.wp-version }}"] | @json' version-support-mysql.json)" >> $GITHUB_OUTPUT
           else
             echo "versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-mysql.json)" >> $GITHUB_OUTPUT
@@ -74,7 +74,7 @@ jobs:
       - name: Get supported MariaDB versions
         id: mariadb-versions
         run: |
-          if  -n "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
+          if  -n [ "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
             echo "versions=$(jq -r '.["${{ inputs.wp-version }}"] | @json' version-support-mariadb.json)" >> $GITHUB_OUTPUT
           else
             echo "versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-mariadb.json)" >> $GITHUB_OUTPUT
