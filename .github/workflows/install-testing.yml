@@ -59,10 +59,20 @@ jobs:
       - name: Get supported MySQL versions
         run: |
           if  -n "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
-            versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-mysql.json)
+            versions=$(jq -r '.["${{ inputs.wp-version }}"] | @json' version-support-mysql.json)
             echo "MYSQL_VERSIONS=$versions" >> $GITHUB_ENV
           else
             versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-mysql.json)
+            echo "MYSQL_VERSIONS=$versions" >> $GITHUB_ENV
+          fi
+
+      - name: Get supported MariaDB versions
+        run: |
+          if  -n "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
+            versions=$(jq -r '.["${{ inputs.wp-version }}"] | @json' version-support-mariadb.json)
+            echo "MYSQL_VERSIONS=$versions" >> $GITHUB_ENV
+          else
+            versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-mariadb.json)
             echo "MYSQL_VERSIONS=$versions" >> $GITHUB_ENV
           fi
 
