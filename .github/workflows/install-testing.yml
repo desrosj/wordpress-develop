@@ -57,7 +57,7 @@ jobs:
         id: wp-version
         run: |
           if [ "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
-            echo "version=$(echo "${{ inputs.wp-version }}" | tr '.' '-' | cut -d '-' -f1-2)"
+            echo "version=$(echo "${{ inputs.wp-version }}" | tr '.' '-' | cut -d '-' -f1-2)" >> $GITHUB_OUTPUT
           else
             echo "version=latest"
           fi
