@@ -60,9 +60,13 @@ jobs:
             test_version=$(echo "5.1.8" | tr '.' '-' | cut -d '-' -f1-2)
             echo $test_version
             echo "versions=$(jq '.["$($test_version )"] | @json' version-support-php.json)" >> $GITHUB_OUTPUT
-            echo "$(jq '.["$(echo $test_version )"] | @json' version-support-php.json)"
+            echo "versions=$(jq '.["$($test_version )"] | @json' version-support-php.json)"
           else
             echo "versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-php.json)" >> $GITHUB_OUTPUT
+
+            test_version=$(echo "5.1.8" | tr '.' '-' | cut -d '-' -f1-2)
+            echo $test_version
+            echo "versions=$(jq '.["$($test_version )"] | @json' version-support-php.json)"
           fi
 
       - name: Get supported MySQL versions
