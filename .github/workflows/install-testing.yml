@@ -114,6 +114,13 @@ jobs:
         multisite: [ false, true ]
         memcached: [ false ]
 
+        exclude:
+          - php: 5.5
+            db-version: 5.7
+          - php: 5.5
+            db-version: 8.0
+
+
     services:
       database:
         image: ${{ matrix.db-type }}:${{ matrix.db-version }}
