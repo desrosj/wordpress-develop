@@ -119,7 +119,7 @@ jobs:
           -e MYSQL_ROOT_PASSWORD=root
           -e MYSQL_DATABASE=test_db
           --entrypoint sh ${{ matrix.db-type }}:${{ matrix.db-version }}
-          -c "exec docker-entrypoint.sh mysqld${{ matrix.db-version != '5.5' && ' --default-authentication-plugin=mysql_native_password"' || '' }}
+          -c "exec docker-entrypoint.sh mariadbd
 
     steps:
       - name: Set up PHP ${{ matrix.php }}
