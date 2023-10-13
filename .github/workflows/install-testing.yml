@@ -57,7 +57,7 @@ jobs:
         id: php-versions
         run: |
           if  -n [ "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
-            echo "versions=$(jq '.["${{ inputs.wp-version }}"] | @json' version-support-php.json)" >> $GITHUB_OUTPUT
+            echo "versions=$(jq '.["$(echo "${{ inputs.wp-version }}" | tr '.' '-' | cut -d- -f1-2)"] | @json' version-support-php.json)" >> $GITHUB_OUTPUT
           else
             echo "versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-php.json)" >> $GITHUB_OUTPUT
           fi
@@ -66,8 +66,7 @@ jobs:
         id: mysql-versions
         run: |
           if  -n [ "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
-            echo "versions=$(jq '.["${{ inputs.wp-version }}"] | @json' version-support-mysql.json)" >> $GITHUB_OUTPUT
-            echo "TEST_MYSQL=$(jq '.["${{ inputs.wp-version }}"] | @json' version-support-mysql.json)" >> $GITHUB_ENV
+            echo "versions=$(jq '.["$(echo "${{ inputs.wp-version }}" | tr '.' '-' | cut -d- -f1-2)"] | @json' version-support-mysql.json)" >> $GITHUB_OUTPUT
           else
             echo "versions=$(jq -r '.[ (keys[-1]) ] | @json' version-support-mysql.json)" >> $GITHUB_OUTPUT
           fi
