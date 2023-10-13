@@ -53,7 +53,7 @@ jobs:
           if  -n "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
             echo $(jq '.["${{ inputs.wp-version }}"] | @json' version-support-php.json) >> $GITHUB_OUTPUT
           else
-            echo $(jq -r '.[ (keys[-1]) ] | @json' version-support-php.json) >> $GITHUB_OUTPUT
+            echo $(jq '.[ (keys[-1]) ] | @json' version-support-php.json) >> $GITHUB_OUTPUT
           fi
 
       - name: Get supported MySQL versions
