@@ -93,7 +93,6 @@ jobs:
     permissions:
       contents: read
     runs-on: ${{ matrix.os }}
-    if: false
     timeout-minutes: 10
     needs: [ build-matrix ]
     strategy:
@@ -157,6 +156,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     needs: [ build-matrix ]
+    if: false
     strategy:
       fail-fast: false
       matrix:
