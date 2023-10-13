@@ -47,8 +47,13 @@ jobs:
 
       - name: Get supported PHP versions
         run: |
-          versions=$(jq '.["6-3"] | @json' version-support-php.json)
-          echo "PHP_VERSIONS=$versions" >> $GITHUB_ENV
+          if [ "${{ matrix.php }}" == "latest" ]; then
+            versions=$(jq '.[0:1] | @json' version-support-php.json)
+            echo "PHP_VERSIONS=$versions" >> $GITHUB_ENV
+          else
+            versions=$(jq '.["${{ matrix.php }}"] | @json' version-support-php.json)
+            echo "PHP_VERSIONS=$versions" >> $GITHUB_ENV
+          fi
 
       - name: Get supported MySQL versions
         run: |
