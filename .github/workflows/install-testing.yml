@@ -59,7 +59,7 @@ jobs:
           if [ "${{ inputs.wp-version }}" ] && [ "${{ inputs.wp-version }}" != "latest" ]; then
             echo "version=$(echo "${{ inputs.wp-version }}" | tr '.' '-' | cut -d '-' -f1-2)" >> $GITHUB_OUTPUT
           else
-            echo "version=latest"
+            echo "version=latest" >> $GITHUB_OUTPUT
           fi
 
       - name: Get supported PHP versions
@@ -116,10 +116,11 @@ jobs:
 
         exclude:
           - php: 5.5
-            db-version: 5.7
-          - php: 5.5
             db-version: 8.0
-
+          - php: 5.4
+            db-version: 8.0
+          - php: 5.3
+            db-version: 8.0
 
     services:
       database:
