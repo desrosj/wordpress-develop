@@ -31,7 +31,13 @@ concurrency:
 permissions: {}
 
 jobs:
-
+  # Determines the appropriate values for PHP and database versions based on the WordPress version being tested.
+  #
+  # Performs the following steps:
+  # - Checks out the repository.
+  # - Fetches the versions of PHP to test.
+  # - Fetches the versions of MySQL to test.
+  # - Fetches the versions of MariaDB to test.
   build-matrix:
     name: Determine PHP Versions to test
     runs-on: ubuntu-latest
