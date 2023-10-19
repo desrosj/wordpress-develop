@@ -87,7 +87,7 @@ jobs:
 
     steps:
       - name: testing
-        run: echo '${{ github.event.before }}
+        run: echo '${{ github.event.before }}'
       - name: Only runs if not comparison works
         if: ${{ ! github.event.before }}
         run: echo 'hey this will display if the comparison worked'
