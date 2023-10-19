@@ -91,7 +91,9 @@ jobs:
       - name: another test
         uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
         with:
-          script: console.dir( ${{ github.event }} )
+          script: |
+            console.debug( ${{ github.event }} );
+            console.list( ${{ github.event }} );
 
       - name: Only runs if not comparison works
         if: ${{ ! github.event.before }}
