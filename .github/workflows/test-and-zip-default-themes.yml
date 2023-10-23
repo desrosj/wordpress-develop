@@ -58,7 +58,7 @@ jobs:
   # - Checks out the repository.
   # - Checks for zero-byte (empty) files.
   check-for-empty-files:
-    name: ${{ matrix.theme }} empty file check
+    name: ${{ matrix.theme }} / Empty file check
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -104,7 +104,7 @@ jobs:
   # - Runs the theme build script.
   # - Ensures version-controlled files are not modified or deleted.
   test-build-scripts:
-    name: Test ${{ matrix.theme }} build script
+    name: ${{ matrix.theme }} / Test build script
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -152,7 +152,7 @@ jobs:
   # - Checks out the repository.
   # - Uploads the theme files as a workflow artifact (files uploaded as an artifact are automatically zipped).
   bundle-theme:
-    name: Create ${{ matrix.theme }} ZIP file
+    name: ${{ matrix.theme }} / Create ZIP file
     runs-on: ubuntu-latest
     permissions:
       contents: read
