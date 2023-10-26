@@ -74,6 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
        issues: write
+       pull-requests: write
     needs: [ 'build-wordpress' ]
     steps:
       - uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
@@ -94,7 +95,7 @@ jobs:
             };
 
             // No comment was found. Create one.
-            const issueComment = `## Test using WordPress Playground
+            const commentInfo.body = `## Test using WordPress Playground
             The changes in this pull request can previewed and tested using a [WordPress Playground](https://developer.wordpress.org/playground/) instance.
 
             [WordPress Playground](https://developer.wordpress.org/playground/) is an experimental project that creates a full WordPress instance entirely within the browser.
