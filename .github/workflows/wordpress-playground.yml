@@ -21,6 +21,7 @@ permissions: {}
 env:
   PUPPETEER_SKIP_DOWNLOAD: ${{ true }}
 
+
 jobs:
   # Creates a built copy of WordPress and uploads it as an artifact that can be used
   # to preview the changes inside of WordPress Playground.
