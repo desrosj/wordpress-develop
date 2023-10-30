@@ -113,7 +113,7 @@ final class WP_Recovery_Mode_Key_Service {
 			require_once ABSPATH . WPINC . '/class-phpass.php';
 			$wp_hasher = new PasswordHash( 8, true );
 		}
-		
+
 
 		if ( ! $wp_hasher->CheckPassword( $key, $record['hashed_key'] ) ) {
 			return new WP_Error( 'hash_mismatch', __( 'Invalid recovery key.' ) );
