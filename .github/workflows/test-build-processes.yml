@@ -3,7 +3,7 @@ name: Test Build Processes
 on:
   push:
     branches:
-      - trunk
+      - temp-trunk
       - '3.[7-9]'
       - '[4-9].[0-9]'
     tags:
