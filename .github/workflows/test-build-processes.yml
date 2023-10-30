@@ -129,7 +129,7 @@ jobs:
     permissions:
       actions: write
     needs: [ slack-notifications ]
-    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name == 'pull_request' }}
+    if: ${{ github.event_name == 'pull_request' }}
 
     steps:
       - name: Dispatch workflow run
@@ -150,7 +150,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: write
-    needs: [ slack-notifications ]
+    needs: [ playground-comment ]
     if: |
       always() &&
       github.repository == 'WordPress/wordpress-develop' &&
