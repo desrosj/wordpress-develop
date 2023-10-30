@@ -142,7 +142,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'pull-request-automation.yml',
-              ref: 'trunk'
+              ref: 'temp-trunk'
             });
 
   failed-workflow:
