@@ -87,6 +87,8 @@ function wp_cache_replace( $key, $data, $group = '', $expire = 0 ) {
 	return $wp_object_cache->replace( $key, $data, $group, (int) $expire );
 }
 
+
+
 /**
  * Saves the data to the cache.
  *
