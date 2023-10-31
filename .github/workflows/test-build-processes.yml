@@ -144,7 +144,7 @@ jobs:
               workflow_id: 'pull-request-automation.yml',
               ref: 'temp-trunk'
               inputs: {
-                run_id: context.issue.number
+                pr-number: context.issue.number
               }
             });
 
@@ -176,4 +176,7 @@ jobs:
               repo: context.repo.repo,
               workflow_id: 'failed-workflow.yml',
               ref: 'trunk',
+              inputs: {
+                run_id: '${{ github.run_id }}'
+              }
             });
