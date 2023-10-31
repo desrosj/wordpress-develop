@@ -4,7 +4,7 @@ name: Pull Request Automation
 on:
   pull_request:
     types: [ 'opened' ]
-  workflow_call:
+  workflow_dispatch:
     inputs:
       pr-number:
         required: true
