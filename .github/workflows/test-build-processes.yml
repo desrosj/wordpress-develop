@@ -128,9 +128,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: write
-    needs: [ slack-notifications ]
     if: ${{ github.event_name == 'pull_request' }}
-
 
     steps:
       - name: Dispatch workflow run
