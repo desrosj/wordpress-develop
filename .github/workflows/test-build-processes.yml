@@ -142,6 +142,9 @@ jobs:
               repo: context.repo.repo,
               workflow_id: 'pull-request-automation.yml',
               ref: 'temp-trunk'
+              inputs: {
+                pr-number: context.issue.number
+              }
             });
 
   failed-workflow:
