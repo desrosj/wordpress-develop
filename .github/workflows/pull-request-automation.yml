@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       pr_number:
+        description: 'The pull request number to process.'
         required: true
         type: number
 
@@ -139,6 +140,8 @@ jobs:
         contains( needs.*.result, 'cancelled' ) ||
         contains( needs.*.result, 'failure' )
       )
+
+
 
     steps:
       - name: Dispatch workflow run
