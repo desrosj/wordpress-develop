@@ -6,7 +6,7 @@ on:
     types: [ 'opened' ]
   workflow_call:
     inputs:
-      pr-number:
+      pr_number:
         required: true
         type: number
 
@@ -14,7 +14,7 @@ on:
 concurrency:
   # The concurrency group contains the workflow name and the branch name for pull requests
   # or the commit hash for any other events.
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.event_name == 'workflow_call' && inputs.pr-number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.event_name == 'workflow_call' && inputs.pr_number || github.sha }}
   cancel-in-progress: true
 
 # Disable permissions for all available scopes by default.
@@ -93,7 +93,7 @@ jobs:
             const commentInfo = {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: inputs.pr-number
+              issue_number: inputs.pr_number
             };
             const comments = ( await github.rest.issues.listComments( commentInfo ) ).data;
 
