@@ -4,9 +4,10 @@ name: Pull Request Automation
 on:
   pull_request:
     types: [ 'opened' ]
-  workflow_call:
+  workflow_dispatch:
     inputs:
       pr_number:
+        description: 'The pull request number to process.'
         required: true
         type: number
 
