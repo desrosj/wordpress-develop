@@ -10,10 +10,6 @@ on:
       - '[0-9]+.[0-9]'
       - '[0-9]+.[0-9].[0-9]+'
   pull_request:
-    branches:
-      - 'temp-trunk'
-      - '3.[7-9]'
-      - '[4-9].[0-9]'
   workflow_dispatch:
 
 # Cancels all previous workflow runs for pull requests that have not completed.
