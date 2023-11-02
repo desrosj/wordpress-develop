@@ -3,7 +3,7 @@ name: Test Build Processes
 on:
   push:
     branches:
-      - trunk
+      - temp-trunk
       - '3.[7-9]'
       - '[4-9].[0-9]'
     tags:
@@ -11,9 +11,11 @@ on:
       - '[0-9]+.[0-9].[0-9]+'
   pull_request:
     branches:
-      - trunk
+      - 'temp-trunk'
       - '3.[7-9]'
       - '[4-9].[0-9]'
+    paths:
+      - '.github/workflows/*.yml'
   workflow_dispatch:
 
 # Cancels all previous workflow runs for pull requests that have not completed.
@@ -31,7 +33,7 @@ jobs:
   # Tests the WordPress Core build process on multiple operating systems.
   test-core-build-process:
     name: Core running from ${{ matrix.directory }}
-    uses: WordPress/wordpress-develop/.github/workflows/callable-test-core-build-process.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/callable-test-core-build-process.yml@temp-trunk
     permissions:
       contents: read
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
@@ -54,7 +56,7 @@ jobs:
   # See https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability.
   test-core-build-process-macos:
     name: Core running from ${{ matrix.directory }}
-    uses: WordPress/wordpress-develop/.github/workflows/callable-test-core-build-process.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/callable-test-core-build-process.yml@temp-trunk
     permissions:
       contents: read
     if: ${{ github.repository == 'WordPress/wordpress-develop' }}
@@ -128,7 +130,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: write
-    needs: [ slack-notifications ]
     if: ${{ github.event_name == 'pull_request' }}
 
     steps:
@@ -144,10 +145,9 @@ jobs:
               workflow_id: 'pull-request-automation.yml',
               ref: 'temp-trunk',
               inputs: {
-                pr_number: context.issue.number
+                pr_number: Number( context.issue.number )
               }
             });
-
 
   failed-workflow:
     name: Failed workflow tasks

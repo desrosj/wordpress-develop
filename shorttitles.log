@@ -1,0 +1,542 @@
+Post WordPress 6.4 RC1 version bump.
+WordPress 6.4 RC1 - capitalize RC in version.
+WordPress 6.4 RC1.
+Editor: Bugfixes npm packages updates for 6.4 RC1.
+Patterns, Templates: Inject `theme` attr into Template Part blocks.
+Bundled Themes: Revert 56451.
+Build/Test Tools: Store WordPress.zip for every GitHub Pull Request as a GitHub artifact.
+Build/Test Tools: Update build related dependencies.
+Build/Test Tools: Update the `caniuse-lite` database.
+Build/Test Tools: Add environment variable for current release.
+Build/Test Tools: Reinstate `PUPPETEER_SKIP_DOWNLOAD` for most CI workflows.
+HTML API: Scan to end of tag when getting updated HTML output.
+Twenty Nineteen: Correct the required WordPress version in theme headers.
+Twenty Twenty-Four: Bugfixes for 6.4 RC1.
+Help/About: Update the About page for 6.4.
+Options, Meta APIs: Prevent saving of invalid timezones.
+CSS: Run grunt `precommit:css` to update CSS.
+Options, Meta APIs: Delete leftover unit tests.
+Options, Meta APIs: Revert update_option changes.
+Update editor related npm packages for 6.4 RC1.
+Build/Test Tools: Downgrade `grunt-contrib-qunit` dependency.
+General: Remove discouraged `@return void` annotations.
+Build/Test Tools: Ensure the failed workflow tasks run last for e2e tests.
+HTML API: Avoid calling subclass method while internally scanning in Tag Processor.
+Twenty Thirteen, Twenty Sixteen: Use default display for summary element.
+Posts, Post Types: Don't force trailing slash in `get_pagenum_link()`.
+Code Modernization: Declare dynamic properties on WP_Text_Diff_Renderer_Table.
+Users: Show "Password reset link sent" message only when finished.
+Tests: Reset the current user before performing assertions in some comment tests.
+Twenty Nineteen: Correctly display default color names in the color palette.
+Build/Test Tools: Do not round percentages when comparing performance test results.
+Script Loader: Move delayed head script to footer when there is a blocking footer dependent.
+Script Loader: Enqueue inline style for block template skip link in head instead of footer.
+Themes: Clear existing pattern cache when in theme development mode and prevent PHP warning due to missing file.
+Build/Test Tools: Fix path check when comparing performance test results.
+Media: Consistently call the `wp_create_file_in_uploads` hook as a filter.
+Build/Test Tools: Fix file prefix handling in performance test results.
+Build/Test Tools: Revert accidental change to `Gruntfile.js`
+Build/Test Tools: Migrate Puppeteer tests to Playwright.
+Query: Cache post parent IDs in `posts` group.
+Post WordPress 6.4 Beta 4 version bump.
+WordPress 6.4 Beta 4.
+Patterns: Don't inject `theme` attribute on frontend.
+Editor: Update npm packages ahead of 6.4 RC1.
+Editor: Move footnotes block hooks to `default-filters.php`
+Editor: Harden the display of footnotes.
+Shortcodes: Restrict ajax handler for media shortcode.
+Application Passwords: Prevent the use of some pseudo protocols in application passwords.
+Comments: Prevent users who can not see a post from seeing comments on it.
+Prevent unintended behavior when certain objects are unserialized.
+REST API: Ensure no-cache headers are sent when methods are ovverriden.
+REST API: Limit `search_columns` for users without `list_users`.
+Twenty Nineteen: Add margins to editor iframe content.
+Build/Test Tools: Remove hardcoded PHPUnit config files.
+Build/Test Tools: Increase the timeout for the failed workflow.
+Build/Test Tools: Increase the number of retries when restarting a workflow.
+Editor: Add further test coverage for `wp_render_elements_support()`.
+Build/Test Tools: Don’t send Slack notification for workflow retries.
+Help/About: Ensure that focus outline on the Credits screen is not cut off.
+Docs: Use US spelling and correct a typing mistake.
+Plugins: Fix broken `sprintf()` call in plugins list table.
+Build/Test Tools: Correct variable typo.
+Post WordPress 6.4 Beta 3 version bump.
+WordPress 6.4 Beta 3.
+Update/Install: Deactivate Gutenberg plugin version older than 16.5.
+REST API: Fix issue with Template and Template Part Revision/Autosave REST API controllers.
+Patterns: Inject `theme` attribute into Template Part blocks.
+Options, Meta APIs: Check setting group exists before search in unregister_setting().
+Update editor related npm packages for beta 3 second part.
+Query: Ensure that the `page` parameter is scalar in `WP_Query::get_posts()`.
+Options, Meta APIs: Prevent unnecessary database updates caused by strict comparisons in update_network_option.
+Changes to TT4 for beta 3.
+Editor: fix incorrect block custom CSS output.
+Query: Rename `_prime_post_parents_caches()` for clarity.
+Administration: Fix unusable mobile admin menu in Safari.
+Administration: Remove deprecated `unload` event handlers and use `pagehide` (and `pageshow`) when appropriate.
+Update npm packages to latest versions for 6.4 beta 3.
+Editor: Improve performance of `wp_render_elements_support()`.
+Editor: Add additional unit tests for elements block support.
+Blocks: Call `get_hooked_blocks` only once per template/part/pattern.
+REST API: Correct parsing of password from Authorization header when processing Application Password credentials.
+Code Modernization: Update parameter names in the `WP_Block_List` class.
+Quick/Bulk Edit: Fix inability to quick edit draft post date.
+Upload: Fix misalignment of 'Copied' message.
+Administration: Add missing space in theme activation notices.
+Coding Standards: Upgrade WPCS to version 3.0.1.
+Coding Standards: Correct alignment in `wp-admin/user-edit.php`.
+Options, Meta APIs: Add test coverage for `update_network_option()` comparison of new and existing value.
+Options, Meta APIs: Fix bug with `update_option()` updating the wrong cache, leading to potentially stale values being returned.
+Editor: Move `wp_navigation` schema updating to `WP_Navigation_Fallback` class.
+Build/Test Tools: Check for zero-byte files in themes.
+Twenty Twenty-Three: Add missing font licenses in `readme.txt` file.
+HTML API: Rename `WP_HTML_Processor::createFragment()` to follow WPCS.
+Options, Meta APIs: Fix minor compatibility issue with `update_option()` change.
+Themes: Fix core block style paths on Windows.
+Twenty Twenty: Fix style issues within iframed editor.
+Build/Test Tools: Don’t send a Slack notice for a workflow’s first failure.
+Editor: Fix wrong `@since` mention in `remove_insecure_properties()`.
+Twenty Twenty-Four: Fix 6.4 Beta 2 image assets.
+Docs: Use 3-digit, x.x.x style semantic versioning for two `@since` entries.
+Docs: Improve documentation for _prime_post_parents_caches().
+Twenty Fourteen: Correct `@since` entry for an authors list query arguments filter.
+Editor: Simplify return shape and logic of `_wp_get_block_patterns()`.
+Build/Test Tools: Test Twenty Twenty-Four.
+Post WordPress 6.4 Beta 2 version bump.
+WordPress 6.4 Beta 2.
+Docs: Improve documentation for `get_avatar()` and related functions.
+Query: Fix a PHPCS issue in `_prime_post_parents_caches()` tests.
+Editor: Improve performance of _register_theme_block_patterns function.
+Bundled Themes: Update TT4 for 6.4 Beta 2.
+Query: Improve caching behavior for WP_Query when retrieving id=>parent fields
+Options, Meta APIs: Implement additional tests covering `update_option()`.
+Tests: Rename and improve the `blocks/context.php` file to follow handbook
+Chore: Remove empty test file that was missed after renaming the file
+Tests: Cover Block Hooks integration with a custom block theme
+Editor: Add function prefix to avoid conflicts.
+Media: Prevent PHP notice in `get_avatar()`.
+Update npm packages to latest.
+Script Loader: Fix missing documentation for the `$path` argument of `wp_enqueue_block_style()`.
+Coding Standards: Remove redundant ignore annotations, take 5.
+Coding Standards: Remove redundant ignore annotations, take 4.
+Coding Standards: Remove redundant ignore annotations, take 3.
+Script Loader: Remove erroneous `type` attribute from `script` tag wrapper on login screen.
+Customize: Harden and modernize URL manipulation in `WP_Customize_Manager::remove_frameless_preview_messenger_channel()`.
+Script Loader: Harden removal of script tag wrappers.
+Comments: Improve WP_Comment_Query count query performance by setting 'order by' to 'none'.
+Tests: Reduce usage of assertEquals
+Revisions: slash meta values for autosave (preview) revisions.
+Editor: Avoid Deferring Loading for Empty Block Script URI
+Coding Standards: Remove redundant ignore annotations, take 2.
+Editor: Replace property_exists calls in block related functions with instanceof
+Coding Standards: Remove temporary exclusion from the PHPCS ruleset.
+Code Modernization: Fix "passing null to non-nullable" deprecation from next_posts().
+General: Set the correct script version for `regenerator-runtime`
+Coding Standards: Remove redundant ignore annotations.
+Editor: Remove 'wp-edit-site' stylesheet enqueue from iframe.
+Filesystem API: Free the archive in `_unzip_file_ziparchive()`.
+Text Changes: Remove empty space in Erase Personal Data help tab.
+Blocks: Add unit test coverage for Patterns registry.
+Bootstrap/Load: Remove a redundant `continue` statement in  `add_magic_quotes()`.
+Editor: fix undefined array key warning.
+Post WordPress 6.4 Beta 1 version bump.
+WordPress 6.4 Beta 1.
+Editor: 2nd package updates for 6.4 Beta 1.
+Bundled Themes: Twenty Twenty-Four is now the default theme.
+Twenty Twenty-Four: Fix issue with theme screenshot.
+General: Define the desired `mime-type` for WebP files.
+Templates: Introduce _remove_theme_attribute_from_template_part_block.
+HTTP API: Deprecate the `http_api_transports` filter.
+Templates: Move old theme attr injection function to deprecated.php.
+Twenty Twenty-Four: Fix font and image assets.
+Toolbar: Link to Learn WordPress in the WordPress Logo menu.
+Templates: Deprecate _inject_theme_attribute_in_block_template_content.
+Login and Registration: Add `/login.php` as an alias for the login page.
+Options, Meta APIs: Fix follow up bug when comparing values for options using the `pre_option_{$option}` filter.
+Bundled Themes: Import Twenty Twenty-Four, the new default theme for WordPress 6.4.
+Revisions: avoid double call to wp_restore_post_revision_meta when restoring post.
+Revisions: framework for storing post meta revisions.
+Update regenerated build files.
+Quick/Bulk Edit: Pre-fill category fields with their status.
+Media: Change link text when attachment pages disabled.
+Update editor related npm packages
+Editor: Reduce the use of the `_wp_array_get()` function to improve performance.
+Sitemaps: do not list users who only authored pages.
+General: Use wp_kses() in wp_trigger_error().
+Editor: Fix deprecation notice in block editor.
+General: Use wp_trigger_error() in _doing_it_wrong() and _deprecated_*().
+Blocks: Have get_hooked_blocks() return blocks grouped by position.
+HTML API: Add class name utilities `has_class()` and `class_list()`.
+HTML API: Add `matches_breadcrumbs()` method for better querying.
+Blocks: Add more unit test covering edge cases for Block Hooks
+Editor: remove null coalescing operator from layout.
+Build: Introduce SCRIPT_DEBUG global in webpack processing
+Editor: make better use of Tag Processor in layout block support.
+Administration: Add event type to Events and News widget.
+Build/Test Tools: Use the latest PHP version for the coding standards workflow.
+Coding Standards: Upgrade WPCS to version 3.0.0.
+Code Modernization: Rename parameters that use reserved keywords in `phpunit/tests/media.php`.
+Media: Ensure images within shortcodes are correctly considered for loading optimization attributes.
+Coding Standards: Fix a few newly introduced WPCS issues.
+Filesystem API: Add missing ZIP file for unzip tests.
+Media: Rely on `wp_get_loading_optimization_attributes()` to add `decoding="async"` to images.
+Filesystem API: Introduce filters for before/after unzipping archives.
+Fonts: Get font-family name from 'fontFamily' field.
+Script Loader: Use `wp_get_script_tag()` and `wp_get_inline_script_tag()`/`wp_print_inline_script_tag()` helper functions to output scripts on the frontend and login screen.
+Docs: Revert [56679].
+HTML API: Remove all duplicate copies of an attribute when removing.
+Editor: Introduce get_block_asset_url Utility Function.
+Script Loader: Replace hardcoded output of style tags with calls to `wp_add_inline_style`.
+Options, Meta APIs: Improve logic to avoid unnecessary database writes in `update_option()`.
+Coding Standards: Fix a few newly introduced WPCS issues.
+Docs: Correct typo in new `@since` tag.
+Themes: Use instanceof in block_has_support.
+Themes: Use instanceof in get_hooked_blocks.
+REST API: Improve the block type schema for the `name` field
+Editor: Add missing parameter to the `block_editor_no_javascript_message` filter after [56672]. Props mukesh27.
+Blocks: Remove `inject_hooked_block_markup` filter.
+Blocks: Introduce filter to allow easy addition of hooked blocks.
+Editor: Improve no JS message for block editor.
+Widgets: Add missing no JS notice in Widgets screen.
+Site Health: Improve `wp.a11y.speak()` notifications.
+Build/Test Tools: Remove random_compat from PHPCS and PHPUnit configuration files.
+REST API: Correct spelling error in `block_hooks` field documentation.
+Coding Standards: Remove unnecessary directives in the PHPCompatibility ruleset.
+Coding Standards: Improve organization of the PHPCompatibility ruleset.
+Administration: Switch order of label/checkbox in `WP_List_Table`.
+Security: remove the cron event that checked for https support.
+Administration: Remove duplicate `wp_admin_notice()` call.
+Code Modernization: Rename reserved keyword used as variable.
+Build/Test Tools: Introduce install and upgrade testing workflows.
+Build/Test Tools: Simplify some logic in GitHub Action workflows.
+Build/Test Tools: Update the environment variable for skipping browser binaries.
+Media: Use correct option name for attachment pages in `upgrade_640()`.
+Media: Disable attachment pages for new installations.
+Query: Improved handling of filtered queries in WP_Query.
+HTTP API: Deprecate `WP_Http_Curl` and `WP_Http_Streams` classes.
+Login and Registration: Improve HTML for errors and notices.
+Coding Standards: Remove unused variable `el` in monitorPopup.
+Media: Close image rotation menu when not focused.
+Media: Introduce filters to customize the results from `wp_get_loading_optimization_attributes()`.
+Taxonomy: Stop double sanitization in get_term function.
+Blocks: Implement automatic block insertion into Block Hooks.
+Options, Meta APIs: Add further test coverage for comparison between old and new option value.
+Build/Test Tools: Update build related dependencies to their latest versions.
+External Libraries: Update the `polyfill-library` package.
+REST API: Remove unused variable in `WP_REST_Server::match_request_to_handler()`.
+Blocks: Change `traverse_and_serialize_block(s)`'s callback signature.
+Editor: add lightbox setting.
+Taxonomy: add taxonomy for user pattern categories.
+Themes: Fix fatal error in `load-styles.php`.
+Editor: fix typo in `css_var` doc update.
+Administration: Improve control proximity in theme details modal.
+General: Account for `Sec-CH-UA-Mobile` client hint request header in `wp_is_mobile()`.
+XML-RPC: Add `alt` attribute value to media item API.
+Users: Improve vertical spacing consistency in labels.
+Themes: Deprecate usage of `TEMPLATEPATH` and `STYLESHEETPATH` constants.
+Blocks: Revert implementation of block insertion functions.
+Coding Standards: Escape the whole attribute in `wp-admin/export.php`.
+Coding Standards: Add missing escaping functions in `wp-admin/export.php`
+Taxonomy: Restrict term edit link generation in `WP_Terms_List_Table::handle_row_actions()`.
+Editor: update docs for `css_var`.
+Editor: Fix post editor layout when Post Content has no attributes.
+Login and Registration: Introduce classes `wp-login.php` footer links.
+External Libraries: Update the `regenerator-runtime` version.
+External Libraries: Update the `regenerator-runtime` library.
+Media: Edit new hook name in `get_available_post_mime_types()`.
+Build/Test Tools: Add `sys_get_temp_dir()` to `open_basedir` tests.
+Themes: Improve performance of get_block_theme_folders function
+Blocks: Introduce a variation of serialize blocks helper with traversing
+Editor: Fix parameter reference in block editor settings tests.
+Blocks: Implement block insertion functions.
+KSES: Add `writing-mode` to the list of safe CSS properties.
+Coding Standards: Replace PHP alias `join()` with `implode()`.
+Editor: fix pattern alignment in editor view.
+Editor: add background image support.
+Bundled Theme: Add missing dimension attributes to images in Twenty Twenty-Two patterns.
+Media: Enhance `wp_get_loading_optimization_attributes()` to support arbitrary context values.
+Quick Edit: Allow Quick Edit to be disabled for custom post types or taxonomies.
+Blocks: Introduce helper function to retrieve hooked blocks
+Plugins: Store result of call to array_keys, to save repeated calls in WP_Hook class.
+Docs: Document `aria-live` and `hidden` in `safecss_filter_attr()`.
+Tests: Add additional tests covering Block Hooks registration
+Posts: update admin notices to refer to patterns.
+Editor: add text orientation for blocks with typography support.
+Editor: add block instance element color support for buttons and headings.
+Administration: Add support for attributes in `wp_admin_notice()`.
+Administration: Move `tabindex="-1"` from notice to JS.
+Administration: Use `wp_admin_notice()` in `wp-admin/network/`.
+Administration: Use `wp_admin_notice()` more in `wp-admin/`.
+Administration: Use `wp_admin_notice()` more in `/wp-admin/includes/`.
+Coding Standards: Fix a few newly introduced WPCS issues.
+Administration: Increase `wp_admin_notice()` usage in `/wp-includes/`.
+Coding Standards: Remove extra parentheses in a few `str_contains()` conditionals.
+Options, Meta APIs: Optimize get_option by relocating notoptions cache lookup.
+Coding Standards: Remove the custom property for the `FileName` sniff.
+Coding Standards: Improve organization of the WPCS-based PHPCS ruleset.
+Blocks: Remove the `gutenberg` textdomain accidently added to translation
+Media: Fix focus loss when closing Image Rotation menu.
+Administration: `additional_classes` is not a function.
+Administration: Fix undeclared variable.
+Tests: Improve the assertions for REST API endpoint for block types
+General: Add `block_hooks` field to block type registration, REST API.
+Coding Standards: Restore more descriptive variable names in a few class methods.
+Taxonomy: Introduce 'cache_results' parameter to WP_Term_Query for bypassing query caching.
+Tests: Split tests for _inject_theme_attribute_in_template_part_block
+Bundled Theme: Implement the_header_image_tag function for enhanced compatibility for older core themes.
+Twenty Ninteen: Revert changes to 'style-rtl.css'.
+Twenty Nineteen: Fixes button line height.
+Themes: Fix @covers PHPDoc line for test.
+Themes: Inject `theme` attribute during serialization.
+Post Types: allow trashing draft patterns.
+Administration: Fix erroneous call to `wp_admin()`.
+REST API: quality tweaks to WP_REST_Global_Styles_Controller.
+Editor: disable default style engine optimisation.
+Administration: Use `wp_admin_notice()` for `.updated`.
+Administration: Use `wp_admin_notice()` in `/wp-includes/`.
+Administration: Use `wp_admin_notice()` in `/wp-admin/includes`.
+Administration: Use `wp_admin_notice()` in `/wp-admin/`.
+Bundled Themes: Ensure Twenty Twenty's main script loads in `head` for WP<6.3.
+General: Update `wp_register_script()` calls in core to use new function signature.
+Twenty-Twenty One: Fixes quotation mark being outside with background.
+REST API: Avoid unnecessarily preparing item links REST API index.
+HTML API: Update documentation and rename internal variable on HTML Processor
+HTML API: Skip over contents of RAWTEXT elements such as STYLE.
+Themes: Add test for `theme` atttibute in file-based block template.
+Docs: Fix typo in a comment in `wp_trim_excerpt()`.
+Posts, Post Types: Avoid unnecessarily parsing blocks twice in `wp_trim_excerpt()`.
+Coding Standards: Include one space after `function` keyword for closures.
+HTML API: Store current token reference in HTML Processor state.
+General: Add optional callback argument to serialize_block(s).
+Bundled Themes: Use `defer` loading strategy for theme scripts.
+Taxonomy: Cache term objects in WP_Term_Query if query is filtered.
+External Libraries: Update the Requests library to version 2.0.8.
+Cron: Cast `doing_cron` transient to a float.
+Code Modernization: Use `dirname()` with the `$levels` parameter.
+Coding Standards: Correct spacing for spread operators.
+Upgrade/Install: Fix broken `sprintf()` call when deleting a backup.
+Coding Standards: Use pre-increment/decrement for stand-alone statements.
+Coding Standards: Remove superfluous blank lines at the end of various functions.
+Coding Standards: Remove superfluous blank lines at the end of various classes.
+Editor: tweak root padding styles.
+Editor: performance enhancements to `class-wp-theme-json`.
+Code Modernization: Use wp_trigger_error() in WP_Text_Diff_Renderer_Table magic methods.
+Code Modernization: Use wp_trigger_error() in WP_User_Query magic methods.
+Code Modernization: Use wp_trigger_error() in WP_List_Table magic methods.
+Plugins: Respect `prefers-reduced-motion` on plugin thumbnails.
+Fonts: Removes static instance in wp_print_font_faces().
+Build/Test Tools: Update a few more 3rd-party GitHub Action occurrences.
+Build/Test Tools: Update 3rd-party GitHub Actions.
+Coding Standards: Remove superfluous blank lines at the end of various files.
+Editor: add configurable viewport sizes for fluid typography.
+Editor: allow disabling layout controls.
+Bundled Themes: Update npm dependencies for Twenty Nineteen and Twenty Twenty.
+Bundled Themes: Set `legacy-peer-deps` to `true`.
+Bundled Themes: Use Node.js 16.x in themes with a build process.
+General: Introduce wp_trigger_error().
+Editor: Prevent possibility of a fatal error when previewing block themes.
+Editor: Fix loading of assets in blocks in child themes where the directory name starts with the parent theme's directory name. Example: `twentyseventeen` and `twentyseventeen-child`.
+Bundled Theme: Update default themes to use new script function signature.
+Upgrade/Install: Check plugin compatibility during bulk upgrades.
+Themes: Avoid stale caches for core block styles.
+Themes: Remove unnecessary check if file exists in the theme functions.
+Database: Add expiration for `dirsize_cache` to transient to improve performance.
+Coding Standards: Correct equals sign alignment in various files.
+Editor: update packages with bug fixes for 6.3.2
+Docs: Add a `@since` note for `add_new` labels change in `get_post_type_labels()`.
+Administration: Use admin notice functions in nav menu admin.
+Administration: Add improved context for `add new` links.
+Code Modernization: Rename parameters that use reserved keywords in `wp-includes/functions.php`.
+Query: Use split queries in WP_Query if persistent object caching is enabled.
+Widgets: Improve performance of has_content method in WP_Widget_Media_Gallery class.
+Coding Standards: Use strict comparison in `wp-includes/class-wp-hook.php`.
+Upload: Correct duplicate MIME type for `.xlsx` files generated by Google Docs.
+Site Health: Show correct debug value for file uploads.
+Options, Meta APIs: Introduce `wp_set_option_autoload_values()`.
+Editor: Ensure main query loop is entered for singular content in block themes.
+Build/Test Tools: Compare results in performance measurement workflow.
+Upgrade/Install: Remove unused globals in `core_upgrade_preamble()`.
+Media: Remove unused `$is_IE` and `$is_opera` globals in `media_upload_form()`.
+Editor: Don't use fluid layout value in typography.
+Editor: Preserve block style variations when securing theme.
+Tests: Remove webfonts tests.
+Introduce font-face styles generator and printer.
+Coding Standards: Remove unused global variables in various `/wp-admin/includes/` files.
+Build/Test Tools: Enable running the tests on PHP 8.3.
+Upload: Add a MIME type exception for `.docx` generated by Google Docs.
+Editor: Add relative time strings for the `wp-date` inline script output.
+HTTP API: Update `WP_Http` class to avoid PHP deprecation warnings.
+General: Replace two `esc_url_raw()` calls in core with `sanitize_url()`.
+HTML API: Stop processing HTML when encountering unsupported markup.
+Tests: Correct uses of `ReflectionProperty::setValue()` for static properties.
+Posts, Post Types: Avoid redundant SQL query in get_pages().
+Posts, Post Types: Reinstate missing sort_column options in get_pages().
+Site Health: fix check name used for REST API permission checks.
+Media: Prevent warning if `[caption]` shortcode is used without attributes.
+External Libraries: Upgrade PHPMailer to version 6.8.1.
+Privacy: Improve docblocks for hooks and functions related to personal data export and erasure.
+External Libraries: Update jQuery to version 3.7.1.
+XML-RPC: Remove unused `wpdb` global in `wp_xmlrpc_server::mw_newMediaObject()`.
+Editor: Replace some accidental double setting up of tests with proper tearing down.
+Users: Call `add_user_meta()` instead of `update_user_meta()` when adding metadata to a new user.
+Users: Remove unused `wpdb` global in `check_password_reset_key()`.
+Database: Improve the documentation for various methods in the `wpdb` class.
+Database: Remove support for the `mysql` extension.
+Docs: Fix typo in a translator comment in `_deprecated_class()`.
+Upgrade/Install: Add missing escaping function for `get_option( 'home' )` in `upgrade.php`.
+Docs: Improve PHPCS comments general consistency.
+Docs: Docblock improvements in `_deprecated_class()` function, as per docblocks standards.
+Fix coding standards for `Tests_Admin_wpUserSearch`
+Properly deprecate both constructors in `WP_User_Search`.
+Fix coding standards for translatable `_deprecated_class()` message strings
+Introduce a `_deprecated_class()` function.
+Coding Standards: Use strict comparison in `wp-includes/class-wp-widget.php`.
+Build/Test Tools: Ensure database containers are prepared for commands.
+Block Editor: Update SVN props to ignore new asset files.
+Customizer: use the correct `X-Robots-Tag` header.
+Build Tools: Avoid doing `copy:dynamic` when running `grunt watch` when using `--dev` option.
+Help/About: Match icon and text in Help for bulk edit button.
+REST API: Remove misleading comment in WP_REST_Blocks_Controller->get_item_schema.
+General: Use regular core button styles for page header actions.
+Editor: Optimize `wp_get_block_css_selector` to remove `array_merge` calls for better performance.
+Administration: Escape post type output as field attribute.
+Performance: Add fallback for `$script_uri` to prevent firing `plugins_url()` unnecessarily.
+Login and Registration: Improve test coverage for sign on related functions
+Build/Test: Revert unintentional .env change in [56449].
+Media: Add a filter to the `get_available_post_mime_types()` function to allow overriding its database query.
+Bundled Themes: Ensure that pull quotes are able to use the correct font size.
+Menus: Revert unintentional changes in [56449].
+Menus: Fix proximity of controls to Save and Delete menus.
+Rewrite Rules: Prevent stampedes when flush_rewrite_rules() is called
+Bundled Theme: Twenty Nineteen: Improve social media icon dimension attributes.
+Plugins: Correctly display spaces in new plugins search results.
+Options, Meta APIs: Introduce `prime_options()` to load multiple options with a single database request.
+Build/Tests: Tests_Formatting_MakeClickable should use data providors
+Build/Test Tools: Implicitly pass secrets to the called workflow.
+Build/Test Tools: Change the version of Node.js in the Codespaces container.
+Docs: Correct default post type in `page_template_dropdown()` docblock.
+Build/Test Tools: Merge pre-commit changes missed in [56439].
+Build/Test Tools: Expand database testing to account for all supported versions and types.
+Coding Standards: Use strict comparison in `wp-includes/ms-site.php`.
+Revisions: Add missing escaping function for `$post_edit_link` in `wp-admin/revision.php`.
+Docs: Clarify `post_date_column_time` filter description.
+Docs: Use third-person singular verbs in various function descriptions, as per docblocks standards.
+Docs: Wrap inline `@see` tags in curly braces.
+Docs: Add missing @param description in `WP_Comment` class.
+Coding Standards: Use strict comparison in `wp-includes/ms-files.php`.
+Posts, Post Types: Remove redundant function calls in `get_body_class()`.
+Editor: Fix error handling of converting classic to block menus.
+Build/Test Tools: Update PHPUnit Polyfills to version 1.1.0.
+Coding Standards: Use strict comparison in `wp-admin/includes/meta-boxes.php`.
+Editor: update npm packages with critical bug fixes for 6.3.1.
+Docs: Correct punctuation in some instances of the `$crop` parameter description.
+Revert the last use of `str_starts_with()` in `update-core.php`.
+Media: Standardise documentation of the `$crop` parameter for various media functions and methods.
+REST API: Correct the docblocks for various permission related methods.
+Docs: Miscellaneous docblock corrections and improvements.
+Themes: add `wp_get_theme_data_custom_templates` function.
+Add missing `@` to the return tag in the `wp_get_theme_data_template_parts` function.
+Coding Standards: Improve variable names in `wp_save_image()`.
+Administration: Invalid argument passed in additional_classes.
+Administration: Apply admin notice functions in multisite.
+Administration: Add function to standardize admin notices.
+Build/Test Tools: Revert Slack messaging changes.
+Build/Test Tools: Send a failure notice in Slack when a run fails to start.
+Build/Test Tools: Use the correct variable for checking the previous conclusion.
+Build/Test Tools: Don’t send a Slack notice when a workflow fails once.
+Editor: Ensure defer loading strategy is only applied to a block's viewScript.
+Build/Test Tools: Simplify the required prerequisite jobs for the `failed-workflow` job.
+Site Health: Correct the check for disk space available to safely perform updates.
+Coding Standards: Use strict comparison in `wp-admin/includes/image-edit.php`.
+Build/Test Tools: Measure additional load time metrics in performance tests.
+Editor: Use defer loading strategy for block view scripts.
+Docs: Fix typo in duplicate hook references for `views_{$this->screen->id}`.
+Coding Standards: Use strict comparison in `wp-admin/includes/class-wp-importer.php`.
+Coding Standards: Bring more consistency to `Last-Modified` and `ETag` checks.
+Coding Standards: Use strict comparison in `wp-includes/cron.php`.
+External Libraries: Update imagesLoaded to version `5.0.0`.
+Editor: Only exclude auto-generated block files from coding standards checks.
+External Libraries: Update Backbone.js to version `1.5.0`.
+Build/Test Tools: Update all build tool related dependencies.
+External Libraries: Update the `whatwg-fetch` polyfill library.
+Build/Test Tools: Update 3rd-party GitHub Actions.
+Build/Test Tools: Update the README file to reflect new Node.js/npm versions.
+Docs: Correct duplicate hook reference for `wp_min_priority_img_pixels`.
+Themes: add wp_get_theme_data_template_parts function.
+Tests: Correct two `@covers` annotations to use the recommended pattern.
+Embeds: Modernize wp-embed script with removal of obsolete IE10/IE11 code and support for WP<4.4.
+Editor: Simplify usage of `block_has_support()` function by supporting a string.
+Users: Correct the logic for `switch_to_blog()` in `WP_User_Query::generate_cache_key()`.
+HTML API: Add support for BUTTON element.
+Docs: Remove `@see` references for SimplePie classes.
+Build/Test Tools: Bump the required versions of Node.js and npm.
+Coding Standards: Use strict comparison in `wp-includes/kses.php`.
+HTML API: Fix missing * for docblock.
+Options, Meta APIs: Expand `$autoload` parameter documentation.
+Upgrade/Install: Update `$_old_files` for 6.3.
+HTML API: Adjust code styling to Gutenberg's linter's preferences.
+Coding Standards: Use strict comparison in `wp-includes/class-wp.php`.
+Coding Standards: Use strict comparison in `wp-includes/class-wp-image-editor.php`.
+Coding Standards: Rewrite loose comparison in `wp_list_categories()`.
+Coding Standards: Use strict comparison in `wp-includes/revision.php`.
+Emoji: Suppress console errors from sessionStorage usage in sandboxed post embed iframe.
+Themes: Avoid unnecessary check whether parent template file exists when not using a child theme.
+Code Modernization: Use "declare" in WP_List_Table magic methods deprecation message
+Script Loader: Use defer loading strategy for wp-embed script and move to head (in block themes).
+Code Modernization: Deprecate dynamic properties in WP_Text_Diff_Renderer_Table magic methods.
+Code Modernization: Deprecate dynamic properties in WP_User_Query magic methods.
+Coding Standards: Use `instanceof` keyword instead of the `is_a()` function.
+Build/Test Tools: revert downgrade of uuid.
+Code Modernization: Deprecate dynamic properties in WP_List_Table magic methods.
+Tests: Fix leakage in WP_List_Table tests.
+Media: Simplify logic in `wp_get_loading_optimization_attributes()`.
+Site Health: Use `PHP_SAPI` constant instead of the `php_sapi_name()` function.
+Themes: Use `isset` instead of `array_key_exists` in `WP_Theme_JSON` class.
+Upgrade/Install: Pass stored credentials to `WP_Filesystem()` where appropriate.
+Help/About: Add images to About page, match header style to images.
+Help/About: Escape "Contribute" links, for better consistency.
+Help/About: Remove `target="_blank"` from the Contribute link.
+Coding Standards: Use strict comparison in `wp-includes/option.php`.
+Editor: second update of npm packages for 6.3 RC3.
+HTML API: Add support for SPAN element.
+Editor: fix duplication in templates list.
+Help/About: Make Contribute links translatable.
+Coding Standards: Use strict comparison in `wp-includes/functions.php`.
+Coding Standards: Use strict comparison in `wp-includes/formatting.php`.
+Coding Standards: Use strict comparison in `wp-includes/feed-atom-comments.php`.
+Script Loader: Delay loading comment-reply script with async loading strategy.
+Coding Standards: Use strict comparison in `wp-includes/class-wp-roles.php`.
+Editor: initial update of npm packages for 6.3 RC3.
+Coding Standards: Use correct case for class name in `WP_Http` tests.
+Editor: Revert [56316].
+Editor: Prevent PHP warning when accessing icon by area.
+Bundled Themes: Bump version numbers for WordPress 6.3.
+Script Loader: Add support for `font-display: optional`.
+Build/Test Tools: Run performance tests using production env vars.
+Help/About: Update “Get involved in WordPress” link on the Credits tab.
+Help/About: Fix the Get Involved tab on Network Admin.
+Build/Test Tools: Restore automatically retrying failed E2E tests once.
+Editor: Fix conditionals in Template Editing Mode.
+Coding Standards: Always declare visibility for class methods.
+Twenty Twenty-One: Enable Dark Mode in the block editor iframe.
+HTML API: Change `wp` infix in test classes to `Wp`.
+Editor: update npm packages with bug fixes for 6.3 RC2.
+Editor: load title on navigation fallback.
+Help/About: Updates to About page.
+Administration: Update dashboard welcome panel for 6.3.
+Help/About: Add illustrations to the Get Involved tab
+Editor: Fix abbreviations of "Example" in `block-template-utils.php`.
+Coding Standards: Remove trailing tabs in `wp-admin/about.php`.
+Editor: fix popover positioning.
+Coding Standards: Correct alignment in `wp-includes/media.php`.
+Media: Fix Image rotation button overflow in translations.
+Coding Standards: Always use parentheses for class instantiation.
+General: Commit changes after running `precommit:css`.
+Media: Fix height max value in image scaling.
+I18N: Add missing translator comment in `WP_Upgrader::generic_strings()`.
+HTML-API: Introduce minimal HTML Processor.
+Coding Standards: Correct equals sign alignment in various files.
+Docs: Fix indentation issue in `WP_REST_Global_Styles_Revisions_Controller` class.
+Media: Adjust PDF upload handling to remove non-opaque alpha channels from previews.
+Docs: Add a missing word in `maybe_create_table()` description.
+REST API: Update Global styles revisions private methods to protected.
