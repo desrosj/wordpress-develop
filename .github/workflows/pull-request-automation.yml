@@ -9,7 +9,7 @@ on:
       pr_number:
         description: 'The pull request number to process.'
         required: true
-        type: number
+        type: string
 
 # Cancels all previous workflow runs for pull requests that have not completed.
 concurrency:
