@@ -28,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+      pull-requests: write
     timeout-minutes: 5
     if: ${{ github.event_name == 'pull_request' }}
 
@@ -85,6 +86,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+      pull-requests: write
     if: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
       - uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
