@@ -9,7 +9,7 @@ on:
       pr_number:
         description: 'The pull request number to process.'
         required: true
-        type: string
+        type: number
 
 # Cancels all previous workflow runs for pull requests that have not completed.
 concurrency:
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
-    if: ${{ github.event_name == 'workflow_call' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
       - uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
         with:
