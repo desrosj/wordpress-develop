@@ -139,7 +139,7 @@ jobs:
               workflow_id: 'pull-request-automation.yml',
               ref: 'temp-trunk',
               inputs: {
-                pr_number: context.issue.number
+                pr_number: 'context.issue.number'
               }
             });
 
