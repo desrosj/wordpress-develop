@@ -9,7 +9,7 @@ on:
       pr_number:
         description: 'The pull request number to process.'
         required: true
-        type: number
+        type: string
 
 # Cancels all previous workflow runs for pull requests that have not completed.
 concurrency:
@@ -78,7 +78,6 @@ jobs:
             Thank you,
 
             The WordPress Project
-
 
   # Leaves a comment on a pull request with a link to test the changes in a WordPress Playground instance.
   playground-details:
