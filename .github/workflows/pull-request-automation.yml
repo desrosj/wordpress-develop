@@ -79,6 +79,7 @@ jobs:
 
             The WordPress Project
 
+
   # Leaves a comment on a pull request with a link to test the changes in a WordPress Playground instance.
   playground-details:
     name: Comment on a pull request with Playground details
