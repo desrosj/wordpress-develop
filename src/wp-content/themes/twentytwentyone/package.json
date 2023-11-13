@@ -30,7 +30,7 @@
 		"postcss-focus-within": "^7.0.1",
 		"postcss-merge-rules": "^5.1.3",
 		"postcss-nested": "^6.0.0",
-		"rtlcss": "^4.0.0",
+		"rtlcss": "^4.1.1",
 		"sass": "^1.69.5",
 		"stylelint": "^13.13.1",
 		"stylelint-config-recommended-scss": "^5.0.2"
