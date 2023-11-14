@@ -1,5 +1,5 @@
-# Performs automation related to Pull Requests, such as commenting for first time contributors.
-name: Pull Request Automation
+# Responsible for making comments on pull requests, such as commenting for first time contributors.
+name: Pull Request Comments
 
 on:
   pull_request:
@@ -27,7 +27,6 @@ jobs:
   post-welcome-message:
     runs-on: ubuntu-latest
     permissions:
-      issues: write
       pull-requests: write
     timeout-minutes: 5
     if: ${{ github.event_name == 'pull_request' }}
@@ -85,7 +84,6 @@ jobs:
     name: Comment on a pull request with Playground details
     runs-on: ubuntu-latest
     permissions:
-      issues: write
       pull-requests: write
     if: ${{ github.event_name == 'workflow_dispatch' }}
     steps:

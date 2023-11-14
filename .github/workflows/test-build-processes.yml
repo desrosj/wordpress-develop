@@ -118,7 +118,7 @@ jobs:
       SLACK_GHA_FIXED_WEBHOOK: ${{ secrets.SLACK_GHA_FIXED_WEBHOOK }}
       SLACK_GHA_FAILURE_WEBHOOK: ${{ secrets.SLACK_GHA_FAILURE_WEBHOOK }}
 
-  # Calls the Pull Request Automation workflow to leave a comment detailing how to test the PR within WordPress Playground.
+  # Calls the Pull Request Commenting workflow to leave a comment detailing how to test the PR within WordPress Playground.
   playground-comment:
     name: Leave WordPress Playground details
     runs-on: ubuntu-latest
@@ -136,7 +136,7 @@ jobs:
             github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'pull-request-automation.yml',
+              workflow_id: 'pull-request-comments.yml',
               ref: 'temp-trunk',
               inputs: {
                 pr_number: '${{ github.event.number }}'
