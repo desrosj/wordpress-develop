@@ -27,6 +27,7 @@ jobs:
   post-welcome-message:
     runs-on: ubuntu-latest
     permissions:
+      issues: write
       pull-requests: write
     timeout-minutes: 5
     if: ${{ github.event_name == 'pull_request' }}
@@ -84,6 +85,7 @@ jobs:
     name: Comment on a pull request with Playground details
     runs-on: ubuntu-latest
     permissions:
+      issues: write
       pull-requests: write
     if: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
