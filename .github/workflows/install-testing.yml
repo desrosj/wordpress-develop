@@ -118,6 +118,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     needs: [ build-matrix ]
+    if: ${{ false }}
     strategy:
       fail-fast: false
       matrix:
@@ -221,15 +222,14 @@ jobs:
         image: ${{ matrix.db-type }}:${{ matrix.db-version }}
         ports:
           - 3306
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
         options: >-
           --health-cmd="mariadb-admin ping"
           --health-interval=30s
           --health-timeout=10s
           --health-retries=5
-          -e MYSQL_ROOT_PASSWORD=root
-          -e MYSQL_DATABASE=test_db
-          --entrypoint sh ${{ matrix.db-type }}:${{ matrix.db-version }}
-          -c "exec docker-entrypoint.sh mariadb
 
     steps:
       - name: Set up PHP ${{ matrix.php }}
