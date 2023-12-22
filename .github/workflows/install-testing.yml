@@ -95,7 +95,7 @@ jobs:
       # Look up the major version's specific MariaDB support policy when a version is provided.
       # Otherwise, use the current MariaDB support policy.
       - name: Get supported MariaDB versions
-        id: mysql-versions
+        id: mariadb-versions
         run: |
           if [ "${{ steps.major-wp-version.outputs.version }}" != "latest" ] && [ "${{ steps.major-wp-version.outputs.version }}" != "nightly" ]; then
             echo "versions=$(jq -r '.["${{ steps.major-wp-version.outputs.version }}"] | @json' .version-support-mariadb.json)" >> $GITHUB_OUTPUT
