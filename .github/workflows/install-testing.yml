@@ -201,6 +201,20 @@ jobs:
         exclude:
           - php: '5.2'
           - php: '5.3'
+          # Docker containers for these versions do not exist.
+          - db-version: 5.1
+          - db-version: 5.2
+          - db-version: 5.3
+          # Skip some older, unmaintained versions.
+          - db-version: 10.0
+          - db-version: 10.1
+          - db-version: 10.2
+          - db-version: 10.3
+          # Skip unmaintained, short-term releases.
+          - db-version: 10.7
+          - db-version: 10.8
+          - db-version: 10.9
+          - db-version: 10.10
 
     services:
       database:
