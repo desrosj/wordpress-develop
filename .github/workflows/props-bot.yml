@@ -2,6 +2,11 @@ name: Props Bot
 
 on:
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
 
 # Cancels all previous workflow runs for pull requests that have not completed.
 concurrency:
