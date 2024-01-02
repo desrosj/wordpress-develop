@@ -40,4 +40,4 @@ jobs:
 
     steps:
       - name: Fetch props
-        uses: desrosj/wordpress-props-action@main
+        uses: desrosj/test-props-bot@main
