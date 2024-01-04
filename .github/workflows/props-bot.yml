@@ -7,6 +7,9 @@ on:
       - synchronize
       - reopened
       - labeled
+  pull_request_review:
+    types:
+      - submitted
 
 # Cancels all previous workflow runs for pull requests that have not completed.
 concurrency:
