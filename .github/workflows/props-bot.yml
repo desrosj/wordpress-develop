@@ -50,4 +50,4 @@ jobs:
 
     steps:
       - name: Fetch props
-        uses: desrosj/test-props-bot@d58b2963dc3a857acb56fd0e944601cfa542e19c
+        uses: desrosj/test-props-bot@main
