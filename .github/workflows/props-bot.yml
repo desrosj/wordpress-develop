@@ -49,4 +49,4 @@ jobs:
 
     steps:
       - name: Fetch props
-        uses: desrosj/test-props-bot@main
+        uses: desrosj/wordpress-props@test/removing-section-headers
