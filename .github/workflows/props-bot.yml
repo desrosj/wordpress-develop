@@ -49,4 +49,4 @@ jobs:
 
     steps:
       - name: Fetch props
-        uses: WordPress/wordpress-props@update/comment-format
+        uses: WordPress/props-bot-action@update/comment-format
