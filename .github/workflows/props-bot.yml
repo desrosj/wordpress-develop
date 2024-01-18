@@ -49,4 +49,4 @@ jobs:
 
     steps:
       - name: Fetch props
-        uses: desrosj/wordpress-props@test/removing-section-headers
+        uses: WordPress/wordpress-props@update/comment-format
