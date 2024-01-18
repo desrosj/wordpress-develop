@@ -54,3 +54,17 @@ jobs:
     steps:
       - name: Fetch props
         uses: WordPress/props-bot-action@update/comment-format
+
+      - name: Remove props-bot label
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        if: ${{ github.event.action != 'labeled' && 'props-bot' != github.event.action.label.name }}
+        with:
+          retries: 2
+          retry-exempt-status-codes: 418
+          script: |
+            github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: '${{ github.event.number }}',
+              name: 'props-bot'
+            });
