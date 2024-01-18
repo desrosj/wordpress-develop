@@ -31,21 +31,11 @@ concurrency:
 permissions: {}
 
 jobs:
-  # Runs PHP coding standards checks.
-  #
-  # Violations are reported inline with annotations.
+  # Compiles a list of props for a pull request.
   #
   # Performs the following steps:
-  # - Checks out the repository.
-  # - Sets up PHP.
-  # - Configures caching for PHPCS scans.
-  # - Installs Composer dependencies.
-  # - Make Composer packages available globally.
-  # - Runs PHPCS on the full codebase with warnings suppressed.
-  # - Generate a report for displaying issues as pull request annotations.
-  # - Runs PHPCS on the `tests` directory without warnings suppressed.
-  # - Generate a report for displaying `test` directory issues as pull request annotations.
-  # - Ensures version-controlled files are not modified or deleted.
+  # - Collects a list of contributor props and leaves a comment.
+  # - Removes the props-bot label, if necessary.
   props-bot:
     name: Generate a list of props
     runs-on: ubuntu-latest
