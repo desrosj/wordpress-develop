@@ -51,12 +51,11 @@ jobs:
       pull-requests: write
       contents: read
     timeout-minutes: 20
-    if: ${{
+    if: |
       contains( fromJSON( '["pull_request_review", "pull_request_review_comment"]' ), github.event_name ) ||
       ( github.event_name == 'issue_comment' && github.event.issue.pull_request ) ||
       github.event.action != 'labeled' ||
       'props-bot' == github.event.label.name
-    }}
 
     steps:
       - name: Gather a list of contributors
