@@ -1,21 +1,28 @@
 name: Props Bot
 
 on:
+  # This event runs anytime a PR is (re)opened, updated, or labeled.
+  # The logic below will look for
   pull_request:
     types:
       - opened
       - synchronize
       - reopened
       - labeled
+  # This event runs anytime a comment is added or deleted.
+  # You cannot filter this event to happen for PR comments only.
+  # However, the logic below does short-circuit the workflow for issues.
+  issue_comment:
+    type:
+      - created
+      - deleted
+  # This event will run everytime a new PR review is created.
   pull_request_review:
     types:
       - submitted
+  # This event runs anytime a PR review comment is added or deleted.
   pull_request_review_comment:
     types:
-      - created
-      - deleted
-  issue_comment:
-    type:
       - created
       - deleted
 
@@ -40,10 +47,16 @@ jobs:
     name: Generate a list of props
     runs-on: ubuntu-latest
     permissions:
+      # The action needs permission to write to PRs in order to add a comment.
       pull-requests: write
       contents: read
     timeout-minutes: 20
-    if: ${{ contains( fromJSON( '["pull_request_review", "pull_request_review_comment"]' ), github.event_name ) || ( github.event_name == 'issue_comment' && github.event.issue.pull_request ) || github.event.action != 'labeled' || 'props-bot' == github.event.label.name }}
+    if: ${{
+      contains( fromJSON( '["pull_request_review", "pull_request_review_comment"]' ), github.event_name ) ||
+      ( github.event_name == 'issue_comment' && github.event.issue.pull_request ) ||
+      github.event.action != 'labeled' ||
+      'props-bot' == github.event.label.name
+    }}
 
     steps:
       - name: Gather a list of contributors
