@@ -1,0 +1,1033 @@
+commit 52854e2796bff1ab2e69991b1c233c277542a0fc
+Author: Joe McGill <joemcgill@git.wordpress.org>
+Date:   Wed Dec 6 16:03:48 2023 +0000
+
+    HTML-API: Prevent unintended behavior when WP_HTML_Token is unserialized.
+    
+    Props dmsnell, peterwilsoncc, dd32, xknown, rawrly, johnbillion, barry, jeffpaul, vortfu, isabel_brison, mikeschroder, jorbin.
+    
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57163 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 0300f8869e35901d3b67c302b99540e659b141e8
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Wed Dec 6 11:52:35 2023 +0000
+
+    Docs: Fix typo in `Gettext_Translations::parenthesize_plural_exression()` description.
+    
+    Follow-up to [10584], [12079], [41722], [57161].
+    
+    Props tohincoderex.
+    See #59347.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57162 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 68ded6f3aa972a0b95dcbcc6f42afb00dc9ccdd6
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Wed Dec 6 11:48:04 2023 +0000
+
+    I18N: Deprecate `Gettext_Translations::parenthesize_plural_exression()`.
+    
+    Aside from having a typo in the name, the method is unused by core as of WordPress 4.9.
+    
+    Follow-up to [10584], [12079], [41722].
+    
+    Props tohincoderex, jrf.
+    Fixes #59347.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57161 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit ee461f010a87d806d31367d047a0d20804a80dde
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Tue Dec 5 13:37:52 2023 +0000
+
+    Administration: Don't unnecessarily escape `none` or `div` in the admin menu.
+    
+    This matches a similar conditional in `wp-admin/menu-header.php`, where these values are handled as special cases and don't output the default menu image so that an icon could be added to `div.wp-menu-image` as CSS background.
+    
+    Follow-up to [9578], [21877], [26664].
+    
+    Props andrewleap, ironprogrammer, azaozz.
+    Fixes #58361.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57159 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 7f0b94069d40e1766a453d77542a533f44fb008f
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Mon Dec 4 22:05:51 2023 +0000
+
+    Coding Standards: Add missing escaping in `wp-activate.php`.
+    
+    Follow-up to [13884].
+    
+    Props dilipbheda, mukesh27, pitamdey, nareshbheda.
+    Fixes #59200.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57158 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit c44432b3388c6ec73198bdd112e3384ca1f20c77
+Author: bernhard-reiter <bernhard-reiter@git.wordpress.org>
+Date:   Mon Dec 4 20:24:33 2023 +0000
+
+    Block Hooks: Store ignored hooked blocks metadata in anchor block.
+    
+    The biggest tradeoff that was made in the implementation of Block Hooks was that they were limited to layouts (i.e. templates, template parts, and patterns) that ''didn't have any user modifications'' (see #59313 for the reason). This changeset is a preparatory step to remove this limitation, so they’ll eventually also work with user-modified layouts.
+    
+    The crucial problem to solve is how to acknowledge that a user has opted to remove or persist a hooked block, so that the auto-insertion mechanism won't run again and inject an extraneous hooked block on the frontend when none is solicited.
+    
+    This is achieved by storing all known blocks hooked to a given anchor block in the `metadata` attribute on that anchor block; specifically in a field called `ignoredHookedBlocks` inside of the `metadata`. Hooked blocks are only rendered on the frontend if they're absent from that field; OTOH, they're injected into that field (via the REST API) when first loaded in the editor.
+    
+    This simple logic guarantees that once a user modifies a given layout, those changes are respected on the frontend; yet if a plugin that includes a hooked block is activated after those modifications have taken place, the hooked block will be rendered on the frontend. This new technique supplants the one previously used (i.e. rendering hooked blocks on the frontend only if a layout doesn't have any modifications) in a rather direct way.
+    
+    Note that this changeset only introduces the new metadata field and relevant logic; it does not yet enable hooked block insertion into modified layouts. That will be done in a subsequent step (see #59646).
+    
+    Props gziolo.
+    Closes #60008.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57157 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 57a5164cbd447769b49577bd77d596cc9ec4a58c
+Author: Felix Arntz <flixos90@git.wordpress.org>
+Date:   Mon Dec 4 19:49:18 2023 +0000
+
+    Themes: Clean up inactive themes' theme mods from being autoloaded as part of upcoming 6.5 upgrade routine.
+    
+    Alongside [57153], this reduces unnecessarily autoloaded data from inactive themes, which can contribute to slow database performance as part of excessive autoloading. This changeset specifically resolves the issue for existing sites.
+    
+    Props mukesh27, joemcgill, swissspidy, westonruter, flixos90.
+    Fixes #59975.
+    See #39537.
+    
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57155 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 7ce128134985dd9fc3cb2a83dccf31d8b8924071
+Author: Felix Arntz <flixos90@git.wordpress.org>
+Date:   Mon Dec 4 19:36:27 2023 +0000
+
+    Themes: Avoid autoloading the previous theme's theme mods when switching to another theme.
+    
+    This reduces unnecessarily autoloaded data from inactive themes, which can contribute to slow database performance as part of excessive autoloading.
+    
+    Props mukesh27, rajinsharwar, igmoweb, joemcgill, swissspidy, westonruter, flixos90.
+    Fixes #59537.
+    See #59975.
+    
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57153 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit b38a6cf9761a523a6b8a5e18fec18227a4be4a5e
+Author: Jonathan Desrosiers <desrosj@git.wordpress.org>
+Date:   Mon Dec 4 18:51:01 2023 +0000
+
+    Build/Test Tools: Update the MariaDB test strategy matrix.
+    
+    This updates the test strategy matrix in the PHPUnit test GitHub Actions workflow to include the most recent MariaDB release, 11.2.
+    
+    While 11.0 and 11.1 are still maintained, all three are short-term stable releases, which see support dropped after 1 year.
+    
+    Until a larger discussion around how the project supports database software releases with shorter support windows takes place (short-term in MariaDB or “innovation” releases in MySQL), testing only against the latest short-term release should be sufficient.
+    
+    Props johnbillion, l1nuxjedi.
+    See #59806.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57152 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit f3236c2c93988dc09096767b42b6fc07916a7d71
+Author: Aaron Jorbin <jorbin@git.wordpress.org>
+Date:   Mon Dec 4 18:05:08 2023 +0000
+
+    Help/About: Change CSS align-item for full browser support.
+    
+    The values of `start` and `end` are not fully supported by Opera Mini which has 1.01% usage. There is no material change in functionality with this change.
+    
+    Props kebbet, NekoJonez, luminuu, hellofromTonya.
+    Fixes #59819.
+    
+    
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57151 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 96a589bf0d1cc4e9f2364b8e15228f77a175b2a1
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Sun Dec 3 19:59:10 2023 +0000
+
+    Docs: Add missing argument type for `supports` in `register_post_type()`.
+    
+    If set to `false`, no feature support is registered for the post type.
+    
+    Follow-up to [12751], [20734], [29091], [37883].
+    
+    Props jeremyfelt, swissspidy.
+    Fixes #59690.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57150 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 76ab1b8891b05fe2f95573b69d21100d9dc3cded
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Sat Dec 2 11:56:31 2023 +0000
+
+    Build/Test Tools: Allow overriding the `WP_UnitTestCase_Base::factory()` method.
+    
+    This allows third-party plugins to write their own factory extending `WP_UnitTest_Factory` for testing purposes, as well as benefit from `WP_UnitTestCase_Base` features.
+    
+    Follow-up to [35186], [35225], [35242].
+    
+    Props hugod.
+    Fixes #59999.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57149 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 0ce733c78f86c4ea06dd0dde329fcca571179f50
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Fri Dec 1 01:33:40 2023 +0000
+
+    Upgrade/Install: Add port number to target origin when decrementing update counts.
+    
+    This ensures that the update counter bubble in the admin menu is properly decreased after a successful plugin or theme update from within the update iframe when the site uses a non-standard port number.
+    
+    Follow-up to [27280], [29357].
+    
+    Props TobiasBg.
+    Fixes #59987.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57148 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 4d19f6c23fab4a0ad0638eb6e626c6a882f2947c
+Author: Tonya Mork <hellofromtonya@git.wordpress.org>
+Date:   Thu Nov 30 14:52:52 2023 +0000
+
+    REST API: Restore site logo and icon in index.
+    
+    Restores setting the site's logo, icon, and wp-admin's back button image (which defaults to W).
+    
+    Prior to [56566], the site logo and icon were unconditionally added to the index. [56566] changed this by conditionally adding them if either the `_links` or `_embedded` fields were included. However, these fields are not included when using the Site Logo block, as it uses the `site_logo`, `site_icon`, and `site_icon_url` fields instead.
+    
+    This changeset restores the functionality by checking specifically for the `site_*` fields when neither of the `_links` or `_embedded` fields are present.
+    
+    Follow up to [56566].
+    
+    Props antonvlasenko, hellofromTonya, ironprogrammer, priethor, wildworks.
+    Fixes #59935.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57147 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 36a7c6ca409455ac8663d1a98b672685b654b2b2
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Thu Nov 30 11:15:34 2023 +0000
+
+    Tests: Update `_wp_timezone_choice_usort_callback()` tests for consistency.
+    
+    * Use the same `@group` annotation as the other tests.
+    * Use `assertSame()` to verify the type of the result.
+    * Use `data_` prefix for the data provider.
+    * Use named data set in the data provider. This makes the output when using the `--testdox` option more descriptive and is helpful when trying to debug which data set from a data provider failed the test.
+    * Other minor corrections.
+    
+    Reference: [https://make.wordpress.org/core/handbook/testing/automated-testing/writing-phpunit-tests/#repetitive-tests Core Handbook: Writing PHP Tests: Repetitive Tests].
+    
+    Follow-up to [57145].
+    
+    See #59953, #59647.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57146 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 4cee935825612180fe357cbe41f4453c51d873f6
+Author: Aaron Jorbin <jorbin@git.wordpress.org>
+Date:   Wed Nov 29 17:31:44 2023 +0000
+
+    Add automated tests for `_wp_timezone_choice_usort_callback`
+    
+    Props pbearne.
+    Fixes #59953.
+    
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57145 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 2dc568464e09be30927ac2cba21a3fd30ecfcd4d
+Author: Tonya Mork <hellofromtonya@git.wordpress.org>
+Date:   Wed Nov 29 16:43:15 2023 +0000
+
+    Plugins: Fix Add Plugin search button pos when JS off.
+    
+    When JavaScript is disabled, the Add Plugins screen's search button position was too high in comparison to the search text field. This fix reuses the CSS declaration to keep field and button aligned.
+    
+    By targeting the `.no-js` class, the CSS specificity is not impacted when JavaScript is enabled.
+    
+    Follow up to [48281], [30830].
+    
+    Props devmuhib, sabernhardt, huzaifaalmesbah, hellofromTonya.
+    Fixes #59967.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57144 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit fdec26724691d64c58e4cfe17557ec5ef00bc0bd
+Author: Pascal Birchler <swissspidy@git.wordpress.org>
+Date:   Wed Nov 29 11:52:36 2023 +0000
+
+    Test: Run database upgrades between performance test steps.
+    
+    Prevents pending upgrades from blocking tests when checking out previous builds.
+    
+    Props mukesh27.
+    See #59647.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57143 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 96339bda237182d2d1246b8b4f12df9833643cd9
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Wed Nov 29 09:32:58 2023 +0000
+
+    Login and Registration: Use correct variable to display a single error message.
+    
+    When the `wp_login_errors` filter is used to add an error message followed by an instructional message, the former was not displayed and the latter was errouneously displayed twice above the login form.
+    
+    This commit ensures that the error message is displayed as expected.
+    
+    Follow-up to [56654].
+    
+    Props mapumba.
+    Fixes #59983.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57142 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit a21f5a3cc054137f3ace4760db43845158fb3cc2
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Tue Nov 28 20:22:26 2023 +0000
+
+    Site Health: Remove unused `$wpdb` global in `utf8mb4` support test.
+    
+    Follow-up to [44984], [56475].
+    
+    Props upadalavipul, mukesh27.
+    Fixes #59977.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57141 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 5f2f5f60ee9cf2092ac751a1bd7702ea6df5776d
+Author: John Blackbourn <johnbillion@git.wordpress.org>
+Date:   Mon Nov 27 20:18:39 2023 +0000
+
+    Docs: Correct the documented type for the `block_hooks` argument when registering a block type.
+    
+    This argument is an associative array of strings, not an array of arrays.
+    
+    See #59313, 59651
+    
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57140 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 6a891c736533417deb3be8940ecc89f71c80b455
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Mon Nov 27 09:15:56 2023 +0000
+
+    Coding Standards: Reorder conditionals in `is_random_header_image()`.
+    
+    This aims to slightly improve performance by checking the faster `empty()` language construct first and potentially avoiding an unnecessary function call. Additionally, this better matches a similar conditional a few lines below.
+    
+    Follow-up to [17757], [17770].
+    
+    Props Cybr.
+    See #59650.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57139 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 8f40982c31cc763ad85dadb02afb0dff0057574f
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Mon Nov 27 08:44:06 2023 +0000
+
+    Twenty Twenty-One: Add "blog" and "portfolio" subject tags.
+    
+    Follow-up to [49216], [49574].
+    
+    Props sumisubedi, sabernhardt.
+    Fixes #59495.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57138 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 653b6448f52f56c1e9219b569af1c060e66471dc
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Sun Nov 26 19:25:50 2023 +0000
+
+    External Libraries: Upgrade PHPMailer to version 6.9.1.
+    
+    This is a maintenance and feature release, adding support for the official release of PHP 8.3, methods for removing and replacing custom headers, XCLIENT support, and links to a new way of implementing XOAUTH2 authentication.
+    
+    The only change likely to have any impact on existing code is that PHPMailer previously attempted to use opportunistic STARTTLS encryption when connecting to `localhost`, which was unlikely to work. The workaround required setting `SMTPAutoTLS = false`, but that's no longer required. You may still need to use this setting when connecting to literal IPs.
+    
+    References:
+    * [https://github.com/PHPMailer/PHPMailer/releases/tag/v6.9.1 PHPMailer 6.9.1 release notes]
+    * [https://github.com/PHPMailer/PHPMailer/compare/v6.8.1...v6.9.1 Full list of changes in PHPMailer 6.9.1]
+    
+    Follow-up to [50628], [50799], [51169], [51634], [51635], [52252], [52749], [52811], [53500], [53535], [53917], [54427], [54937], [55557], [56484].
+    
+    Props jrf, Synchro.
+    Fixes #59966.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57137 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit bc4eb46b5577bae4fc48f0cebac0f0d037939db0
+Author: Pascal Birchler <swissspidy@git.wordpress.org>
+Date:   Sun Nov 26 16:41:34 2023 +0000
+
+    I18N: Improve translator comments for strings containing date formats.
+    
+    Adds translator comments where absent and changes code style so that
+    comments are attached to the right strings during string extraction.
+    
+    Props NekoJonez.
+    Fixes #59947
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57136 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit cd5cf79e54826e17f0e0776e933402f2cee4218c
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Sat Nov 25 21:17:28 2023 +0000
+
+    I18N: Move code out of translatable strings in a few error messages.
+    
+    Follow-up to [54272], [56101].
+    
+    Props rabmalin, Presskopp.
+    Fixes #59563.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57135 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 5ff4794ef195479930dbc244440a92d456fab835
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Fri Nov 24 14:07:00 2023 +0000
+
+    Build/Test Tools: Add a readme note on passing parameters into the PHPUnit tests.
+    
+    Follow-up to [45745], [47743].
+    
+    Props pbearne, costdev.
+    Fixes #59624.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57134 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 09a2050fca40250036b222474572749dd3c45b7e
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Thu Nov 23 14:39:16 2023 +0000
+
+    Tests: Avoid an infinite loop in `Spy_REST_Server` if a non-existing method is called.
+    
+    Follow-up to [34928].
+    
+    Props xknown, joemcgill.
+    Fixes #59601.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57133 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 9099d9789bc0baadd65c46b1b7724f28dd2887a5
+Author: Jonathan Desrosiers <desrosj@git.wordpress.org>
+Date:   Wed Nov 22 19:38:09 2023 +0000
+
+    Build/Test Tools: Run unit tests using new MySQL versions.
+    
+    The MySQL project has introduced a new versioning strategy with two types of releases: innovation and long-term support. While long-term support is a familiar concept, it’s not clear how innovation releases should be supported in various WordPress versions for a number of reasons.
+    
+    Mainly, innovation releases are very short-lived. Each one is only supported until the next innovation version is released with a goal of one per quarter. Even though these versions will have a short lifespan they are described as producton-grade and generally available.
+    
+    More discussion is needed to determine exactly how each WordPress release should support these new innovation releases. But while the parameters for proper support are determined, the PHPUnit tests can be run against these innovation releases to detect any potential problems or incompatibilities.
+    
+    This change adds the `8.1` and `8.2` innovation releases to the testing matrix for the PHPUnit test worfklow.
+    
+    Props johnbillion, jorbin.
+    See #59779.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57132 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 647d59302d3a9cd942c862f496c77fe7249d231a
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Wed Nov 22 17:42:11 2023 +0000
+
+    Text Changes: Update mentions of “web site” to “website” for consistency.
+    
+    While “web site” was the original spelling, this variant has become rarely used, and “website” is now the standard spelling, already used throughout most of the WordPress core.
+    
+    Reference: [https://en.wikipedia.org/wiki/Website Wikipedia: Website].
+    
+    Props LiamMcArthur, cafenoirdesign, sabbirshouvo, sabernhardt, ironprogrammer, mukesh27.
+    Fixes #59853, #54276.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57131 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 2452701c3253aef0c33f1cd85fb01f0c77a83c3e
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Tue Nov 21 00:23:01 2023 +0000
+
+    General: Rename `wp_json_encode()` parameters for parity with PHP Core.
+    
+    `wp_json_encode()` is a wrapper for the PHP native `json_encode()` function with some extra safety checks.
+    
+    This commit renames the `$data` parameter in the `wp_json_encode()` function and associated functions to `$value`, and the `$options` parameter to `$flags` for parity with the parameter names used in PHP Core.
+    
+    Reference: [https://www.php.net/manual/en/function.json-encode.php PHP Manual: json_encode()].
+    
+    Follow-up to [30055].
+    
+    Props jrf, hellofromTonya.
+    Fixes #59630.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57130 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit b6bf3553d975da2e017a00443b7639aacf0a8586
+Author: Joe McGill <joemcgill@git.wordpress.org>
+Date:   Mon Nov 20 22:27:17 2023 +0000
+
+    Themes: Remove memoization from stylesheet and theme directories.
+    
+    This fixes bugs introduced in [56635] whereby the template or stylesheet path could be memoized incorrectly if `get_template_directory()` or `get_stylesheet_directory()` were called before the theme has been fully initialized.
+    
+    Props partyfrikadelle, coreyw, kdowns, rebasaurus, meta4, flixos90, mukesh27, joemcgill.
+    Fixes #59847.
+    
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57129 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 30954f7ac0840cfdad464928021d7f380940c347
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Mon Nov 20 00:06:08 2023 +0000
+
+    Administration: Standardize default values in `submit_button()`.
+    
+    This commit updates the `submit_button()` function to standardize the default values of `$text` and `$other_attributes` parameters. Previously set to `null`, these defaults have now been changed to an empty string (`''`), bringing consistency with the `get_submit_button()` function, which `submit_button()` wraps.
+    
+    The change maintains backward compatibility, as `get_submit_button()` does not perform strict type-checking on these parameters. This update aligns with the ongoing effort to standardize function parameters across the WordPress codebase, improving the readability and predictability of the core functions.
+    
+    Follow-up to [31446].
+    
+    Props andbalashov.
+    Fixes #59921.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57128 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 2a0d8fcd645e0df939eed588b1cc832e568a1150
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Sun Nov 19 11:35:09 2023 +0000
+
+    Twenty Twenty-Four: Add missing textdomain in pattern category description.
+    
+    Follow-up to [56951].
+    
+    Props gavande1, acosmin, afercia, huzaifaalmesbah, ironprogrammer.
+    Fixes #59840.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57127 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 1427d257160ac8a4596038ab8417005d0ac00ca9
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Sat Nov 18 20:44:32 2023 +0000
+
+    Code Modernization: Use `str_starts_with()` in `WP_REST_Server::serve_request()`.
+    
+    Follow-up to [55703], [56834].
+    
+    See #59650.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57126 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit f72f1893d6d1ec2e1938ba4d3b60f340622ff614
+Author: Jonathan Desrosiers <desrosj@git.wordpress.org>
+Date:   Fri Nov 17 20:09:51 2023 +0000
+
+    Build/Test Tools: Allow the `playground-comment` job to fail.
+    
+    When this job fails, it should not fail the entire workflow. The next update to the pull request will attempt to dispatch the commenting workflow.
+    
+    Follow up to [57124].
+    
+    Props johnbillion.
+    See #59416.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57125 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 26ed1b8bcf824f18033eb2c3da78a2347bd60290
+Author: Jonathan Desrosiers <desrosj@git.wordpress.org>
+Date:   Fri Nov 17 18:22:49 2023 +0000
+
+    Build/Test Tools: Comment on PRs with WordPress Playground information.
+    
+    After [56958], pull requests to `wordpress-develop` can be tested within a WordPress Playground instance. However this capability is not obvious.
+    
+    This makes several updates to GitHub action workflows to avoid unnecessary extra runs/jobs while also commenting on pull requests with proper context for testing in Playground once a build is available for the PR.
+    
+    Changes:
+    - The `build.yml` workflow has been deleted. The WordPress build process is already being tested within the `test-build-processes.yml` workflow. Now that workflow will produce and upload the built artifact for the given PR.
+    - A `pull-request-comments.yml` workflow has been added to handle the commenting. To avoid having multiple workflows that comment on PRs, the logic within the `welcome-new-contributors.yml` workflow has been merged into this one.
+    - The `pull_request` event trigger lacks the needed permission to comment on or update pull requests. Instead of using `pull_request_target` to navigate around this, the `test-build-processes.yml` workflow will now use `workflow_dispatch` to initiate a run of the commenting workflow. This adds the ability to only comment on the PR when a build has been successfully created and uploaded as an artifact.
+    
+    Props swissspidy, zieladam, jeffpaul.
+    See #59416.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57124 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 2b15e0fc7b48c7900957f5766f8ccd2ef29f898f
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Fri Nov 17 17:09:09 2023 +0000
+
+    Coding Standards: Rewrite a few capability checks for clarity and readability.
+    
+    This aims to:
+    * Perform the checks as early as possible to avoid redundant function calls.
+    * Remove an empty conditiaonal branch and make the exit conditions clearer.
+    * Bring the formatting in line with other multi-line conditionals in core.
+    
+    Follow-up to [56836].
+    
+    See #59650.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57123 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit b558a7bde170678c7b4a7b8cee941d5ecfd4a37d
+Author: Jonathan Desrosiers <desrosj@git.wordpress.org>
+Date:   Fri Nov 17 16:20:50 2023 +0000
+
+    Twenty Twenty-One: Update all dependencies.
+    
+    In preparation for updating Core to use Node.js version 18.x, this updates the dependancies for the Twenty Twenty-One theme to the latest versions. This addresses an unsupported engine warning where packages within the dependency tree did not support Node.js > 16.x.
+    
+    All changes to built files are included in this commit. These changes are a result of the following:
+    
+    - Identical sets of properties for multiple selectors are now consolidated into one.
+    - The removal of a duplicate `--branding--description--font-family` definition.
+    - The addition of the `postcss-discard-empty` dependency, which removes empty CSS rules within IE stylesheets after the previous consolidation is performed.
+    - `stylelint` has only been updated to 14.x (15.x is the latest). This is because `@wordpres/stylelint-config` currently has a version constraint of `^14.2` and does not properly support 15.x.
+    
+    The last change of note is the new configuration for the `value-keyword-case` rule in `.stylelint-css.json`. This was added as a way to prevent the `currentColor` from being changed to all lowercase.
+    
+    Props jorbin, poena.
+    See #59663, #59658.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57122 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 9857a80406a01d4457d19d268f3cfd90bac891b8
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Fri Nov 17 15:31:52 2023 +0000
+
+    Docs: Fix typo in `get_image_tag()` DocBlock.
+    
+    Follow-up to [54173].
+    
+    Props kitchin.
+    See #55646, #59651.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57121 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 7c492d36e0c6e219e54ce22eb6d1f5ae4610092b
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Fri Nov 17 13:27:23 2023 +0000
+
+    Docs: Improve some DocBlocks and inline comments per the documentation standards.
+    
+    Follow-up to [56834], [56836], [56837], [56838].
+    
+    Props kebbet, costdev, mukesh27, SergeyBiryukov.
+    See #59651.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57120 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit b892a416377c1cd1b8dad524daabd78a5295b4c7
+Author: Bernie Reiter <bernhard-reiter@git.wordpress.org>
+Date:   Fri Nov 17 07:08:47 2023 +0000
+
+    Block Hooks: Expose serialized template content to filter.
+    
+    The recently introduced Block Hooks API exposes a filter (`hooked_block_types`) which is given a `$context` argument, among others. If the filter is called on a block that's part of a template or template part, `$context` is set to the corresponding `WP_Block_Template` object.
+    
+    However, that object's `$content` property is currently ''not'' exposed to the filter. This changeset amends that shortcoming.
+    
+    This is useful for callbacks that might want to detect the presence of a serialized block instance (or potentially in the future utilize the HTML API) to restrict where the block is injected (before the template is rendered).
+    
+    Addressing this also achieves parity with the structure of `$context` when it represents a pattern (where pattern serialized content is present).
+    
+    Props nerrad.
+    Fixes #59882.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57118 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit f2df7d8b7c419f5cbfd5c729d70d07527b22cf29
+Author: Bernie Reiter <bernhard-reiter@git.wordpress.org>
+Date:   Fri Nov 17 06:38:33 2023 +0000
+
+    HTML API: Fix typo in documentation example.
+    
+    The example code in the PHPDoc comment for the HTML Tag Processor class
+    previously showed calling `next_tag()` with an array containing a `class`
+    key, which should have been `class_name`. This patch fixes this by using
+    the appropriate `class_name` key.
+    
+    Props dmsnell, gaambo, crstauf, atachibana, audrasjb, krupalpanchal.
+    Fixes #59891.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57116 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 3d06660c636430d9b256c660062756d9142e008d
+Author: Bernie Reiter <bernhard-reiter@git.wordpress.org>
+Date:   Fri Nov 17 06:11:31 2023 +0000
+
+    HTML API: Add support for containers elements, including ARTICLE.
+    
+    There are a handful of elements which behave similarly and are generically container elements. These are the following elements:
+    
+        ADDRESS, ARTICLE, ASIDE, BLOCKQUOTE, CENTER, DETAILS, DIALOG, DIR,
+        DL, DIV, FIELDSET, FIGCAPTION, FIGURE, FOOTER, HEADER, HGROUP, MAIN,
+        MENU, NAV, SEARCH, SECTION, SUMMARY
+    
+    This patch adds support to the HTML Processor for handling these elements. They do not require any additional logic in the rest of the class, and carry no specific semantic rules for parsing beyond what is listed in their group in the IN BODY section of the HTML5 specification.
+    
+    Props dmsnell.
+    Fixes #59914.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57115 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit ddb67a0099c9912c46a22374bcf90e5aac2f25e3
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Thu Nov 16 17:00:28 2023 +0000
+
+    Docs: Replace `tabindex` example in submit button functions documentation.
+    
+    Most of the `tabindex` attributes across the admin were removed in [21311].
+    
+    This commit updates the example for the `$other_attributes` parameter to use the `id` attribute instead.
+    
+    Includes synchronizing documentation between `submit_button()` and `get_submit_button()`.
+    
+    Follow-up to [15810], [16061], [21311], [27136], [31599].
+    
+    Props benjaminknox, sabernhardt, fushar, SergeyBiryukov.
+    Fixes #59768.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57114 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 0b8ca16ea3bd9722bd1a38f8ab68901506b1a0e7
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Wed Nov 15 09:31:56 2023 +0000
+
+    Docs: Fix typo in the `ms_user_list_site_class` filter description.
+    
+    Follow-up to [44977].
+    
+    Props nithins53, shailu25, sabernhardt.
+    Fixes #59907.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57111 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 6456e6ea8b4ef25762a7c94821011d42a0c6da99
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Tue Nov 14 12:42:52 2023 +0000
+
+    Docs: Use typed array notation for the `$options` parameter in some new functions.
+    
+    Follow-up to [56445], [56508], [57013].
+    
+    Props tmatsuur.
+    Fixes #59904.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57110 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 7304f61f9894b08caeb845a7ddaa667bd398b2d6
+Author: Isabel Brison <isabel_brison@git.wordpress.org>
+Date:   Tue Nov 14 00:09:17 2023 +0000
+
+    Editor: update npm packages for 6.4.2.
+    
+    Package updates with bug fixes related to patterns, Query look interactivity, design tools UI and accessibility.
+    
+    Props mikachan, jorbin, kebbet, artemiosans, talldanwp, ramonopoly, alexstine, andrewserong, mamaduka, cbravobernal, ajlende, luisherranz.
+    See #59828.
+    
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57109 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit cfecc5cde5d84954b5c4812701fed396ebaabb2a
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Mon Nov 13 11:11:54 2023 +0000
+
+    Docs: Replace miscellaneous incorrect PHPDoc tags.
+    
+    * `@contrib` is not a valid tag.
+    * `@origin` is not a valid tag.
+    * `@ref` is not a valid tag.
+    * `@blessed` is not a valid tag and doesn't convey any meaningful information.
+    * `@issue` is not a valid tag.
+    
+    Reference: [https://developer.wordpress.org/coding-standards/inline-documentation-standards/php/#phpdoc-tags PHP Documentation Standards: PHPDoc Tags].
+    
+    Follow-up to [8852], [34754], [38832], [43808].
+    
+    Props jrf.
+    See #59651.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57108 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 00791300b386af12d871293c56cd8a2e208f4b32
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Sun Nov 12 09:19:20 2023 +0000
+
+    Docs: Fix incorrect property doc in `WP_Theme::get_allowed()` tests.
+    
+    The `@array` tag does not exist. This should be `@var array`.
+    
+    Reference: [https://developer.wordpress.org/coding-standards/inline-documentation-standards/php/#2-1-class-members PHP Documentation Standards: Class Members].
+    
+    Follow-up to [36350].
+    
+    Props jrf.
+    See #59651.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57107 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 152a1ecd81a61ee3a1cbc8c721d934cc0099ceca
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Sat Nov 11 09:26:44 2023 +0000
+
+    Docs: Include `'weekly'` as a valid value in `wp_schedule_event()` description.
+    
+    Follow-up to [47062].
+    
+    Props crstauf, pacicio.
+    Fixes #59888.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57106 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit db071f729c6e4fc6c46af89c5b602e704fa541e6
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Fri Nov 10 22:52:06 2023 +0000
+
+    Docs: Fix broken `@covers` tag in `_wp_post_thumbnail_context_filter()` tests.
+    
+    Without the space between the tag and the "description", the tag will not be recognized and the test will not record coverage correctly.
+    
+    Reference: [https://docs.phpunit.de/en/9.6/annotations.html#covers PHPUnit Manual: Annotations].
+    
+    Follow-up to [55821].
+    
+    Props jrf.
+    See #59651.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57105 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 9df9e28f65fb5da8b65e08e3aeceed061f18638d
+Author: Felix Arntz <flixos90@git.wordpress.org>
+Date:   Fri Nov 10 18:59:59 2023 +0000
+
+    Tests: Fix incorrect check for block themes in legacy PHPUnit test for themes.
+    
+    Props mukesh27.
+    Fixes #59881.
+    
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57104 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 155017ae7b2d37a1a65406179ec29c0958a43728
+Author: Joe McGill <joemcgill@git.wordpress.org>
+Date:   Fri Nov 10 15:10:35 2023 +0000
+
+    Themes: Correct docblock for _register_theme_block_patterns.
+    
+    This updates the '@since 6.4.0' annotation in `_register_theme_block_patterns` to reference `WP_Theme::get_block_patterns` instead of `_wp_get_block_patterns`, which was changed in [56978].
+    
+    Props audrasjb, mukesh27, joemcgill.
+    Fixes #59869.
+    
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57102 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 1b5ab7ad0c701d4dbe5e07743beffc7afcc7a6a0
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Fri Nov 10 10:47:55 2023 +0000
+
+    Docs: Fix incorrect `@return` tag in `wp_check_filetype()` tests.
+    
+    `@return[]` is not a valid tag. Fixed now, though without further specification.
+    
+    Reference: [https://developer.wordpress.org/coding-standards/inline-documentation-standards/php/#phpdoc-tags PHP Documentation Standards: PHPDoc Tags].
+    
+    Follow-up to [55456].
+    
+    Props jrf.
+    See #59651.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57101 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit a4a4f3a1dc68d84e2f3d24c8c9951ae962c6860d
+Author: Peter Wilson <peterwilsoncc@git.wordpress.org>
+Date:   Fri Nov 10 00:07:59 2023 +0000
+
+    Coding Standards: Replace CRLF line breaks with LF.
+    
+    Run `npm run grunt format:php:error` to correct the EOL sequence for:
+    
+    * `tests/phpunit/tests/functions/wpAdminNotice.php`
+    * `tests/phpunit/tests/functions/wpGetAdminNotice.php`
+    
+    See #59650.
+    
+    
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57100 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 7287ff52633264b4e16fdaed5697307d4b8ceac1
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Thu Nov 9 09:49:41 2023 +0000
+
+    Docs: Fix various incorrect WP-flavored array specifications.
+    
+    Tags like `@string` or `@array` do not exist and are not supported. The way these were used here, also meant duplicate information being documented.
+    
+    Fixed now by using the `@type` tag as per the WP flavor of array documentation.
+    
+    Includes some fixes to the documentation formatting.
+    
+    Reference: [https://developer.wordpress.org/coding-standards/inline-documentation-standards/php/#1-1-parameters-that-are-arrays PHP Documentation Standards: Parameters That Are Arrays].
+    
+    Follow-up to [33322], [42880], [42971], [44786].
+    
+    Props jrf.
+    See #59651.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57099 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 2bf4a27d5ae2bf4005b438fbc86fe76a6d45a7c6
+Author: Peter Wilson <peterwilsoncc@git.wordpress.org>
+Date:   Wed Nov 8 23:20:33 2023 +0000
+
+    Quick/Bulk Edit: Prevent assigning posts to default categories during bulk edit.
+    
+    During a bulk edit of posts with different categories, the categories for the edited posts would be reset to the default category: uncategorized by default.
+    
+    This reverts [56712] to resolve the issue.
+    
+    Props peterwilsoncc, hellofromtonya, jorbin.
+    Fixes #59837.
+    See #11302.
+    
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57093 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 8c2c762e23bc2400b5e39400634c0b9e2e7330d2
+Author: Tonya Mork <hellofromtonya@git.wordpress.org>
+Date:   Wed Nov 8 20:31:34 2023 +0000
+
+    Database: Reinstate wpdb::$use_mysqli property.
+    
+    Partial revert of [56475] to reinstate the private `wpdb::$use_mysqli` property and set to its default to `true`. This private property was / is accessible through the magic methods. Though Core's usage of this property was removed by [56475], plugins are using the property. Reinstating it resolves the BC break.
+    
+    Follow up to [56475].
+    
+    Props jason_the_adams, joemcgill, johnbillion, johnjamesjacoby, jrf, rajinsharwar, renehermi.
+    Fixes #59846.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57089 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 2130a90861bb7c2ecca7927b04e7a23f247f37ba
+Author: Jonathan Desrosiers <desrosj@git.wordpress.org>
+Date:   Wed Nov 8 19:46:00 2023 +0000
+
+    External Libraries: Update Requests to `2.0.9`.
+    
+    This updates the Requests library from version `2.0.8` to `2.0.9`. This is a hotfix release.
+    
+    Props jorbin, hellofromTonya, desrosj, barry, cenkdemir, nexflaszlo, schlessera, jrf, Clorith, tomsommer, azaozz, pbiron, afragen, howdy_mcgee.
+    Fixes #59842.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57086 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 1e2619a2dcc71076bcc4e3e4532346f4982e7937
+Author: Jonathan Desrosiers <desrosj@git.wordpress.org>
+Date:   Wed Nov 8 14:06:39 2023 +0000
+
+    Build/Test Tools: Use correct order of arguments for `contains()`.
+    
+    This corrects the order the arguments are passed to the `contains()` function in the Performance Testing workflow.
+    
+    Because the arguments were passed incorrectly, the expression was not evaluating correctly.
+    
+    Follow up to [56972].
+    
+    Props hellofromTonya.
+    See #59805.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57085 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 1eed1269eb708f8054da69221411727764670b93
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Wed Nov 8 11:04:14 2023 +0000
+
+    Administration: Fix typos in `wp_admin_notice()` arguments in a few instances.
+    
+    Follow-up to [56570], [56599].
+    
+    Props dlh, mukesh27, sumitbagthariya16.
+    Fixes #59830.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57084 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 74e06045081e8f1db32b3603733610751a16e8f8
+Author: Pascal Birchler <swissspidy@git.wordpress.org>
+Date:   Wed Nov 8 10:30:21 2023 +0000
+
+    Build/Test Tools: Expand performance test scenarios.
+    
+    Adds new tests for localized sites as well as the dashboard.
+    Also amends Server-Timing output to measure memory usage in all scenarios.
+    
+    Props swissspidy, joemcgill, flixos90, mukesh27, mamaduka.
+    See #59656.
+    Fixes #59815.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57083 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit a31c785af19787a39893816b735be96a08a15412
+Author: Jonathan Desrosiers <desrosj@git.wordpress.org>
+Date:   Wed Nov 8 00:34:17 2023 +0000
+
+    Build/Test Tools: Add 6.3 to the Upgrade Testing workflow.
+    
+    This adds WordPress 6.3 to the Upgrade Testing GitHub Actions workflow.
+    
+    See #59805.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57082 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 9c19bc5a2c2d645745016ca6a625e6d84136f613
+Author: Aaron Jorbin <jorbin@git.wordpress.org>
+Date:   Tue Nov 7 22:56:57 2023 +0000
+
+    Help/About: Improve translation comment around release notes.
+    
+    Props kharisblank, kebbet.
+    Fixes #59821.
+    
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57081 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit 4e4fdcb94910fb4cd21d17658431c28e06e7e19c
+Author: Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+Date:   Tue Nov 7 00:12:24 2023 +0000
+
+    Docs: Use proper case for `@todo` tags.
+    
+    The correct tag is `@todo`, not `@TODO` or `@todo:` (note the trailing colon).
+    
+    Reference: [https://developer.wordpress.org/coding-standards/inline-documentation-standards/php/#phpdoc-tags PHP Documentation Standards: PHPDoc tags].
+    
+    Follow-up to [55203], [56274], [56565], [56698].
+    
+    Props jrf.
+    See #59651.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57077 602fd350-edb4-49c9-b593-d223f7449a82
+
+commit b22d0618d37f241e5101085860d26598d4cf1c83
+Author: Tonya Mork <hellofromtonya@git.wordpress.org>
+Date:   Mon Nov 6 17:47:32 2023 +0000
+
+    Upgrade/Install: Update $_old_files for 6.4.
+    
+    Props davidbaumwald.
+    Fixes #59817.
+    
+    git-svn-id: https://develop.svn.wordpress.org/trunk@57075 602fd350-edb4-49c9-b593-d223f7449a82

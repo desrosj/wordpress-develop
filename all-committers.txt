@@ -1,0 +1,191 @@
+  9081	Ryan Boren <ryan@git.wordpress.org>
+  7414	Sergey Biryukov <sergeybiryukov@git.wordpress.org>
+  5410	Andrew Nacin <nacin@git.wordpress.org>
+  3336	Andrew Ozz <azaozz@git.wordpress.org>
+  2139	Scott Taylor <wonderboymusic@git.wordpress.org>
+  1946	Jonathan Desrosiers <desrosj@git.wordpress.org>
+  1939	Matt Mullenweg <matt@git.wordpress.org>
+  1645	Mark Jaquith <markjaquith@git.wordpress.org>
+  1509	John Blackbourn <johnbillion@git.wordpress.org>
+  1419	Dominik Schilling (ocean90) <ocean90@git.wordpress.org>
+  1349	Drew Jaynes <drewapicture@git.wordpress.org>
+  1346	Dion Hulse <dd32@git.wordpress.org>
+  1343	Peter Westwood <westi@git.wordpress.org>
+  1140	Gary Pendergast <pento@git.wordpress.org>
+   971	Jonathan Desrosiers <desrosj@users.noreply.github.com>
+   970	Jb Audras <audrasjb@git.wordpress.org>
+   889	Lance Willett <lancewillett@git.wordpress.org>
+   886	Boone Gorges <boonebgorges@git.wordpress.org>
+   746	Weston Ruter <westonruter@git.wordpress.org>
+   685	Helen Hou-Sandi <helen@git.wordpress.org>
+   660	Peter Wilson <peterwilsoncc@git.wordpress.org>
+   640	bumpbot <bumpbot@git.wordpress.org>
+   637	Daryl Koopersmith <koop@git.wordpress.org>
+   492	Jeremy Felt <jeremyfelt@git.wordpress.org>
+   459	Andrea Fercia <afercia@git.wordpress.org>
+   443	Jake Spurlock <whyisjake@git.wordpress.org>
+   428	Aaron Jorbin <jorbin@git.wordpress.org>
+   408	scribu <scribu@git.wordpress.org>
+   401	Pascal Birchler <swissspidy@git.wordpress.org>
+   366	Tonya Mork <hellofromtonya@git.wordpress.org>
+   335	Drew Jaynes (DrewAPicture) <drewapicture@git.wordpress.org>
+   319	rob1n <rob1n@git.wordpress.org>
+   275	Aaron D. Campbell <aaroncampbell@git.wordpress.org>
+   268	Felix Arntz <flixos90@git.wordpress.org>
+   267	Jon Desrosiers <desrosj@users.noreply.github.com>
+   249	Adam Zieliński <adam@adamziel.com>
+   247	Ron Rennick <wpmuguru@git.wordpress.org>
+   244	potbot <potbot@git.wordpress.org>
+   237	Mike Little <mikelittle@git.wordpress.org>
+   234	Dominik Schilling <ocean90@git.wordpress.org>
+   225	Konstantin Obenland <obenland@git.wordpress.org>
+   220	Matt Thomas <iammattthomas@git.wordpress.org>
+   214	michelvaldrighi <michelvaldrighi@git.wordpress.org>
+   203	David Baumwald <davidbaumwald@git.wordpress.org>
+   197	Jon Cave <duck_@git.wordpress.org>
+   170	Joe Dolson <joedolson@git.wordpress.org>
+   161	Ian Stewart <iandstewart@git.wordpress.org>
+   160	Joe McGill <joemcgill@git.wordpress.org>
+   154	Nikolay Bachiyski <nbachiyski@git.wordpress.org>
+   154	Rachel Baker <rachelbaker@git.wordpress.org>
+   150	Greg ZiÃ³Å‚kowski <gziolo@git.wordpress.org>
+   148	Jonny Harris <spacedmonkey@git.wordpress.org>
+   137	Timothy Jacobs <timothyblynjacobs@git.wordpress.org>
+   130	Adam Silverstein <adamsilverstein@git.wordpress.org>
+   114	Kelly Choyce-Dwan <ryelle@git.wordpress.org>
+   112	Dougal Campbell <dougal@git.wordpress.org>
+    97	Jorge Costa <jorgefilipecosta@git.wordpress.org>
+    90	Riad Benguella <youknowriad@git.wordpress.org>
+    89	Ella Iseulde Van Dorpe <iseulde@git.wordpress.org>
+    89	Robert Anderson <noisysocks@git.wordpress.org>
+    88	Isabel Brison <isabel_brison@git.wordpress.org>
+    85	Ian Dunn <iandunn@git.wordpress.org>
+    83	Alex King <alexkingorg@git.wordpress.org>
+    74	David A. Kennedy <davidakennedy@git.wordpress.org>
+    72	K. Adam White <kadamwhite@git.wordpress.org>
+    71	Bernie Reiter <bernhard-reiter@git.wordpress.org>
+    69	Ryan McCue <rmccue@git.wordpress.org>
+    67	Anton Timmermans <atimmer@git.wordpress.org>
+    67	SergeyBiryukov <SergeyBiryukov@602fd350-edb4-49c9-b593-d223f7449a82>
+    66	Mike Schroder <mikeschroder@git.wordpress.org>
+    62	Jonathan Desrosiers <desrosj@gmail.com>
+    61	James Nylen <jnylen0@git.wordpress.org>
+    57	Ian Belanger <ianbelanger@git.wordpress.org>
+    55	laurelfulford <laurelfulford@git.wordpress.org>
+    53	Anthony Burchell <antpb@git.wordpress.org>
+    52	Tammie Lister <karmatosed@git.wordpress.org>
+    51	Daniel Bachhuber <danielbachhuber@git.wordpress.org>
+    49	Joe Hoyle <joehoyle@git.wordpress.org>
+    45	Mel Choyce <melchoyce@git.wordpress.org>
+    38	Adam Zielinski <adam@adamziel.com>
+    35	Donncha O Caoimh <donncha@git.wordpress.org>
+    35	Eric Andrew Lewis <ericlewis@git.wordpress.org>
+    31	Pete Mall <petemall@git.wordpress.org>
+    30	Michael Adams (mdawaffe) <mdawaffe@git.wordpress.org>
+    25	Colin Stewart <costdev@git.wordpress.org>
+    25	wonderboymusic <wonderboymusic@602fd350-edb4-49c9-b593-d223f7449a82>
+    23	jverber <jverber@git.wordpress.org>
+    22	Marius L. J <clorith@git.wordpress.org>
+    22	Robin <86726198+robinwpdeveloper@users.noreply.github.com>
+    20	Robin <robin@wpdeveloper.com>
+    19	jrfnl <jrfnl@users.noreply.github.com>
+    18	John James Jacoby <johnjamesjacoby@git.wordpress.org>
+    17	azaozz <azaozz@602fd350-edb4-49c9-b593-d223f7449a82>
+    16	DrewAPicture <DrewAPicture@602fd350-edb4-49c9-b593-d223f7449a82>
+    16	allancole <allancole@git.wordpress.org>
+    14	AndrÃ© <oandregal@git.wordpress.org>
+    14	Pramod Jodhani <mrpramodjodhani@gmail.com>
+    14	johnbillion <johnbillion@602fd350-edb4-49c9-b593-d223f7449a82>
+    13	Joseph Scott <josephscott@git.wordpress.org>
+    13	MaggieCabrera <maggie.cabrera@automattic.com>
+    13	westonruter <westonruter@602fd350-edb4-49c9-b593-d223f7449a82>
+    12	Sarah Norris <sarah@sekai.co.uk>
+    11	A. H. M. Nazmul Hasan Monshi <robin@wpdeveloper.com>
+    11	boonebgorges <boonebgorges@602fd350-edb4-49c9-b593-d223f7449a82>
+    11	ocean90 <ocean90@602fd350-edb4-49c9-b593-d223f7449a82>
+    10	Ella van Dorpe <iseulde@git.wordpress.org>
+    10	Jeff Ong <jffng@git.wordpress.org>
+     9	Andrew Duthie <aduth@git.wordpress.org>
+     9	Grzegorz (Greg) ZiÃ³Å‚kowski <gziolo@git.wordpress.org>
+     9	jeremyfelt <jeremyfelt@602fd350-edb4-49c9-b593-d223f7449a82>
+     9	pento <pento@602fd350-edb4-49c9-b593-d223f7449a82>
+     8	Alex Shiels <tellyworth@git.wordpress.org>
+     8	Brandon Kraft <public@brandonkraft.com>
+     8	Ella van Durpe <ellatrix@git.wordpress.org>
+     8	Konstantin Kovshenin <kovshenin@git.wordpress.org>
+     8	Tammie <karmatosed@git.wordpress.org>
+     8	nacin <nacin@602fd350-edb4-49c9-b593-d223f7449a82>
+     7	Ella Van Dorpe <iseulde@git.wordpress.org>
+     7	dd32 <dd32@602fd350-edb4-49c9-b593-d223f7449a82>
+     7	flixos90 <flixos90@602fd350-edb4-49c9-b593-d223f7449a82>
+     6	Arpit G Shah <helloarpitgshah@gmail.com>
+     6	swissspidy <swissspidy@602fd350-edb4-49c9-b593-d223f7449a82>
+     5	Daniele Scasciafratte <mte90net@gmail.com>
+     5	Maggie <maggie.cabrera@automattic.com>
+     5	Miguel Fonseca <mcsf@git.wordpress.org>
+     5	adamsilverstein <adamsilverstein@602fd350-edb4-49c9-b593-d223f7449a82>
+     5	audrasjb <audrasjb@602fd350-edb4-49c9-b593-d223f7449a82>
+     5	desrosj <desrosj@602fd350-edb4-49c9-b593-d223f7449a82>
+     5	herregroen <herregroen@git.wordpress.org>
+     4	Jeff Ong <jonger4@gmail.com>
+     4	JustinyAhin <justiny.ahinon@gmail.com>
+     4	Tonya Mork <tonya.mork@automattic.com>
+     4	jrf <jrf@git.wordpress.org>
+     4	zieladam <zieladam@git.wordpress.org>
+     3	Ella van Durpe <iseulde@git.wordpress.org>
+     3	Jb Audras <audrasjb@gmail.com>
+     3	John Blackbourn <johnbillion@gmail.com>
+     3	Michael Arestad <michael-arestad@git.wordpress.org>
+     3	dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+     3	ericlewis <ericlewis@602fd350-edb4-49c9-b593-d223f7449a82>
+     3	gziolo <gziolo@602fd350-edb4-49c9-b593-d223f7449a82>
+     3	jorbin <jorbin@602fd350-edb4-49c9-b593-d223f7449a82>
+     3	peterwilsoncc <peterwilsoncc@602fd350-edb4-49c9-b593-d223f7449a82>
+     3	rmccue <rmccue@602fd350-edb4-49c9-b593-d223f7449a82>
+     3	ryelle <ryelle@git.wordpress.org>
+     3	spacedmonkey <spacedmonkey@602fd350-edb4-49c9-b593-d223f7449a82>
+     2	David Baumwald <david.baumwald@gmail.com>
+     2	Kelly Dwan <ryelle@users.noreply.github.com>
+     2	Robert Anderson <robert@noisysocks.com>
+     2	TimothyBlynJacobs <TimothyBlynJacobs@602fd350-edb4-49c9-b593-d223f7449a82>
+     2	aaroncampbell <aaroncampbell@602fd350-edb4-49c9-b593-d223f7449a82>
+     2	afercia <afercia@602fd350-edb4-49c9-b593-d223f7449a82>
+     2	audrasjb <audrasjb@gmail.com>
+     2	helen <helen@602fd350-edb4-49c9-b593-d223f7449a82>
+     2	hellofromTonya <hellofromTonya@602fd350-edb4-49c9-b593-d223f7449a82>
+     2	iandstewart <iandstewart@602fd350-edb4-49c9-b593-d223f7449a82>
+     2	jnylen0 <jnylen0@602fd350-edb4-49c9-b593-d223f7449a82>
+     2	joedolson <joedolson@602fd350-edb4-49c9-b593-d223f7449a82>
+     2	joehoyle <joehoyle@602fd350-edb4-49c9-b593-d223f7449a82>
+     2	obenland <obenland@602fd350-edb4-49c9-b593-d223f7449a82>
+     2	obenland <obenland@git.wordpress.org>
+     2	seieric <30688855+seieric@users.noreply.github.com>
+     1	Bernie Reiter <ockham@raz.or.at>
+     1	Ella Van Durpe <iseulde@git.wordpress.org>
+     1	Ella Van Dorpe <iseulde@git.wordpress.org>
+     1	Ella VanÂ Dorpe <iseulde@git.wordpress.org>
+     1	Ella VanÂ Durpe <iseulde@git.wordpress.org>
+     1	Jessica Lyschik <luminuu@gmail.com>
+     1	Kónståntîn Obénland <obenland@git.wordpress.org>
+     1	Matias Ventura <matveb@git.wordpress.org>
+     1	Omar Reiss <omarreiss@git.wordpress.org>
+     1	Riad Benguella <benguella@gmail.com>
+     1	Sarah Norris <1645628+mikachan@users.noreply.github.com>
+     1	Tellyworth <tellyworth@git.wordpress.org>
+     1	antpb <antpb@602fd350-edb4-49c9-b593-d223f7449a82>
+     1	ellatrix <ellatrix@602fd350-edb4-49c9-b593-d223f7449a82>
+     1	gziolo <gziolo@git.wordpress.org>
+     1	hellofromtonya <tonya.mork@automattic.com>
+     1	iandunn <iandunn@602fd350-edb4-49c9-b593-d223f7449a82>
+     1	iseulde <iseulde@602fd350-edb4-49c9-b593-d223f7449a82>
+     1	joemcgill <joemcgill@602fd350-edb4-49c9-b593-d223f7449a82>
+     1	jorgefilipecosta <jorgefilipecosta@602fd350-edb4-49c9-b593-d223f7449a82>
+     1	kadamwhite <kadamwhite@602fd350-edb4-49c9-b593-d223f7449a82>
+     1	karmatosed <karmatosed@602fd350-edb4-49c9-b593-d223f7449a82>
+     1	lancewillett <lancewillett@602fd350-edb4-49c9-b593-d223f7449a82>
+     1	matveb <matveb@602fd350-edb4-49c9-b593-d223f7449a82>
+     1	noisysocks <noisysocks@git.wordpress.org>
+     1	oandregal <oandregal@602fd350-edb4-49c9-b593-d223f7449a82>
+     1	rachelbaker <rachelbaker@602fd350-edb4-49c9-b593-d223f7449a82>
+     1	tofumatt <lonelyvegan@git.wordpress.org>
+     1	whyisjake <whyisjake@602fd350-edb4-49c9-b593-d223f7449a82>
