@@ -21,10 +21,6 @@ on:
     type:
       - created
       - deleted
-  # This event will run everytime a new PR review is initially submitted.
-  pull_request_review:
-    types:
-      - submitted
   # This event runs anytime a PR review comment is created or deleted.
   pull_request_review_comment:
     types:
