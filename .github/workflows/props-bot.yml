@@ -21,6 +21,10 @@ on:
     type:
       - created
       - deleted
+  # This event will run everytime a new PR review is initially submitted.
+  pull_request_review:
+    types:
+      - submitted
   # This event runs anytime a PR review comment is created or deleted.
   pull_request_review_comment:
     types:
@@ -52,22 +56,22 @@ jobs:
       pull-requests: write
       contents: read
     timeout-minutes: 20
-    # The job should only run if:
-    #
-    # - A pull request review is created or commented on.
-    # - An issue comment is added to a pull request.
-    # - A pull request is opened, synchronized, or reopened.
-    # - The `props-bot` label is added to the pull request.
-    if: |
-      github.event_name == 'issue_comment' && github.event.issue.pull_request ||
-      contains( fromJSON( '["pull_request_review", "pull_request_review_comment"]' ), github.event_name ) ||
-      github.event_name == 'pull_request_target' && github.event.action != 'labeled' ||
-      'props-bot' == github.event.label.name &&
-      ( ! github.pull_request.draft && github.pull_request.state == 'open' || ! github.issue.draft && github.issue.state == 'open' )
 
     steps:
       - name: Gather a list of contributors
         uses: WordPress/props-bot-action@trunk
+        # The step should only run if:
+        #
+        # - A pull request review is created or commented on.
+        # - An issue comment is added to a pull request.
+        # - A pull request is opened, synchronized, or reopened.
+        # - The `props-bot` label is added to the pull request.
+        if: |
+          github.event_name == 'issue_comment' && github.event.issue.pull_request ||
+          contains( fromJSON( '["pull_request_review", "pull_request_review_comment"]' ), github.event_name ) ||
+          github.event_name == 'pull_request_target' && github.event.action != 'labeled' ||
+          'props-bot' == github.event.label.name &&
+          ( ! github.pull_request.draft && github.pull_request.state == 'open' || ! github.issue.draft && github.issue.state == 'open' )
 
       - name: Remove the props-bot label
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
