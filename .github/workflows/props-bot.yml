@@ -67,10 +67,12 @@ jobs:
         # - A pull request is opened, synchronized, or reopened.
         # - The `props-bot` label is added to the pull request.
         if: |
-          github.event_name == 'issue_comment' && github.event.issue.pull_request ||
-          contains( fromJSON( '["pull_request_review", "pull_request_review_comment"]' ), github.event_name ) ||
-          github.event_name == 'pull_request_target' && github.event.action != 'labeled' ||
-          'props-bot' == github.event.label.name &&
+          (
+            github.event_name == 'issue_comment' && github.event.issue.pull_request ||
+            contains( fromJSON( '["pull_request_review", "pull_request_review_comment"]' ), github.event_name ) ||
+            github.event_name == 'pull_request_target' && github.event.action != 'labeled' ||
+            'props-bot' == github.event.label.name
+          ) &&
           ( ! github.pull_request.draft && github.pull_request.state == 'open' || ! github.issue.draft && github.issue.state == 'open' )
 
       - name: Remove the props-bot label
