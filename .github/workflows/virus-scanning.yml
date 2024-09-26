@@ -1,0 +1,191 @@
+name: Antivirus Scanning
+
+on:
+  push:
+  create:
+
+# Cancels all previous workflow runs for pull requests that have not completed.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  # Scans the WordPress source code for false positives by antivirus software.
+  #
+  # Performs the following steps:
+  # - Checks out the repository.
+  # - Logs debug information.
+  option1:
+    name: Scan for viruses (Scan Virus action full)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+#    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
+    env:
+      PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579 # v2.4.0
+
+      - name: Log debug information
+        run: |
+          npm --version
+          node --version
+          git --version
+          svn --version
+
+      - name: Install NodeJS
+        uses: actions/setup-node@270253e841af726300e85d718a5f606959b2903c # v2.4.1
+        with:
+          node-version: 14
+          cache: npm
+
+      - name: Log debug information
+        run: |
+          npm --version
+          node --version
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build WordPress
+        run: npm run build
+
+      - name: Scan for viruses
+        uses: hugoalh/scan-virus-ghaction@1fd1f1c4da6156bd5b191eaf19816a0fcb57b53c # v0.4.2
+        with:
+          integrate: git
+
+  option2:
+    name: Scan for viruses (Scan Virus action)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+#    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
+    env:
+      PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579 # v2.4.0
+
+      - name: Log debug information
+        run: |
+          npm --version
+          node --version
+          git --version
+          svn --version
+
+      - name: Install NodeJS
+        uses: actions/setup-node@270253e841af726300e85d718a5f606959b2903c # v2.4.1
+        with:
+          node-version: 14
+          cache: npm
+
+      - name: Log debug information
+        run: |
+          npm --version
+          node --version
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build WordPress
+        run: npm run build
+
+      - name: Scan for viruses
+        uses: hugoalh/scan-virus-ghaction@1fd1f1c4da6156bd5b191eaf19816a0fcb57b53c # v0.4.2
+        with:
+          integrate: none
+
+  option3:
+    name: Scan for viruses (Git Anti Virus Scan)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+#    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
+    env:
+      PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579 # v2.4.0
+
+      - name: Log debug information
+        run: |
+          npm --version
+          node --version
+          git --version
+          svn --version
+
+      - name: Install NodeJS
+        uses: actions/setup-node@270253e841af726300e85d718a5f606959b2903c # v2.4.1
+        with:
+          node-version: 14
+          cache: npm
+
+      - name: Log debug information
+        run: |
+          npm --version
+          node --version
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build WordPress
+        run: npm run build
+
+      - name: Scan for viruses (current HEAD only)
+        uses: djdefi/gitavscan@11b729c2a19f391ca64d1a794a82d94b3cbe5ffb # v4
+
+  option4:
+    name: Scan for viruses (Git Anti Virus Scan full)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+#    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
+    env:
+      PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: ${{ true }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579 # v2.4.0
+
+      - name: Log debug information
+        run: |
+          npm --version
+          node --version
+          git --version
+          svn --version
+
+      - name: Install NodeJS
+        uses: actions/setup-node@270253e841af726300e85d718a5f606959b2903c # v2.4.1
+        with:
+          node-version: 14
+          cache: npm
+
+      - name: Log debug information
+        run: |
+          npm --version
+          node --version
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build WordPress
+        run: npm run build
+
+      - name: Scan for viruses (current HEAD only)
+        uses: djdefi/gitavscan@11b729c2a19f391ca64d1a794a82d94b3cbe5ffb # v4
+        with:
+          full: "--full"
+
+#  slack-notifications:
+#    name: Slack Notifications
+#    uses: WordPress/wordpress-develop/.github/workflows/slack-notifications.yml@trunk
+#    needs: [ phpcs, jshint ]
+#    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' && always() }}
+#    with:
+#      calling_status: ${{ needs.phpcs.result == 'success' && needs.jshint.result == 'success' && 'success' || ( needs.phpcs.result == 'cancelled' || needs.jshint.result == 'cancelled' ) && 'cancelled' || 'failure' }}
+#    secrets:
+#      SLACK_GHA_SUCCESS_WEBHOOK: ${{ secrets.SLACK_GHA_SUCCESS_WEBHOOK }}
+#      SLACK_GHA_CANCELLED_WEBHOOK: ${{ secrets.SLACK_GHA_CANCELLED_WEBHOOK }}
+#      SLACK_GHA_FIXED_WEBHOOK: ${{ secrets.SLACK_GHA_FIXED_WEBHOOK }}
+#      SLACK_GHA_FAILURE_WEBHOOK: ${{ secrets.SLACK_GHA_FAILURE_WEBHOOK }}
