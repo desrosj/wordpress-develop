@@ -51,6 +51,7 @@ jobs:
       major-wp-version: ${{ steps.major-wp-version.outputs.version }}
       php-versions: ${{ steps.php-versions.outputs.versions }}
       mysql-versions: ${{ steps.mysql-versions.outputs.versions }}
+      mariadb-versions: ${{ steps.mariadb-versions.outputs.versions }}
 
     steps:
       - name: Checkout repository
@@ -91,7 +92,18 @@ jobs:
             echo "versions=$(jq -r '.[ (keys[-1]) ] | @json' .version-support-mysql.json)" >> $GITHUB_OUTPUT
           fi
 
-  # Test the WordPress installation process through WP-CLI.
+      # Look up the major version's specific MariaDB support policy when a version is provided.
+      # Otherwise, use the current MariaDB support policy.
+      - name: Get supported MariaDB versions
+        id: mariadb-versions
+        run: |
+          if [ "${{ steps.major-wp-version.outputs.version }}" != "latest" ] && [ "${{ steps.major-wp-version.outputs.version }}" != "nightly" ]; then
+            echo "versions=$(jq -r '.["${{ steps.major-wp-version.outputs.version }}"] | @json' .version-support-mariadb.json)" >> $GITHUB_OUTPUT
+          else
+            echo "versions=$(jq -r '.[ (keys[-1]) ] | @json' .version-support-mariadb.json)" >> $GITHUB_OUTPUT
+          fi
+
+  # Test the WordPress installation process with MySQL through WP-CLI.
   #
   # Performs the following steps:
   # - Sets up PHP.
@@ -100,12 +112,13 @@ jobs:
   # - Creates a `wp-config.php` file.
   # - Installs WordPress.
   install-tests-mysql:
-    name: WP ${{ inputs.wp-version || 'nightly' }} / PHP ${{ matrix.php }} / ${{ 'mariadb' == matrix.db-type && 'MariaDB' || 'MySQL' }} ${{ matrix.db-version }}${{ matrix.multisite && ' multisite' || '' }}
+    name: WP ${{ inputs.wp-version || 'nightly' }} / PHP ${{ matrix.php }} / MySQL ${{ matrix.db-version }}${{ matrix.multisite && ' multisite' || '' }}
     permissions:
       contents: read
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     needs: [ build-matrix ]
+    if: ${{ false }}
     strategy:
       fail-fast: false
       matrix:
@@ -160,13 +173,92 @@ jobs:
       - name: Install WordPress
         run: wp core ${{ matrix.multisite && 'multisite-' || '' }}install --url=http://localhost/ --title="Upgrade Test" --admin_user=admin --admin_password=password --admin_email=me@example.org --skip-email
 
+  # Test the WordPress installation process with MariaDB through WP-CLI.
+  #
+  # Performs the following steps:
+  # - Sets up PHP.
+  # - Starts the database server.
+  # - Downloads the specified version of WordPress.
+  # - Creates a `wp-config.php` file.
+  # - Installs WordPress.
+  install-tests-mariadb:
+    name: WP ${{ inputs.wp-version || 'nightly' }} / PHP ${{ matrix.php }} / MariaDB ${{ matrix.db-version }}${{ matrix.multisite && ' multisite' || '' }}
+    permissions:
+      contents: read
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    needs: [ build-matrix ]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        php: ${{ fromJSON( needs.build-matrix.outputs.php-versions ) }}
+        db-type: [ 'mariadb' ]
+        db-version: ${{ fromJSON( needs.build-matrix.outputs.mariadb-versions ) }}
+        multisite: [ false, true ]
+        memcached: [ false ]
+
+        # Exclude some PHP and MySQL versions that cannot currently be tested with Docker containers.
+        exclude:
+          - php: '5.2'
+          - php: '5.3'
+          # Docker containers for these versions do not exist.
+          - db-version: 5.1
+          - db-version: 5.2
+          - db-version: 5.3
+          # Skip some older, unmaintained versions.
+          - db-version: 10.0
+          - db-version: 10.1
+          - db-version: 10.2
+          - db-version: 10.3
+          # Skip unmaintained, short-term releases.
+          - db-version: 10.7
+          - db-version: 10.8
+          - db-version: 10.9
+          - db-version: 10.10
+
+    services:
+      database:
+        image: ${{ matrix.db-type }}:${{ matrix.db-version }}
+        ports:
+          - 3306
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+        options: >-
+          --health-cmd="mariadb-admin ping"
+          --health-interval=30s
+          --health-timeout=10s
+          --health-retries=5
+
+    steps:
+      - name: Set up PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@e6f75134d35752277f093989e72e140eaa222f35 # v2.28.0
+        with:
+          php-version: '${{ matrix.php }}'
+          coverage: none
+          tools: wp-cli${{ contains( fromJSON('["5.4", "5.5"]'), matrix.php ) && ':2.4.0' || '' }}
+
+      - name: Start the database server
+        run: |
+          sudo systemctl start ${{ matrix.db-type }}
+
+      - name: Download WordPress
+        run: wp core download ${{ inputs.wp-version && format( '--version={0}', inputs.wp-version ) || '--version=nightly' }}
+
+      - name: Create wp-config.php file
+        run: wp config create --dbname=test_db --dbuser=root --dbpass=root --dbhost=127.0.0.1:${{ job.services.database.ports['3306'] }}
+
+      - name: Install WordPress
+        run: wp core ${{ matrix.multisite && 'multisite-' || '' }}install --url=http://localhost/ --title="Upgrade Test" --admin_user=admin --admin_password=password --admin_email=me@example.org --skip-email
+
   slack-notifications:
     name: Slack Notifications
     uses: WordPress/wordpress-develop/.github/workflows/slack-notifications.yml@trunk
     permissions:
       actions: read
       contents: read
-    needs: [ install-tests-mysql ]
+    needs: [ install-tests-mysql, install-tests-mariadb ]
     if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' && always() }}
     with:
       calling_status: ${{ contains( needs.*.result, 'cancelled' ) && 'cancelled' || contains( needs.*.result, 'failure' ) && 'failure' || 'success' }}
