@@ -52,7 +52,7 @@
 		"grunt-contrib-uglify": "~5.2.2",
 		"grunt-contrib-watch": "~1.1.0",
 		"grunt-file-append": "0.0.7",
-		"grunt-jsdoc": "2.4.1",
+		"grunt-jsdoc": "2.3.0",
 		"grunt-legacy-util": "^2.0.1",
 		"grunt-patch-wordpress": "~4.0.0",
 		"grunt-replace-lts": "~1.1.0",
