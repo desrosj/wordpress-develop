@@ -8,8 +8,6 @@
  *
  * @group blocks
  * @group block-bindings
- *
- * @coversDefaultClass WP_Block_Bindings_Registry
  */
 class Tests_Blocks_wpBlockBindingsRegistry extends WP_UnitTestCase {
 
@@ -39,6 +37,7 @@ class Tests_Blocks_wpBlockBindingsRegistry extends WP_UnitTestCase {
 			'get_value_callback' => function () {
 				return 'test-value';
 			},
+			'uses_context'       => array( 'sourceContext' ),
 		);
 	}
 
@@ -163,6 +162,23 @@ class Tests_Blocks_wpBlockBindingsRegistry extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Should reject block bindings registration if `uses_context` is not an array.
+	 *
+	 * @ticket 60525
+	 *
+	 * @covers WP_Block_Bindings_Registry::register
+	 *
+	 * @expectedIncorrectUsage WP_Block_Bindings_Registry::register
+	 */
+	public function test_register_invalid_string_uses_context() {
+
+		self::$test_source_properties['uses_context'] = 'not-an-array';
+
+		$result = $this->registry->register( self::$test_source_name, self::$test_source_properties );
+		$this->assertFalse( $result );
+	}
+
+	/**
 	 * Should accept valid block binding source.
 	 *
 	 * @ticket 60282
@@ -179,6 +195,13 @@ class Tests_Blocks_wpBlockBindingsRegistry extends WP_UnitTestCase {
 			),
 			$result
 		);
+		$this->assertSame( 'test/source', $result->name );
+		$this->assertSame( 'Test source', $result->label );
+		$this->assertSame(
+			'test-value',
+			$result->get_value( array(), null, '' )
+		);
+		$this->assertEquals( array( 'sourceContext' ), $result->uses_context );
 	}
 
 	/**
@@ -202,7 +225,7 @@ class Tests_Blocks_wpBlockBindingsRegistry extends WP_UnitTestCase {
 	 *
 	 * @covers WP_Block_Bindings_Registry::register
 	 * @covers WP_Block_Bindings_Registry::unregister
-	 * WP_Block_Bindings_Source::__construct
+	 * @covers WP_Block_Bindings_Source::__construct
 	 */
 	public function test_unregister_block_source() {
 		$this->registry->register( self::$test_source_name, self::$test_source_properties );
@@ -224,7 +247,7 @@ class Tests_Blocks_wpBlockBindingsRegistry extends WP_UnitTestCase {
 	 *
 	 * @covers WP_Block_Bindings_Registry::register
 	 * @covers WP_Block_Bindings_Registry::get_all_registered
-	 * WP_Block_Bindings_Source::__construct
+	 * @covers WP_Block_Bindings_Source::__construct
 	 */
 	public function test_get_all_registered() {
 		$source_one_name       = 'test/source-one';

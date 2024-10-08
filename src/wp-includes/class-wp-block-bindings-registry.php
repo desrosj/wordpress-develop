@@ -12,7 +12,7 @@
 /**
  * Core class used for interacting with block bindings sources.
  *
- *  @since 6.5.0
+ * @since 6.5.0
  */
 final class WP_Block_Bindings_Registry {
 
@@ -33,6 +33,31 @@ final class WP_Block_Bindings_Registry {
 	private static $instance = null;
 
 	/**
+	 * Supported source properties that can be passed to the registered source.
+	 *
+	 * @since 6.5.0
+	 * @var string[]
+	 */
+	private $allowed_source_properties = array(
+		'label',
+		'get_value_callback',
+		'uses_context',
+	);
+
+	/**
+	 * Supported blocks that can use the block bindings API.
+	 *
+	 * @since 6.5.0
+	 * @var string[]
+	 */
+	private $supported_blocks = array(
+		'core/paragraph',
+		'core/heading',
+		'core/image',
+		'core/button',
+	);
+
+	/**
 	 * Registers a new block bindings source.
 	 *
 	 * This is a low-level method. For most use cases, it is recommended to use
@@ -47,17 +72,17 @@ final class WP_Block_Bindings_Registry {
 	 *
 	 * @since 6.5.0
 	 *
-	 * @param string   $source_name       The name of the source. It must be a string containing a namespace prefix, i.e.
-	 *                                    `my-plugin/my-custom-source`. It must only contain lowercase alphanumeric
-	 *                                    characters, the forward slash `/` and dashes.
-	 * @param array    $source_properties {
+	 * @param string $source_name       The name of the source. It must be a string containing a namespace prefix, i.e.
+	 *                                  `my-plugin/my-custom-source`. It must only contain lowercase alphanumeric
+	 *                                  characters, the forward slash `/` and dashes.
+	 * @param array  $source_properties {
 	 *     The array of arguments that are used to register a source.
 	 *
 	 *     @type string   $label              The label of the source.
-	 *     @type callback $get_value_callback A callback executed when the source is processed during block rendering.
+	 *     @type callable $get_value_callback A callback executed when the source is processed during block rendering.
 	 *                                        The callback should have the following signature:
 	 *
-	 *                                        `function ($source_args, $block_instance,$attribute_name): mixed`
+	 *                                        `function( $source_args, $block_instance, $attribute_name ): mixed`
 	 *                                            - @param array    $source_args    Array containing source arguments
 	 *                                                                              used to look up the override value,
 	 *                                                                              i.e. {"key": "foo"}.
@@ -65,6 +90,7 @@ final class WP_Block_Bindings_Registry {
 	 *                                            - @param string   $attribute_name The name of the target attribute.
 	 *                                        The callback has a mixed return type; it may return a string to override
 	 *                                        the block's original value, null, false to remove an attribute, etc.
+	 *     @type string[] $uses_context       Optional. Array of values to add to block `uses_context` needed by the source.
 	 * }
 	 * @return WP_Block_Bindings_Source|false Source when the registration was successful, or `false` on failure.
 	 */
@@ -107,7 +133,7 @@ final class WP_Block_Bindings_Registry {
 			return false;
 		}
 
-		/* Validate that the source properties contain the label */
+		// Validates that the source properties contain the label.
 		if ( ! isset( $source_properties['label'] ) ) {
 			_doing_it_wrong(
 				__METHOD__,
@@ -117,7 +143,7 @@ final class WP_Block_Bindings_Registry {
 			return false;
 		}
 
-		/* Validate that the source properties contain the get_value_callback */
+		// Validates that the source properties contain the get_value_callback.
 		if ( ! isset( $source_properties['get_value_callback'] ) ) {
 			_doing_it_wrong(
 				__METHOD__,
@@ -127,11 +153,30 @@ final class WP_Block_Bindings_Registry {
 			return false;
 		}
 
-		/* Validate that the get_value_callback is a valid callback */
+		// Validates that the get_value_callback is a valid callback.
 		if ( ! is_callable( $source_properties['get_value_callback'] ) ) {
 			_doing_it_wrong(
 				__METHOD__,
 				__( 'The "get_value_callback" parameter must be a valid callback.' ),
+				'6.5.0'
+			);
+			return false;
+		}
+
+		// Validates that the uses_context parameter is an array.
+		if ( isset( $source_properties['uses_context'] ) && ! is_array( $source_properties['uses_context'] ) ) {
+			_doing_it_wrong(
+				__METHOD__,
+				__( 'The "uses_context" parameter must be an array.' ),
+				'6.5.0'
+			);
+			return false;
+		}
+
+		if ( ! empty( array_diff( array_keys( $source_properties ), $this->allowed_source_properties ) ) ) {
+			_doing_it_wrong(
+				__METHOD__,
+				__( 'The $source_properties array contains invalid properties.' ),
 				'6.5.0'
 			);
 			return false;
