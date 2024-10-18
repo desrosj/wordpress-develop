@@ -6,6 +6,7 @@ on:
       - trunk
       - '3.[7-9]'
       - '[4-9].[0-9]'
+      - 'try/**'
     tags:
       - '[0-9]+.[0-9]'
       - '[0-9]+.[0-9].[0-9]+'
@@ -107,7 +108,7 @@ jobs:
   #
   test-with-mariadb:
     name: PHP ${{ matrix.php }}
-    uses: WordPress/wordpress-develop/.github/workflows/reusable-phpunit-tests-v3.yml@trunk
+    uses: ${{ github.event_name == 'pull_request' && '.' || 'WordPress/wordpress-develop' }}/.github/workflows/reusable-phpunit-tests-v3.yml@trunk
     permissions:
       contents: read
     secrets: inherit
