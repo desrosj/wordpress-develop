@@ -108,7 +108,7 @@ jobs:
   #
   test-with-mariadb:
     name: PHP ${{ matrix.php }}
-    uses: ${{ github.event_name == 'pull_request' && '.' || 'WordPress/wordpress-develop' }}/.github/workflows/reusable-phpunit-tests-v3.yml@trunk
+    uses: ${{ github.event_name != 'pull_request' && 'WordPress/wordpress-develop' || '.' }}/.github/workflows/reusable-phpunit-tests-v3.yml@trunk
     permissions:
       contents: read
     secrets: inherit
