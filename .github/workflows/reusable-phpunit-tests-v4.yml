@@ -160,7 +160,7 @@ jobs:
         run: cp wp-tests-config-sample.php wp-tests-config.php
 
       - name: Change DB_HOST value
-        run: wp config set DB_HOST 127.0.0.1:${{ job.services.database.ports['3306'] }}
+        run: wp config set DB_HOST 127.0.0.1:${{ job.services.database.ports['3306'] }} --config-file=wp-test-config.php
 
       - name: Run PHPUnit tests${{ inputs.phpunit-test-groups && format( ' ({0} groups)', inputs.phpunit-test-groups ) || '' }}${{ inputs.coverage-report && ' with coverage report' || '' }}
         continue-on-error: ${{ inputs.allow-errors }}
