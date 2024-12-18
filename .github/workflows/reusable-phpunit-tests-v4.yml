@@ -156,17 +156,11 @@ jobs:
           composer --version
           locale -a
 
-      - name: Debug step
-        run: ls -l
-
-      - name: Create wp-config.php file
-        run: wp config create --dbname=test_db --dbuser=root --dbpass=root --dbhost=127.0.0.1:${{ job.services.database.ports['3306'] }} --config-file=${{ github.workspace }}/wp-config.php
+      - name: Create wp-tests-config.php file
+        run: cp wp-tests-config-sample.php wp-tests-config.php
 
       - name: Install WordPress
         run: wp core ${{ inputs.multisite && 'multisite-' || '' }}install --url=${{ inputs.tests-domain }} --title="WordPress Unit Test Suite" --admin_user=admin --admin_password=password --admin_email=me@example.org --skip-email
-
-      - name: Debug step
-        run: find . -maxdepth 1 -exec ls -l "{}" \;
 
       - name: Run PHPUnit tests${{ inputs.phpunit-test-groups && format( ' ({0} groups)', inputs.phpunit-test-groups ) || '' }}${{ inputs.coverage-report && ' with coverage report' || '' }}
         continue-on-error: ${{ inputs.allow-errors }}
