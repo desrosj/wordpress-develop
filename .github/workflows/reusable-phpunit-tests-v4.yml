@@ -159,6 +159,9 @@ jobs:
       - name: Create wp-tests-config.php file
         run: cp wp-tests-config-sample.php wp-tests-config.php
 
+      - name: Debug
+        run: ls -l
+      
       - name: Change DB_HOST value
         run: wp config set DB_HOST 127.0.0.1:${{ job.services.database.ports['3306'] }} --config-file=${{ github.workspace }}/wp-test-config.php
 
