@@ -72,11 +72,6 @@ on:
         description: 'The Codecov token required for uploading reports.'
         required: false
 env:
-  LOCAL_PHP: ${{ inputs.php }}-fpm
-  LOCAL_PHP_XDEBUG: ${{ inputs.coverage-report || false }}
-  LOCAL_PHP_XDEBUG_MODE: ${{ inputs.coverage-report && 'coverage' || 'develop,debug' }}
-  LOCAL_DB_TYPE: ${{ inputs.db-type }}
-  LOCAL_DB_VERSION: ${{ inputs.db-version }}
   LOCAL_PHP_MEMCACHED: ${{ inputs.memcached }}
   LOCAL_WP_TESTS_DOMAIN: ${{ inputs.tests-domain }}
   PHPUNIT_CONFIG: ${{ inputs.phpunit-config }}
@@ -109,6 +104,21 @@ jobs:
     runs-on: ${{ inputs.os }}
     timeout-minutes: ${{ inputs.coverage-report && 120 || 20 }}
 
+    services:
+      database:
+        image: ${{ inputs.db-type }}:${{ inputs.db-version }}
+        ports:
+          - 3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval="30s"
+          --health-timeout="10s"
+          --health-retries="5"
+          -e MYSQL_ROOT_PASSWORD="root"
+          -e MYSQL_DATABASE="test_db"
+          --entrypoint sh ${{ inputs.db-type }}:${{ inputs.db-version }}
+          -c "exec docker-entrypoint.sh mysqld${{ inputs.db-type == 'mysql' && contains( fromJSON('["7.2", "7.3"]'), inputs.php ) && ' --default-authentication-plugin=mysql_native_password' || '' }}"
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -126,6 +136,7 @@ jobs:
         with:
           php-version: '${{ inputs.php }}'
           coverage: ${{ inputs.coverage-report && 'xdebug' || '' }}
+          tools: wp-cli
 
       # Since Composer dependencies are installed using `composer update` and no lock file is in version control,
       # passing a custom cache suffix ensures that the cache is flushed at least once per week.
@@ -145,6 +156,12 @@ jobs:
           git --version
           composer --version
           locale -a
+
+      - name: Create wp-config.php file
+        run: wp config create --dbname=test_db --dbuser=root --dbpass=root --dbhost=127.0.0.1:${{ job.services.database.ports['3306'] }}
+
+      - name: Install WordPress
+        run: wp core ${{ inputs.multisite && 'multisite-' || '' }}install --url=http://localhost/ --title="WordPress Unit Test Suite" --admin_user=admin --admin_password=password --admin_email=me@example.org --skip-email
 
       - name: Run PHPUnit tests${{ inputs.phpunit-test-groups && format( ' ({0} groups)', inputs.phpunit-test-groups ) || '' }}${{ inputs.coverage-report && ' with coverage report' || '' }}
         continue-on-error: ${{ inputs.allow-errors }}
