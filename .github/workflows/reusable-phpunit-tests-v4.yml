@@ -113,8 +113,8 @@ jobs:
           --health-interval="30s"
           --health-timeout="10s"
           --health-retries="5"
-          -e MYSQL_ROOT_PASSWORD="root"
-          -e MYSQL_DATABASE="test_db"
+          -e MYSQL_ROOT_PASSWORD="password"
+          -e MYSQL_DATABASE="wordpress_develop_tests"
           --entrypoint sh ${{ inputs.db-type }}:${{ inputs.db-version }}
           -c "exec docker-entrypoint.sh mysqld${{ inputs.db-type == 'mysql' && contains( fromJSON('["7.2", "7.3"]'), inputs.php ) && ' --default-authentication-plugin=mysql_native_password' || '' }}"
 
@@ -158,9 +158,6 @@ jobs:
 
       - name: Create wp-tests-config.php file
         run: cp wp-tests-config-sample.php wp-tests-config.php
-
-      - name: Install WordPress
-        run: wp core ${{ inputs.multisite && 'multisite-' || '' }}install --url=${{ inputs.tests-domain }} --title="WordPress Unit Test Suite" --admin_user=admin --admin_password=password --admin_email=me@example.org --skip-email
 
       - name: Run PHPUnit tests${{ inputs.phpunit-test-groups && format( ' ({0} groups)', inputs.phpunit-test-groups ) || '' }}${{ inputs.coverage-report && ' with coverage report' || '' }}
         continue-on-error: ${{ inputs.allow-errors }}
