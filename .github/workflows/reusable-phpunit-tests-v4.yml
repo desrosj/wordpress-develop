@@ -159,6 +159,15 @@ jobs:
       - name: Create wp-tests-config.php file
         run: cp wp-tests-config-sample.php wp-tests-config.php
 
+      - name: Change DB_NAME value
+        run: wp config set DB_NAME wordpress_develop_tests --config-file=wp-tests-config.php
+
+      - name: Change DB_USER value
+        run: wp config set DB_USER 127.0.0.1:${{ job.services.database.ports['3306'] }} --config-file=wp-tests-config.php
+
+      - name: Change DB_PASSWORD value
+        run: wp config set DB_PASSWORD password --config-file=wp-tests-config.php
+
       - name: Change DB_HOST value
         run: wp config set DB_HOST 127.0.0.1:${{ job.services.database.ports['3306'] }} --config-file=wp-tests-config.php
 
