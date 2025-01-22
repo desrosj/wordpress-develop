@@ -154,7 +154,7 @@ jobs:
         id: create-payload
         run: |
           PAYLOAD="$( jq \
-            -nr \
+            -n -r \
             --arg workflow_name "${GITHUB_WORKFLOW}" \
             --arg ref_name "${CURRENT_BRANCH}" \
             --arg run_url "https://github.com/WordPress/wordpress-develop/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}" \
