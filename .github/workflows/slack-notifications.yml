@@ -153,9 +153,8 @@ jobs:
       - name: Construct payload and store as an output
         id: create-payload
         run: |
-          echo $GITHUB_WORKFLOW;
           PAYLOAD="$( jq \
-            -r \
+            -nr \
             --arg workflow_name "${GITHUB_WORKFLOW}" \
             --arg ref_name "${CURRENT_BRANCH}" \
             --arg run_url "https://github.com/WordPress/wordpress-develop/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}" \
