@@ -155,7 +155,6 @@ jobs:
         run: |
           PAYLOAD="$( jq \
             -n \
-            --arg workflow_name "${GITHUB_WORKFLOW}" \
             --arg ref_name "${CURRENT_BRANCH}" \
             --arg run_url "https://github.com/WordPress/wordpress-develop/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}" \
             --arg commit_message "${COMMIT_MSG}" \
