@@ -161,7 +161,7 @@ jobs:
             --arg commit_message "${COMMIT_MSG}" \
             '{workflow_name: $workflow_name, ref_name: $ref_name, run_url: $run_url, commit_message: $commit_message}'
           )"
-          echo "payload={$PAYLOAD}" >> "$GITHUB_OUTPUT"
+          echo "payload=${PAYLOAD}" >> "$GITHUB_OUTPUT"
         env:
           COMMIT_MSG: ${{ steps.commit-message.outputs.commit_message_escaped }}
 
