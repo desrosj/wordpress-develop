@@ -154,11 +154,11 @@ jobs:
         id: create-payload
         run: |
           PAYLOAD="$( jq \
-            -n -r \
-            --arg workflow_name "${GITHUB_WORKFLOW}" \
+            -n \
             --arg ref_name "${CURRENT_BRANCH}" \
             --arg run_url "https://github.com/WordPress/wordpress-develop/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}" \
             --arg commit_message "${COMMIT_MSG}" \
+            --arg workflow_name "${GITHUB_WORKFLOW}" \
             '{workflow_name: $workflow_name, ref_name: $ref_name, run_url: $run_url, commit_message: $commit_message}'
           )"
           echo "payload=$PAYLOAD" >> "$GITHUB_OUTPUT"
