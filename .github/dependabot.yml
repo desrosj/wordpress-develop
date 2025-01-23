@@ -19,7 +19,7 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 40
     ignore:
-      - "@wordpress/*"
+      - dependency-name: "@wordpress/*"
     groups:
       css-sass:
         patterns:
