@@ -17,7 +17,7 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 40
     groups:
       qunit:
         patterns:
@@ -40,4 +40,14 @@ updates:
       # These are currently managed manually through Grunt tasks.
       - dependency-name: "@wordpress/*"
       # UglifyJS updates very frequently. Update this less often below.
+      - dependency-name: "uglify-js"
+
+  # UglifyJS updates very frequently.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 10
+    ignore: "*"
+    allow:
       - dependency-name: "uglify-js"
