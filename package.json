@@ -124,7 +124,7 @@
 		"@wordpress/notices": "5.8.3",
 		"@wordpress/nux": "9.8.11",
 		"@wordpress/patterns": "2.8.15",
-		"@wordpress/plugins": "7.8.11",
+		"@wordpress/plugins": "7.16.0",
 		"@wordpress/preferences": "4.8.11",
 		"@wordpress/preferences-persistence": "2.8.2",
 		"@wordpress/primitives": "4.8.1",
