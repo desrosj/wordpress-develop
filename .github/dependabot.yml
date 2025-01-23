@@ -18,36 +18,43 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 40
+    ignore:
+      - dependency-name: "*"
     groups:
+      css-sass:
+        patterns:
+          - "autoprefixer"
+          # postcss and css related dependencies.
+          - "*css*"
+          - "*sass"
       qunit:
         patterns:
           - "*qunit*"
           - "sinon*"
+      # Webpack build process related dependencies.
       webpack:
         patterns:
           - "*webpack*"
+          - "source-map-loader"
+      # Officially maintained GruntJS dependencies.
       grunt-contrib:
         patterns:
           - "grunt-contrib-*"
+      # All other GruntJS related dependencies.
       grunt:
         patterns:
-          - "*grunt-*"
+          - "*grunt*"
       docker-related:
         patterns:
           - "dotenv*"
           - "wait-on"
-    ignore:
-      # These are currently managed manually through Grunt tasks.
-      - dependency-name: "@wordpress/*"
-      # UglifyJS updates very frequently. Update this less often below.
-      - dependency-name: "uglify-js"
-
-  # UglifyJS updates very frequently.
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 10
-    ignore: "*"
-    allow:
-      - dependency-name: "uglify-js"
+      miscellaneous:
+        patterns:
+          - "chalk"
+          - "check-node-version"
+          - "ink-docstrap"
+          - "install-changed"
+          - "uuid"
+      uglify:
+        patterns:
+          - "*uglify*"
