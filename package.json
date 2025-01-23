@@ -134,7 +134,7 @@
 		"@wordpress/reusable-blocks": "5.8.15",
 		"@wordpress/rich-text": "7.8.3",
 		"@wordpress/router": "1.8.1",
-		"@wordpress/server-side-render": "5.8.11",
+		"@wordpress/server-side-render": "5.16.0",
 		"@wordpress/shortcode": "4.8.1",
 		"@wordpress/style-engine": "2.8.1",
 		"@wordpress/sync": "1.8.1",
