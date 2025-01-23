@@ -129,7 +129,7 @@
 		"@wordpress/preferences-persistence": "2.8.2",
 		"@wordpress/primitives": "4.8.1",
 		"@wordpress/priority-queue": "3.8.1",
-		"@wordpress/private-apis": "1.8.1",
+		"@wordpress/private-apis": "1.16.0",
 		"@wordpress/redux-routine": "5.8.1",
 		"@wordpress/reusable-blocks": "5.8.15",
 		"@wordpress/rich-text": "7.8.3",
