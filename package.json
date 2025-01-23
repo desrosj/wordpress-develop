@@ -136,7 +136,7 @@
 		"@wordpress/router": "1.8.1",
 		"@wordpress/server-side-render": "5.8.11",
 		"@wordpress/shortcode": "4.8.1",
-		"@wordpress/style-engine": "2.8.1",
+		"@wordpress/style-engine": "2.16.0",
 		"@wordpress/sync": "1.8.1",
 		"@wordpress/token-list": "3.8.1",
 		"@wordpress/undo-manager": "1.8.1",
