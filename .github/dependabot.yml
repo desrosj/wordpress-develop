@@ -18,6 +18,12 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 40
+    allow:
+      - dependency-name: "backbone"
+      - dependency-name: "clipboard"
+      - dependency-name: "element-closest"
+      - dependency-name: "formdata-polyfill"
+      - dependency-name: "json2php"
     ignore:
       - dependency-name: "@wordpress/*"
     groups:
