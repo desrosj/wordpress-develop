@@ -21,18 +21,21 @@ updates:
     ignore:
       - dependency-name: "@wordpress/*"
     groups:
-      css-sass:
+      tests-playwright:
+        patterns:
+            - "*playwright*"
+      tests-qunit:
+        patterns:
+          - "*qunit*"
+          - "sinon*"
+      dev-css-sass:
         patterns:
           - "autoprefixer"
           # postcss and css related dependencies.
           - "*css*"
           - "*sass"
-      qunit:
-        patterns:
-          - "*qunit*"
-          - "sinon*"
       # Webpack build process related dependencies.
-      webpack:
+      dev-webpack:
         patterns:
           - "*webpack*"
           - "react-refresh"
