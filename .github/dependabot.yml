@@ -17,7 +17,7 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 40
+    open-pull-requests-limit: 20
     ignore:
       - dependency-name: "@wordpress/*"
     groups:
@@ -38,36 +38,37 @@ updates:
           - "react-refresh"
           - "source-map-loader"
       # Officially maintained GruntJS dependencies.
-      grunt-contrib:
+      dev-grunt-contrib:
         patterns:
           - "grunt-contrib-*"
       # All other GruntJS related dependencies.
-      grunt:
+      dev-grunt:
         patterns:
           - "*grunt*"
-      docker-related:
+      dev-docker:
         patterns:
           - "dotenv*"
           - "wait-on"
-      miscellaneous:
+      dev-miscellaneous:
         patterns:
           - "chalk"
           - "check-node-version"
           - "ink-docstrap"
           - "install-changed"
+          - "matchdep"
           - "uuid"
-      uglify:
+      dev-uglify:
         patterns:
           - "*uglify*"
       # Update some external library dependencies.
-      jquery:
+      external-jquery:
         patterns:
           - "jquery*"
-      react:
+      external-react:
         patterns:
           - "react*"
           - "!react-refresh"
-      polyfills:
+      external-polyfills:
         patterns:
           - "core-js-url-browser"
           - "element-closest"
@@ -77,10 +78,10 @@ updates:
           - "polyfill-library"
           - "regenerator-runtime"
           - "whatwg-fetch"
-      masonry:
+      external-masonry:
         patterns:
           - "masonry-layout"
-      miscellaneous-external:
+      external-miscellaneous:
         patterns:
           - "backbone"
           - "clipboard"
