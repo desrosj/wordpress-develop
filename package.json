@@ -53,7 +53,7 @@
 		"grunt-contrib-watch": "1.0.1",
 		"grunt-file-append": "0.0.6",
 		"grunt-jsdoc": "2.4.0",
-		"grunt-legacy-util": "2.0.0",
+		"grunt-legacy-util": "2.0.1",
 		"grunt-patch-wordpress": "3.0.1",
 		"grunt-replace-lts": "1.0.3",
 		"grunt-rtlcss": "2.0.1",
