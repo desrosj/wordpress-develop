@@ -12,7 +12,7 @@ updates:
       github-actions:
         patterns:
           - "*"
-  # Update some npm dependencies in groups.
+  # Monitor some npm dependencies for updates in groups.
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -40,14 +40,6 @@ updates:
           - "*webpack*"
           - "react-refresh"
           - "source-map-loader"
-      # Officially maintained GruntJS dependencies.
-      dev-grunt-contrib:
-        patterns:
-          - "grunt-contrib-*"
-      # All other GruntJS related dependencies.
-      dev-grunt:
-        patterns:
-          - "*grunt*"
       dev-docker:
         patterns:
           - "dotenv*"
@@ -63,6 +55,10 @@ updates:
       dev-uglify:
         patterns:
           - "*uglify*"
+      # All GruntJS related dependencies that do not relate to another group.
+      dev-grunt:
+        patterns:
+          - "*grunt*"
       # Update some external library dependencies.
       external-jquery:
         patterns:
