@@ -18,6 +18,8 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 50
+    ignore:
+      - dependency-name: "@wordpress/*"
     groups:
       ##
       # Groups for updating devDependencies.
@@ -26,8 +28,6 @@ updates:
       # Dependencies related to Playwright testing (E2E, performance).
       tests-playwright:
         patterns:
-          - "@wordpress/e2e-test-utils"
-          - "@wordpress/e2e-test-utils-playwright"
           - "*playwright*"
       # Dependencies related to JavaScript testing with QUnit.
       tests-qunit:
@@ -47,7 +47,6 @@ updates:
           - "*webpack*"
           - "react-refresh"
           - "source-map-loader"
-          - "@wordpress/dependency-extraction-webpack-plugin"
       # Dependencies related to the local Docker development environment.
       dev-docker:
         patterns:
@@ -75,10 +74,6 @@ updates:
       # Groups for updating production dependencies.
       ##
 
-      # Dependencies maintained in the Gutenberg repository.
-      wordpress:
-        patterns: "@wordpress/*"
-        dependency-type: "production"
       # Dependencies related to jQuery and its ecosystem.
       external-jquery:
         patterns:
