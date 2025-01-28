@@ -21,30 +21,41 @@ updates:
     ignore:
       - dependency-name: "@wordpress/*"
     groups:
+      ##
+      # Groups for updating devDependencies.
+      ##
+
+      # Dependencies related to Playwright testing (E2E, performance).
       tests-playwright:
         patterns:
-            - "*playwright*"
+          - "@wordpress/e2e-test-utils"
+          - "@wordpress/e2e-test-utils-playwright"
+          - "*playwright*"
+      # Dependencies related to JavaScript testing with QUnit.
       tests-qunit:
         patterns:
           - "*qunit*"
           - "sinon*"
+      # Dependencies related to CSS and SASS building and manilupating.
       dev-css-sass:
         patterns:
           - "autoprefixer"
           # postcss and css related dependencies.
           - "*css*"
           - "*sass"
-      # Webpack build process related dependencies.
+      # Dependencies related to the Webpack build process.
       dev-webpack:
         patterns:
           - "*webpack*"
           - "react-refresh"
           - "source-map-loader"
           - "@wordpress/dependency-extraction-webpack-plugin"
+      # Dependencies related to the local Docker development environment.
       dev-docker:
         patterns:
           - "dotenv*"
           - "wait-on"
+      # Dependencies that do not fall into a specific grouping.
       dev-miscellaneous:
         patterns:
           - "chalk"
@@ -53,6 +64,7 @@ updates:
           - "install-changed"
           - "matchdep"
           - "uuid"
+      # Dependencies related to JavaScript minification.
       dev-uglify:
         patterns:
           - "*uglify*"
@@ -60,14 +72,21 @@ updates:
       dev-grunt:
         patterns:
           - "*grunt*"
-      # Update some external library dependencies.
+
+      ##
+      # Groups for updating production dependencies.
+      ##
+
+      # Dependencies related to jQuery and its ecosystem.
       external-jquery:
         patterns:
           - "jquery*"
+      # Dependencies related to React and its ecosystem.
       external-react:
         patterns:
           - "react*"
           - "!react-refresh"
+      # Dependencies used for bundling polyfill libraries into WordPress.
       external-polyfills:
         patterns:
           - "core-js-url-browser"
@@ -79,9 +98,11 @@ updates:
           - "regenerator-runtime"
           - "whatwg-fetch"
           - "wicg-inert"
+      # Dependencies related to the Masonry library.
       external-masonry:
         patterns:
           - "masonry-layout"
+      # Dependencies that do not fall into a specific grouping.
       external-miscellaneous:
         patterns:
           - "backbone"
