@@ -81,6 +81,7 @@ updates:
           - "polyfill-library"
           - "regenerator-runtime"
           - "whatwg-fetch"
+          - "wicg-inert"
       external-masonry:
         patterns:
           - "masonry-layout"
@@ -89,6 +90,7 @@ updates:
           - "backbone"
           - "clipboard"
           - "hoverintent"
+          - "json2php"
           - "lodash"
           - "moment"
           - "underscore"

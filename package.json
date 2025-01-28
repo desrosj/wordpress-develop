@@ -26,7 +26,7 @@
 	"devDependencies": {
 		"@lodder/grunt-postcss": "^3.1.0",
 		"@playwright/test": "1.49.1",
-		"@pmmmwh/react-refresh-webpack-plugin": "0.5.15",
+		"@pmmmwh/react-refresh-webpack-plugin": "0.5.14",
 		"@wordpress/babel-preset-default": "8.8.2",
 		"@wordpress/dependency-extraction-webpack-plugin": "6.8.3",
 		"@wordpress/e2e-test-utils": "11.8.2",
@@ -153,7 +153,7 @@
 		"hoverintent": "2.2.0",
 		"imagesloaded": "4.1.4",
 		"jquery": "3.7.0",
-		"jquery-color": "3.0.0",
+		"jquery-color": "2.2.0",
 		"jquery-form": "4.2.2",
 		"jquery-hoverintent": "1.10.1",
 		"json2php": "0.0.9",
