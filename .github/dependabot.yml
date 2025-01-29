@@ -12,6 +12,18 @@ updates:
       github-actions:
         patterns:
           - "*"
+
+  # Check for updates to Composer packages.
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    groups:
+      composer-packages:
+        patterns:
+          - "composer/ca-bundle"
+
   # Monitor some npm dependencies for updates in groups.
   - package-ecosystem: "npm"
     directory: "/"
