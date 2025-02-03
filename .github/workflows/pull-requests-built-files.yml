@@ -106,4 +106,4 @@ jobs:
         if: ${{ steps.built-file-check.outputs.uncommitted_changes != '' }}
         run: git push HEAD:${{ github.event.pull_request.head.ref }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
