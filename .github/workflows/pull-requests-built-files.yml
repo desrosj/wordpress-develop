@@ -106,6 +106,6 @@ jobs:
 
       - name: Push changes
         if: ${{ steps.built-file-check.outputs.uncommitted_changes != '' }}
-        run: git push HEAD:${{ github.event.pull_request.head.ref }}
+        run: git push --set-upstream origin ${{ github.event.pull_request.head.ref }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
