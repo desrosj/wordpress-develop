@@ -41,6 +41,7 @@ jobs:
     permissions:
       issues: write
       pull-requests: write
+      contents: write
     if: ${{ github.event_name == 'pull_request_target' }}
     steps:
       - name: Checkout repository
