@@ -71,7 +71,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run SASS related tasks
+      - name: Run SASS precommit tasks
         run: npm run grunt precommit:css
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
