@@ -66,13 +66,9 @@ jobs:
 
       - name: Run Emoji precommit task
         run: npm run grunt precommit:emoji
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run SASS precommit tasks
         run: npm run grunt precommit:css
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build WordPress
         run: npm run build:dev
@@ -105,6 +101,6 @@ jobs:
 
       - name: Push changes
         if: ${{ steps.built-file-check.outputs.uncommitted_changes != '' }}
-        run: git push HEAD:${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.head.ref }}
+        run: git push HEAD:${{ github.event.pull_request.head.ref }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
