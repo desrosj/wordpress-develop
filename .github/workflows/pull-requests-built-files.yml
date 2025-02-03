@@ -39,6 +39,7 @@ jobs:
     name: Updates built files when necessary
     runs-on: ubuntu-24.04
     permissions:
+      issues: write
       pull-requests: write
     if: ${{ github.event_name == 'pull_request' }}
     steps:
