@@ -66,6 +66,8 @@ jobs:
 
       - name: Run Emoji precommit task
         run: npm run grunt precommit:emoji
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run SASS precommit tasks
         run: npm run grunt precommit:css
