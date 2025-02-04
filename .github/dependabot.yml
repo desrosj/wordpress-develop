@@ -37,7 +37,7 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 50
     ignore:
-      - dependency-name: "@wordpress/*"
+      - dependency-name: "*"
     groups:
       ##
       # Groups for updating devDependencies.
