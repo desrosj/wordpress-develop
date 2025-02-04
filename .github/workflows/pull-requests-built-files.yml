@@ -132,7 +132,7 @@ jobs:
 
       - name: Commit changes
         if: ${{ steps.built-file-check.outputs.uncommitted_changes != '' }}
-        run: git commit -m "Automation: Updating built files with changes. [dependabot skip]"
+        run: git commit -m "Automation\: Updating built files with changes. [dependabot skip]"
 
       - name: Push changes
         if: ${{ steps.built-file-check.outputs.uncommitted_changes != '' }}
