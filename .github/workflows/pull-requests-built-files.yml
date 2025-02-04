@@ -48,6 +48,38 @@ jobs:
           ref: ${{ github.head_ref }}
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
 
+      - name: Generate Installation Token
+        id: generate_token
+        run: |
+          echo "${{ secrets.GH_APP_PRIVATE_KEY }}" > private-key.pem
+
+          APP_ID=${{ secrets.GH_APP_ID }}
+
+          # Generate JWT
+          JWT=$(python3 - <<EOF
+          import jwt, time
+          private_key = open("private-key.pem", "r").read()
+          payload = {
+              "iat": int(time.time()),
+              "exp": int(time.time()) + 600,  # 10-minute expiration
+              "iss": APP_ID
+          }
+          print(jwt.encode(payload, private_key, algorithm="RS256"))
+          EOF
+          )
+
+          # Get Installation ID
+          INSTALLATION_ID=$(curl -s -X GET -H "Authorization: Bearer $JWT" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/app/installations | jq -r '.[0].id')
+
+          # Request Installation Access Token
+          ACCESS_TOKEN=$(curl -s -X POST -H "Authorization: Bearer $JWT" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/app/installations/$INSTALLATION_ID/access_tokens | jq -r '.token')
+
+          echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
+
       - name: Set up Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
@@ -98,4 +130,7 @@ jobs:
 
       - name: Push changes
         if: ${{ steps.built-file-check.outputs.uncommitted_changes != '' }}
+        env:
+          GITHUB_TOKEN: ${{ env.ACCESS_TOKEN }}
         run: git push
+        
