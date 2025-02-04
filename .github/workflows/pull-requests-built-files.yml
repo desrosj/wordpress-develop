@@ -40,6 +40,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       pull-requests: write
+      issues: write
     if: ${{ github.event_name == 'pull_request' }}
     steps:
       - name: Checkout repository
