@@ -121,7 +121,7 @@ jobs:
       - name: Ensure version-controlled files are not modified or deleted during building
         id: built-file-check
         run: |
-          diff_output="$(git diff)"
+          diff_output=$(git diff)
           if [ -n "$diff_output" ]; then
             echo "uncommitted_changes=$diff_output" >> "$GITHUB_OUTPUT"
           fi
