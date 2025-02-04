@@ -50,7 +50,7 @@ jobs:
         run: |
           echo "${{ env.GH_APP_PRIVATE_KEY }}" > private-key.pem
 
-          APP_ID=${{ env.GH_APP_ID }}
+          APP_ID="${{ env.GH_APP_ID }}"
 
           # Generate JWT
           JWT="$(python3 - <<EOF
