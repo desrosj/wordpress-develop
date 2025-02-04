@@ -52,6 +52,18 @@ jobs:
 
           APP_ID=${{ env.GH_APP_ID }}
 
+          # Generate JWT
+          JWT=$(python3 - <<EOF
+          import jwt, time
+          private_key = open("private-key.pem", "r").read()
+          payload = {
+              "iat": int(time.time()),
+              "exp": int(time.time()) + 600,  # 10-minute expiration
+              "iss": $APP_ID
+          }
+          print(jwt.encode(payload, private_key, algorithm="RS256"))
+          EOF
+          )
 
           # Get Installation ID
           INSTALLATION_ID=$(curl -s -X GET -H "Authorization: Bearer $JWT" \
