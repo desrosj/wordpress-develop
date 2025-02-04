@@ -75,11 +75,11 @@ jobs:
 
       - name: Build WordPress
         run: npm run build:dev
-
-      - name: Configure git user name and email
-        run: |
-          git config user.name "dependabot[bot]"
-          git config user.email dependabot[bot]@users.noreply.github.com
+#
+#      - name: Configure git user name and email
+#        run: |
+#          git config user.name "dependabot[bot]"
+#          git config user.email dependabot[bot]@users.noreply.github.com
 
       - name: Ensure version-controlled files are not modified or deleted during building
         id: built-file-check
