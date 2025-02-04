@@ -50,7 +50,7 @@ jobs:
         run: |
           echo "${{ env.GH_APP_PRIVATE_KEY }}" > private-key.pem
 
-          APP_ID="${{ env.GH_APP_ID }}"
+          APP_ID=${{ env.GH_APP_ID }}
 
           # Generate JWT
           JWT=$(python3 - <<EOF
@@ -75,7 +75,7 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/app/installations/$INSTALLATION_ID/access_tokens | jq -r '.token')
 
-          echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
+          echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> "$GITHUB_ENV"
 
           rm -f private-key.pem
 
