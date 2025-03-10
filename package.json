@@ -62,7 +62,7 @@
 		"install-changed": "1.1.0",
 		"postcss": "8.5.3",
 		"prettier": "npm:wp-prettier@3.0.3",
-		"qunit": "~2.23.1",
+		"qunit": "~2.24.1",
 		"react-refresh": "0.14.0",
 		"sass": "1.85.1",
 		"sinon": "16.1.3",
