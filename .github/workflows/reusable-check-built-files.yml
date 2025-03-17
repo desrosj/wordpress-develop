@@ -29,33 +29,21 @@ jobs:
   # - Builds Emoji files.
   # - Builds bundled Root Certificate files.
   # - Builds WordPress.
-<<<<<<< HEAD
-  # - Configures the Git author.
-  # - Checks for changes to versioned files.
-=======
   # - Checks for changes to versioned files.
   # - Displays the result of git diff for debugging purposes.
   # - Configures the Git author.
->>>>>>> upstream/trunk
   # - Stages changes.
   # - Commits changes.
   # - Pushes changes.
   update-built-files:
     name: Check and update built files
     runs-on: ubuntu-24.04
-<<<<<<< HEAD
-    permissions:
-      contents: write
-    # This prevents a second run after changes are committed back because Dependabot always rebases updates onto trunk.
-    if: ${{ github.actor != 'dependabot[bot]' || github.event.commits < 2 }}
-=======
     # This prevents an unnecessary second run after changes are committed back because Dependabot always rebases
     # updates and force pushes.
     if: ${{ github.actor != 'dependabot[bot]' || github.event.commits < 2 }}
     timeout-minutes: 10
     permissions:
       contents: write
->>>>>>> upstream/trunk
     steps:
       - name: Generate Installation Token
         id: generate_token
@@ -71,11 +59,7 @@ jobs:
           private_key = open("private-key.pem", "r").read()
           payload = {
               "iat": int(time.time()),
-<<<<<<< HEAD
-              "exp": int(time.time()) + 60,  # 1-minute expiration
-=======
-              "exp": int(time.time()) + 600,  # 10-minute expiration
->>>>>>> upstream/trunk
+              "exp": int(time.time()) + 60,  # 10-minute expiration
               "iss": $GH_APP_ID
           }
           print(jwt.encode(payload, private_key, algorithm="RS256"))
