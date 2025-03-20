@@ -43,6 +43,7 @@ jobs:
     name: Update built files
     permissions:
       contents: write
+      pull-requests: write
     # This should never be changed to use local reference. Always reference the workflow in trunk.
     uses: desrosj/wordpress-develop/.github/workflows/reusable-check-built-files.yml@trunk
     secrets:
