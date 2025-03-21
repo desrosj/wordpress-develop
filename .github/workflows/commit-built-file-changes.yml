@@ -1,5 +1,5 @@
 # Commits missed changes to built files back to pull request branches.
-name: Commit Built File Changes
+name: Commit Built File Changes (PRs)
 
 on:
   workflow_run:
@@ -91,9 +91,6 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: list directory
-        run: ls -la
-
       - name: Unzip the artifact containing the PR data
         if: ${{ steps.artifact-check.outputs.exists == 'true' }}
         run: unzip pr-data.zip
@@ -143,9 +140,12 @@ jobs:
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
           token: ${{ env.ACCESS_TOKEN }}
 
+      - name: list directory
+        run: ls -la
+
       - name: Apply patch
         if: ${{ steps.artifact-check.outputs.exists == 'true' }}
-        run: git apply ../pr-data/patch.diff
+        run: git apply ./pr-data/patch.diff
 
       - name: Display changes to versioned files
         if: ${{ steps.artifact-check.outputs.exists == 'true' }}
