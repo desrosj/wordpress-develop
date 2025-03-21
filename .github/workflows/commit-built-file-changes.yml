@@ -66,7 +66,7 @@ jobs:
             } )[0];
 
             if ( ! matchArtifact ) {
-              core.setFailed( 'No artifact found!' );
+              core.info( 'No artifact found!' );
               return;
             }
 
