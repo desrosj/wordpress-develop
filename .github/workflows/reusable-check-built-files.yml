@@ -96,10 +96,6 @@ jobs:
         if: ${{ steps.built-file-check.outputs.uncommitted_changes == 'true' }}
         run: git diff
 
-      - name: Create directory for PR data
-        if: ${{ steps.built-file-check.outputs.uncommitted_changes == 'true' }}
-        run: mkdir -p ./pr-data
-
       - name: Save diff to a file
         if: ${{ steps.built-file-check.outputs.uncommitted_changes == 'true' }}
         run: git diff > ./changes.diff
@@ -111,4 +107,4 @@ jobs:
         if: ${{ steps.built-file-check.outputs.uncommitted_changes == 'true' }}
         with:
           name: pr-built-file-changes
-          path: pr-built-file-changes/
+          path: changes.diff
