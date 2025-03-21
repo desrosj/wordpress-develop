@@ -78,14 +78,14 @@ jobs:
             } );
 
             const fs = require( 'fs' );
-            fs.writeFileSync( '${{ github.workspace }}/pr-data.zip', Buffer.from( download.data ) )
+            fs.writeFileSync( './pr-data.zip', Buffer.from( download.data ) )
         env:
           RUN_ID: ${{ github.event.workflow_run.id }}
 
       - name: Check for artifact
         id: artifact-check
         run: |
-          if [ -f "${{ github.workspace }}/pr-data.zip" ]; then
+          if [ -f "./pr-data.zip" ]; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
           else
             echo "exists=true" >> "$GITHUB_OUTPUT"
@@ -93,7 +93,7 @@ jobs:
 
       - name: Unzip the artifact containing the PR data
         if: ${{ steps.artifact-check.outputs.exists == 'true' }}
-        run: unzip pr-data.zip
+        run: unzip ./pr-data.zip
 
       - name: Generate Installation Token
         id: generate_token
