@@ -27,10 +27,8 @@ jobs:
   # - Builds WordPress.
   # - Checks for changes to versioned files.
   # - Displays the result of git diff for debugging purposes.
-  # - Creates a directory for storing PR data.
-  # - Saves the patch as a file.
-  # - Saves the PR number to a file.
-  # - Uploads the PR data as an artifact.
+  # - Saves the diff to a patch file.
+  # - Uploads the patch file as an artifact.
   update-built-files:
     name: Check and update built files
     runs-on: ubuntu-24.04

@@ -20,14 +20,10 @@ permissions: {}
 jobs:
   # Checks a PR for uncommitted changes to built files.
   #
-  # This job uses a GitHub App instead of $GITHUB_TOKEN because Dependabot pull requests are only granted
-  # read-only access.
-  #
   # Performs the following steps:
   # - Attempts to download the artifact containing the PR diff.
   # - Checks for the existence of an artifact.
   # - Unzips the artifact.
-  # - Generates a token for authenticating with the GitHub App.
   # - Checks out the repository.
   # - Applies the patch file.
   # - Displays the result of git diff.
@@ -89,42 +85,6 @@ jobs:
         if: ${{ steps.artifact-check.outputs.exists == 'true' }}
         run: unzip pr-built-file-changes.zip
 
-      - name: Generate Installation Token
-        id: generate_token
-        if: ${{ steps.artifact-check.outputs.exists == 'true' }}
-        env:
-          GH_APP_ID: ${{ secrets.GH_APP_ID }}
-          GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
-        run: |
-          echo "$GH_APP_PRIVATE_KEY" > private-key.pem
-
-          # Generate JWT
-          JWT=$(python3 - <<EOF
-          import jwt, time
-          private_key = open("private-key.pem", "r").read()
-          payload = {
-              "iat": int(time.time()),
-              "exp": int(time.time()) + 600,  # 10-minute expiration
-              "iss": $GH_APP_ID
-          }
-          print(jwt.encode(payload, private_key, algorithm="RS256"))
-          EOF
-          )
-
-          # Get Installation ID
-          INSTALLATION_ID=$(curl -s -X GET -H "Authorization: Bearer $JWT" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/app/installations | jq -r '.[0].id')
-
-          # Request Installation Access Token
-          ACCESS_TOKEN=$(curl -s -X POST -H "Authorization: Bearer $JWT" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/app/installations/$INSTALLATION_ID/access_tokens" | jq -r '.token')
-
-          echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> "$GITHUB_ENV"
-
-          rm -f private-key.pem
-
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         if: ${{ steps.artifact-check.outputs.exists == 'true' }}
@@ -148,8 +108,8 @@ jobs:
         if: ${{ steps.artifact-check.outputs.exists == 'true' }}
         working-directory: 'pr-repo'
         run: |
-          git config user.name "test-wp-build-script-commit[bot]"
-          git config user.email ${{ env.GH_APP_ID }}+test-wp-build-script-commit[bot]@users.noreply.github.com
+          git config user.name "WordPress Build Script Bot[bot]"
+          git config user.email wordpress@users.noreply.github.com
 
       - name: Stage changes
         if: ${{ steps.artifact-check.outputs.exists == 'true' }}
