@@ -86,9 +86,9 @@ jobs:
         id: artifact-check
         run: |
           if [ -f "pr-data.zip" ]; then
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          else
             echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: list directory
