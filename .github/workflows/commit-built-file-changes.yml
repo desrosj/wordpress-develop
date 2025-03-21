@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-24.04
     # This prevents an unnecessary second run after changes are committed back because Dependabot always rebases
     # updates and force pushes.
-    if: ${{ true || github.workflow_run.actor != 'dependabot[bot]' || github.event.commits < 2 }}
+    if: ${{ true || github.event.workflow_run.actor != 'dependabot[bot]' || github.event.commits < 2 }}
     timeout-minutes: 10
     permissions:
       contents: write
