@@ -82,11 +82,22 @@ jobs:
         env:
           RUN_ID: ${{ github.event.workflow_run.id }}
 
+      - name: Check for artifact
+        id: artifact-check
+        run: |
+          if [ -f "./pr-data.zip" ]; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Unzip the artifact containing the PR data
+        if: ${{ steps.artifact-check.outputs.exists == 'true' }}
         run: unzip pr-data.zip
 
       - name: Generate Installation Token
         id: generate_token
+        if: ${{ steps.artifact-check.outputs.exists == 'true' }}
         env:
           GH_APP_ID: ${{ secrets.GH_APP_ID }}
           GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
@@ -122,6 +133,7 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        if: ${{ steps.artifact-check.outputs.exists == 'true' }}
         with:
           repository: ${{ github.event.workflow_run.repository.full_name }}
           ref: ${{ github.event.workflow_run.head_branch }}
@@ -129,22 +141,28 @@ jobs:
           token: ${{ env.ACCESS_TOKEN }}
 
       - name: Apply patch
+        if: ${{ steps.artifact-check.outputs.exists == 'true' }}
         run: git apply ../pr-data/patch.diff
 
       - name: Display changes to versioned files
+        if: ${{ steps.artifact-check.outputs.exists == 'true' }}
         run: git diff
 
       - name: Configure git user name and email
+        if: ${{ steps.artifact-check.outputs.exists == 'true' }}
         run: |
           git config user.name "test-wp-build-script-commit[bot]"
           git config user.email ${{ env.GH_APP_ID }}+test-wp-build-script-commit[bot]@users.noreply.github.com
 
       - name: Stage changes
+        if: ${{ steps.artifact-check.outputs.exists == 'true' }}
         run: git add .
 
       - name: Commit changes
+        if: ${{ steps.artifact-check.outputs.exists == 'true' }}
         run: |
           git commit -m "Automation: Updating built files with changes. [dependabot skip]"
 
       - name: Push changes
+        if: ${{ steps.artifact-check.outputs.exists == 'true' }}
         run: git push
