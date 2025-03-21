@@ -1,11 +1,11 @@
-# Checks for uncommitted changes to built files and pushes changes back.
-name: Check built files
+# Checks for uncommitted changes to built files in pull requests.
+name: Check Built Files (PRs)
 
 on:
   # Because all commits happen through SVN and should always be manually reviewed by a committer, this workflow only
   # runs for pull requests.
   #
-  # Other workflows that run on push will detect changes to versioned files and fail.
+  # Other workflows that run for the push event will detect changes to versioned files and fail.
   pull_request:
     branches:
       - trunk
@@ -39,8 +39,8 @@ concurrency:
 permissions: {}
 
 jobs:
-  update-built-files:
-    name: Update built files
+  check-for-built-file-changes:
+    name: Check built files
     if: ${{ github.repository == 'desrosj/wordpress-develop' }}
     uses: ./.github/workflows/reusable-check-built-files.yml
 

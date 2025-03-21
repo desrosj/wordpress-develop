@@ -1,4 +1,4 @@
-# Commits missed changes to built files back to pull request branches.
+# Commits all missed changes to built files back to pull request branches.
 name: Commit Built File Changes (PRs)
 
 on:
@@ -24,19 +24,13 @@ jobs:
   # read-only access.
   #
   # Performs the following steps:
+  # - Attempts to download the artifact containing the PR diff.
+  # - Checks for the existence of an artifact.
+  # - Unzips the artifact.
   # - Generates a token for authenticating with the GitHub App.
   # - Checks out the repository.
-  # - Sets up Node.js.
-  # - Configures caching for Composer.
-  # - Installs Composer dependencies.
-  # - Logs general debug information about the runner.
-  # - Installs npm dependencies.
-  # - Builds CSS file using SASS.
-  # - Builds Emoji files.
-  # - Builds bundled Root Certificate files.
-  # - Builds WordPress.
-  # - Checks for changes to versioned files.
-  # - Displays the result of git diff for debugging purposes.
+  # - Applies the patch file.
+  # - Displays the result of git diff.
   # - Configures the Git author.
   # - Stages changes.
   # - Commits changes.
@@ -131,9 +125,6 @@ jobs:
 
           rm -f private-key.pem
 
-      - name: list directory
-        run: ls -la
-
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         if: ${{ steps.artifact-check.outputs.exists == 'true' }}
@@ -142,10 +133,6 @@ jobs:
           ref: ${{ github.event.workflow_run.head_branch }}
           path: 'pr-repo'
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
-          token: ${{ env.ACCESS_TOKEN }}
-
-      - name: list directory
-        run: ls -la
 
       - name: Apply patch
         if: ${{ steps.artifact-check.outputs.exists == 'true' }}
