@@ -3,7 +3,7 @@ name: Commit Built File Changes (PRs)
 
 on:
   workflow_run:
-    workflows: [ 'Check built files' ]
+    workflows: [ 'Check Built Files (PRs)' ]
     types:
       - completed
 
