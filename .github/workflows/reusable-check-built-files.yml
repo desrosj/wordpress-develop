@@ -11,8 +11,8 @@ permissions: {}
 jobs:
   # Checks a PR for uncommitted changes to built files.
   #
-  # When changes are detected, the patch is stored as an artifact. The Commit Built File Changes workflow runs on
-  # workflow_run, commits, and push the changes back to the pull request for testing purposes.
+  # When changes are detected, the patch is stored as an artifact for processing by the Commit Built File Changes
+  # workflow.
   #
   # Performs the following steps:
   # - Checks out the repository.
@@ -32,9 +32,6 @@ jobs:
   update-built-files:
     name: Check and update built files
     runs-on: ubuntu-24.04
-    # This prevents an unnecessary second run after changes are committed back because Dependabot always rebases
-    # updates and force pushes.
-    if: ${{ github.actor != 'dependabot[bot]' || github.event.commits < 2 }}
     timeout-minutes: 10
     steps:
       - name: Checkout repository
