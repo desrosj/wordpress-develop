@@ -85,7 +85,7 @@ jobs:
       - name: Check for artifact
         id: artifact-check
         run: |
-          if [ -f "./pr-data.zip" ]; then
+          if [ -f "${{ github.workspace }}/pr-data.zip" ]; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
           else
             echo "exists=true" >> "$GITHUB_OUTPUT"
