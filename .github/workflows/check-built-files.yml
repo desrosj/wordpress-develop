@@ -41,6 +41,6 @@ permissions: {}
 jobs:
   update-built-files:
     name: Update built files
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
+    if: ${{ github.repository == 'desrosj/wordpress-develop' }}
     uses: ./.github/workflows/reusable-check-built-files.yml
 
