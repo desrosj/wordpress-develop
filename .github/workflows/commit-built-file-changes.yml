@@ -78,7 +78,7 @@ jobs:
             } );
 
             const fs = require( 'fs' );
-            fs.writeFileSync( '${{ github.workspace }}/pr-built-file-changes.zip', Buffer.from( download.data ) )
+            fs.writeFileSync( '${{ github.workspace }}/artifacts/pr-built-file-changes.zip', Buffer.from( download.data ) )
         env:
           RUN_ID: ${{ github.event.workflow_run.id }}
 
@@ -93,7 +93,7 @@ jobs:
 
       - name: Unzip the artifact containing the PR data
         if: ${{ steps.artifact-check.outputs.exists == 'true' }}
-        run: unzip pr-built-file-changes.zip
+        run: unzip artifacts/pr-built-file-changes.zip
 
       - name: Generate Installation Token
         id: generate_token
@@ -148,7 +148,7 @@ jobs:
 
       - name: Apply patch
         if: ${{ steps.artifact-check.outputs.exists == 'true' }}
-        run: git apply ./pr-built-file-changes/changes.diff
+        run: git apply ./artifacts/changes.diff
 
       - name: Display changes to versioned files
         if: ${{ steps.artifact-check.outputs.exists == 'true' }}
