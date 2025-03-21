@@ -102,14 +102,7 @@ jobs:
 
       - name: Save diff to a file
         if: ${{ steps.built-file-check.outputs.uncommitted_changes == 'true' }}
-        run: git diff > ./pr-data/changes.diff
-
-      - name: Save PR number
-        if: ${{ steps.built-file-check.outputs.uncommitted_changes == 'true' }}
-        run: |
-          echo "${EVENT_NUMBER}" > ./pr-data/NR
-        env:
-          EVENT_NUMBER: ${{ github.event.number }}
+        run: git diff > ./changes.diff
 
       # Uploads the PR number and diff as an artifact for the Commit Built File Changes workflow to download and then
       # commit back for testing.
@@ -117,5 +110,5 @@ jobs:
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         if: ${{ steps.built-file-check.outputs.uncommitted_changes == 'true' }}
         with:
-          name: pr-data
-          path: pr-data/
+          name: pr-built-file-changes
+          path: pr-built-file-changes/
