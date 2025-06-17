@@ -59,7 +59,8 @@ jobs:
               const query = `is:pr is:open repo:${ context.repo.owner }/${ context.repo.repo } in:body ${ tracTicketUrl } OR ${ corePrefix }`;
               const result = await github.rest.search.issues({ q: query });
 
-              console.debug( result );
+              console.log( query );
+              console.log( JSON.stringify(result) );
               prNumbers = prNumbers.concat(result.data.items.map(pr => pr.number));
             }
             return prNumbers;
