@@ -65,7 +65,7 @@ jobs:
             return prNumbers;
 
       - name: Comment and close pull requests
-        if: ${{ steps.trac-tickets.outputs.fixed_list != '' && steps.git-svn-id.outputs.svn_revision_number != '' }}
+        if: ${{ true }}
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
