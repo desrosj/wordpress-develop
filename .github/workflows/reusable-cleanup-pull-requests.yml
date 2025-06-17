@@ -53,16 +53,15 @@ jobs:
 
             let prNumbers = [];
 
-            for (const ticket of fixedList) {
-              const tracTicketUrl = `https://core.trac.wordpress.org/ticket/1234`;
-              const corePrefix = `Core-${ ticket }`;
-              const query = `is:pr is:open repo:${ context.repo.owner }/${ context.repo.repo } in:body ${ tracTicketUrl } OR ${ corePrefix }`;
-              const result = await github.rest.search.issues({ q: query });
+            const tracTicketUrl = `https://core.trac.wordpress.org/ticket/1234`;
+            const corePrefix = `Core-${ ticket }`;
+            const query = `is:pr is:open repo:${ context.repo.owner }/${ context.repo.repo } in:body ${ tracTicketUrl } OR ${ corePrefix }`;
+            const result = await github.rest.search.issues({ q: query });
 
-              console.log( query );
-              console.log( JSON.stringify(result) );
-              prNumbers = prNumbers.concat(result.data.items.map(pr => pr.number));
-            }
+            console.log( query );
+            console.log( JSON.stringify(result) );
+            prNumbers = prNumbers.concat(result.data.items.map(pr => pr.number));
+            
             return prNumbers;
 
       - name: Comment and close pull requests
