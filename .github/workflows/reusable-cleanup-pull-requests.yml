@@ -54,7 +54,7 @@ jobs:
             let prNumbers = [];
 
             const tracTicketUrl = `https://core.trac.wordpress.org/ticket/1234`;
-            const corePrefix = `Core-${ ticket }`;
+            const corePrefix = `Core-1234`;
             const query = `is:pr is:open repo:${ context.repo.owner }/${ context.repo.repo } in:body ${ tracTicketUrl } OR ${ corePrefix }`;
             const result = await github.rest.search.issues({ q: query, advanced_search: 'true' });
 
