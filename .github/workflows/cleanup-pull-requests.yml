@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - trunk
+      - 'temp-test'
       - '4.[1-9]'
       - '[5-9].[0-9]'
 
@@ -24,5 +25,5 @@ jobs:
     name: Clean up pull requests
     permissions:
       pull-requests: write
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
+    if: ${{ github.repository == 'desrosj/wordpress-develop' }}
     uses: ./.github/workflows/reusable-cleanup-pull-requests.yml
