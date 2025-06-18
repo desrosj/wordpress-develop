@@ -55,7 +55,7 @@ jobs:
 
             const tracTicketUrl = `https://core.trac.wordpress.org/ticket/1234`;
             const corePrefix = `Core-1234`;
-            const query = `is:pr is:open repo:${ context.repo.owner }/${ context.repo.repo } in:body ${ tracTicketUrl } OR ${ corePrefix }`;
+            const query = `is:pr is:open repo:desrosj/wordpress-develop in:body ${ tracTicketUrl } OR ${ corePrefix }`;
             const result = await github.request("GET /search/issues", {
               q: query,
               advanced_search: true,
@@ -68,7 +68,7 @@ jobs:
             return prNumbers;
 
       - name: Comment and close pull requests
-        if: ${{ true }}
+        if: ${{ false }}
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
