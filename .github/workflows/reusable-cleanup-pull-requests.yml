@@ -59,8 +59,10 @@ jobs:
             const result = await github.request("GET /search/issues", {
               q: query,
               advanced_search: true,
-              per_page: 50,
+              per_page: 1,
             });
+
+            console.log( query );
 
             console.log( result.data.items );
             prNumbers = prNumbers.concat(result.data.items.map(pr => pr.number));
