@@ -55,7 +55,7 @@ jobs:
 
             const tracTicketUrl = `https://core.trac.wordpress.org/ticket/1234`;
             const corePrefix = `Core-1234`;
-            const query = `is:pr is:open repo:desrosj/wordpress-develop in:body ${ tracTicketUrl } OR ${ corePrefix }`;
+            const query = `is:pr is:open repo:desrosj/wordpress-develop in:body "${ tracTicketUrl }" OR "${ corePrefix }"`;
             const result = await github.request("GET /search/issues", {
               q: query,
               advanced_search: true,
