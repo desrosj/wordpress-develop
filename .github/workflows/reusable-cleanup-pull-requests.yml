@@ -78,6 +78,7 @@ jobs:
             const matchingPRs = result.search.nodes.map(pr => pr.number);
             prNumbers.push(...matchingPRs);
             console.log( result );
+            console.log( result.search.nodes );
             console.log( query );
             console.log( prNumbers );
 
