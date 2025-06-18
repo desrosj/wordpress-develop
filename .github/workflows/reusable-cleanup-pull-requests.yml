@@ -69,7 +69,7 @@ jobs:
               }
             `;
 
-            const searchQuery = `repo:${context.repo.owner}/${context.repo.repo} is:pr is:open in:body "${tracTicketUrl}" OR "${corePrefix}"`;
+            const searchQuery = `repo:${context.repo.owner}/${context.repo.repo} is:pr is:open in:body ( "${tracTicketUrl}" OR "${corePrefix}" )`;
 
             const result = await github.graphql(query, {
               searchQuery,
