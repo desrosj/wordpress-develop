@@ -60,6 +60,7 @@ jobs:
                 search(query: $searchQuery, type: ISSUE_ADVANCED, first: 20) {
                   nodes {
                     ... on PullRequest {
+                      title
                       number
                       state
                     }
@@ -76,7 +77,7 @@ jobs:
 
             const matchingPRs = result.search.nodes.map(pr => pr.number);
             prNumbers.push(...matchingPRs);
-
+            console.log( result );
             console.log( query );
             console.log( prNumbers );
 
