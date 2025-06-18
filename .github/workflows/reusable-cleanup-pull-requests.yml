@@ -62,8 +62,7 @@ jobs:
               per_page: 50,
             });
 
-            console.log( query );
-            console.log( JSON.stringify(result) );
+            console.log( result.data.items );
             prNumbers = prNumbers.concat(result.data.items.map(pr => pr.number));
 
             return prNumbers;
