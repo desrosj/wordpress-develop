@@ -127,3 +127,34 @@ updates:
           - "lodash"
           - "moment"
           - "underscore"
+
+  # Monitor npm dependencies within default themes
+  - package-ecosystem: "npm"
+    directory: "/src/wp-content/themes/twentytwentyone"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 20
+    groups:
+      twentytwentyone:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "npm"
+    directory: "/src/wp-content/themes/twentytwenty"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 20
+    groups:
+      twentytwenty:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "npm"
+    directory: "/src/wp-content/themes/twentynineteen"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 20
+    groups:
+      twentynineteen:
+        patterns:
+          - "*"
