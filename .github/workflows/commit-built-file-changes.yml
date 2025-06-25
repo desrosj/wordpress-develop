@@ -3,7 +3,9 @@ name: Commit Built File Changes (PRs)
 
 on:
   workflow_run:
-    workflows: [ 'Check Built Files (PRs)' ]
+    workflows:
+      - 'Check Built Files (PRs)'
+      - 'Test Default Themes & Create ZIPs'
     types:
       - completed
 
@@ -35,7 +37,7 @@ jobs:
   update-built-files:
     name: Check and update built files
     runs-on: ubuntu-24.04
-    if: ${{ github.repository == 'wordpress/wordpress-develop' }}
+    if: ${{ github.repository == 'desrosj/wordpress-develop' }}
     timeout-minutes: 10
     permissions:
       contents: write
