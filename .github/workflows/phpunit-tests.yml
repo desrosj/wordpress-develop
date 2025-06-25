@@ -129,7 +129,7 @@ jobs:
   # Creates a PHPUnit test job for each PHP/MariaDB combination.
   #
   # All LTS versions of MariaDB supported by WordPress with greater than 1% usage according to w.org/stats should be
-  # tested. The exceptions to this rule are the latest LTS and version 5.5.
+  # tested. The exceptions to this rule are the most recent LTS and version 5.5.
   #
   # The 5.5 release was intended as a drop-in replacement for MySQL. Because the MySQL 5.5 Docker containers do not
   # work, this ensures some level of MySQL 5.5 testing.
