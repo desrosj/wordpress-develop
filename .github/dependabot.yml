@@ -135,20 +135,20 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 20
     groups:
-      sass-css:
+      twentytwentyone-sass-css:
         patterns:
           - "**browserslist*"
           - "autoprefixer"
           - "*css*"
           - "*sass*"
           - "!*stylelint*"
-      eslint:
+      twentytwentyone-eslint:
         patterns:
           - "**eslint*"
-      stylelint:
+      twentytwentyone-stylelint:
         patterns:
           - "**stylelint*"
-      miscellaneous:
+      twentytwentyone-miscellaneous:
         patterns:
           - "chokidar-cli"
           - "minimist"
@@ -160,15 +160,15 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 20
     groups:
-      css:
+      twentytwenty-css:
         patterns:
           - "**browserslist*"
           - "autoprefixer"
           - "*css*"
-      stylelint:
+      twentytwenty-stylelint:
         patterns:
           - "*stylelint*"
-      miscellaneous:
+      twentytwenty-miscellaneous:
         patterns:
           - "concurrently"
           - "@wordpress/scripts"
@@ -179,13 +179,13 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 20
     groups:
-      css-sass:
+      twentynineteen-css-sass:
         patterns:
           - "**browserslist*"
           - "autoprefixer"
           - "*css*"
           - "*sass*"
-      miscellaneous:
+      twentynineteen-miscellaneous:
         patterns:
           - "chokidar-cli"
           - "npm-run-all"
