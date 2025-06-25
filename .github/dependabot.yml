@@ -162,7 +162,16 @@ updates:
     groups:
       css:
         patterns:
-          - "*postcss*"
+          - "**browserslist*"
+          - "autoprefixer"
+          - "*css*"
+      stylelint:
+        patterns:
+          - "*stylelint*"
+      miscellaneous:
+        include:
+          - "concurrently"
+          - "@wordpress/scripts"
 
   - package-ecosystem: "npm"
     directory: "/src/wp-content/themes/twentynineteen"
