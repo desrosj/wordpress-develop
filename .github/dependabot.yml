@@ -149,7 +149,7 @@ updates:
         patterns:
           - "**stylelint*"
       miscellaneous:
-        include:
+        patterns:
           - "chokidar-cli"
           - "minimist"
           - "npm-run-all"
@@ -169,7 +169,7 @@ updates:
         patterns:
           - "*stylelint*"
       miscellaneous:
-        include:
+        patterns:
           - "concurrently"
           - "@wordpress/scripts"
 
@@ -186,6 +186,6 @@ updates:
           - "*css*"
           - "*sass*"
       miscellaneous:
-        include:
+        patterns:
           - "chokidar-cli"
           - "npm-run-all"
