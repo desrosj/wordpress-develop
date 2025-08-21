@@ -27,7 +27,7 @@ jobs:
   # - Ensures version-controlled files are not modified or deleted.
   jshint:
     name: JavaScript checks
-    runs-on: ubuntu-24.04
+    runs-on: self-hosted
     permissions:
       contents: read
     timeout-minutes: 20
