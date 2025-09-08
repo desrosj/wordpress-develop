@@ -173,7 +173,7 @@ jobs:
         run: wp config set DB_NAME wordpress_develop_tests --config-file=wp-tests-config.php
 
       - name: Change DB_USER value
-        run: wp config set DB_USER 127.0.0.1:${{ job.services.database.ports['3306'] }} --config-file=wp-tests-config.php
+        run: wp config set DB_USER root --config-file=wp-tests-config.php
 
       - name: Change DB_PASSWORD value
         run: wp config set DB_PASSWORD password --config-file=wp-tests-config.php
