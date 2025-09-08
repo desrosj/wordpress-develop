@@ -124,7 +124,7 @@ jobs:
           --health-retries="5"
           -e MYSQL_ROOT_PASSWORD="password"
           -e MYSQL_DATABASE="wordpress_develop_tests"
-          ${{ inputs.db-type == 'mysql' && contains( fromJSON('["7.2", "7.3"]'), inputs.php ) && '--entrypoint="sh -c \"exec docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password\""' || '' }}
+          ${{ inputs.db-type == 'mysql' && contains( fromJSON('["7.2", "7.3"]'), inputs.php ) && '--entrypoint sh -- -c "exec docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"' || '' }}
 
     steps:
       - name: Checkout repository
