@@ -127,6 +127,8 @@ jobs:
           --health-interval="30s"
           --health-timeout="10s"
           --health-retries="5"
+          ${{ inputs.db-type == 'mysql' && contains( fromJSON('["7.2", "7.3"]'), inputs.php ) && inputs.db-version == '8.4' && '--authentication-policy=mysql_native_password' || '' }}
+          ${{ inputs.db-type == 'mysql' && contains( fromJSON('["7.2", "7.3"]'), inputs.php ) && inputs.db-version != '8.4' && '--default-authentication-plugin=mysql_native_password' || '' }}
 
     steps:
       - name: Checkout repository
