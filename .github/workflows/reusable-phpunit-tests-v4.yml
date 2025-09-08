@@ -51,7 +51,7 @@ on:
         description: 'A list of test groups to run.'
         required: false
         type: 'string'
-        default: ''
+        default: 'media'
       tests-domain:
         description: 'The domain to use for the tests'
         required: false
