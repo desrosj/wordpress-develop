@@ -118,7 +118,7 @@ jobs:
         ports:
           - 3306
         options: >-
-          --health-cmd="${{ inputs.db-type == 'mariadb' && ! contains( fromJSON( '["5.5", "10.0", "10.1", "10.2", "10.3"]' ), inputs.db-version ) && 'mariadb-admin ping -h 127.0.0.1' || 'mysqladmin ping -h 127.0.0.1' }}
+          --health-cmd="${{ inputs.db-type == 'mariadb' && ! contains( fromJSON( '["5.5", "10.0", "10.1", "10.2", "10.3"]' ), inputs.db-version ) && 'mariadb-admin ping' || 'mysqladmin ping' }}
           --health-interval="30s"
           --health-timeout="10s"
           --health-retries="5"
