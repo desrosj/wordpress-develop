@@ -136,9 +136,29 @@ jobs:
           ${{ inputs.db-type == 'mysql' && contains( fromJSON('["7.2", "7.3"]'), inputs.php ) && inputs.db-version != '8.4' && '--default-authentication-plugin=mysql_native_password' || '' }}
 
     steps:
-      - name: Install ImageMagick
+      - name: Install ImageMagick with AVIF support
         if: ${{ inputs.install-imagemagick }}
-        run: sudo apt-get update && sudo apt-get install -y imagemagick
+        run: |
+          sudo apt-get remove --purge -y imagemagick imagemagick-6-common libmagickcore-6* libmagickwand-6*
+          sudo apt-get autoremove -y
+          which magick || echo "ImageMagick removed"
+          sudo apt-get update
+          sudo apt-get install -y \
+          build-essential pkg-config autoconf automake libtool \
+          libjpeg-dev libpng-dev libtiff-dev zlib1g-dev \
+          libheif-dev libaom-dev libdav1d-dev libde265-dev
+          curl -fsSL https://imagemagick.org/archive/ImageMagick.tar.gz | tar xz
+          cd ImageMagick-*
+          ./configure --with-heic=yes
+          make -j"$(nproc)"
+          sudo make install
+          sudo ldconfig
+
+      - name: Confirm AVIF support
+        run: magick -version | grep Delegates
+
+      - name: Confirm image format support
+        run: magick -list format
 
       - name: Log PHP debugging information
         run: php -i
