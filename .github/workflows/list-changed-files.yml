@@ -29,11 +29,26 @@ permissions: {}
 
 jobs:
   changed-files:
-    name: Generate changed file list
+    name: ${{ matrix.description }} files between tags ${{ matrix.old_tag }} and ${{ matrix.new_tag }}
     runs-on: 'ubuntu-24.04'
     permissions:
       contents: read
     if: ${{ github.repository == 'WordPress/wordpress-develop' || true }}
+    strategy:
+      matrix:
+        new_tag: '6.8.0'
+        old_tag: '6.7.3'
+        pattern: [ 'A', 'D', 'M', 'R' ]
+
+        include:
+          - pattern: 'A'
+            description: 'Added'
+          - pattern: 'D'
+            description: 'Deleted'
+          - pattern: 'M'
+            description: 'Modified'
+          - pattern: 'R'
+            description: 'Renamed'
 
     steps:
       - name: Checkout repository
@@ -44,14 +59,10 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: List added files
-        run: echo "$(git diff --name-status 6.7.3...6.8.0 | grep -E '^(A)' | cut -c3-)" >> $GITHUB_STEP_SUMMARY
-
-      - name: List deleted files
-        run: echo "$(git diff --name-status 6.7.3...6.8.0 | grep -E '^(D)' | cut -c3-)" >> $GITHUB_STEP_SUMMARY
-
-      - name: List modified files
-        run: echo "$(git diff --name-status 6.7.3...6.8.0 | grep -E '^(M)' | cut -c3-)" >> $GITHUB_STEP_SUMMARY
+      - name: Generate file list
+        env:
+          PATTERN: ${{ matrix.pattern }}
+        run: echo "$(git diff --name-status 6.7.3...6.8.0 | grep -E '^($PATTERN)' | cut -c3-)" >> $GITHUB_STEP_SUMMARY
 
   slack-notifications:
     name: Slack Notifications
