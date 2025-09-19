@@ -45,13 +45,13 @@ jobs:
           persist-credentials: false
 
       - name: List added files
-        run: echo "$(git diff --name-status 6.7.3...6.8 | grep -E '^(A)' | cut -c3-)" >> $GITHUB_STEP_SUMMARY
+        run: echo "$(git diff --name-status 6.7.3...6.8.0 | grep -E '^(A)' | cut -c3-)" >> $GITHUB_STEP_SUMMARY
 
       - name: List deleted files
-        run: echo "$(git diff --name-status 6.7.3...6.8 | grep -E '^(D)' | cut -c3-)" >> $GITHUB_STEP_SUMMARY
+        run: echo "$(git diff --name-status 6.7.3...6.8.0 | grep -E '^(D)' | cut -c3-)" >> $GITHUB_STEP_SUMMARY
 
       - name: List modified files
-        run: echo "$(git diff --name-status 6.7.3...6.8 | grep -E '^(M)' | cut -c3-)" >> $GITHUB_STEP_SUMMARY
+        run: echo "$(git diff --name-status 6.7.3...6.8.0 | grep -E '^(M)' | cut -c3-)" >> $GITHUB_STEP_SUMMARY
 
   slack-notifications:
     name: Slack Notifications
