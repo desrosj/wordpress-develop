@@ -66,11 +66,11 @@ jobs:
           NEW_TAG: ${{ matrix.new_tag }}
           OLD_TAG: ${{ matrix.old_tag }}
         run: |
-          DIFF_OUTPUT=$(git diff --name-status $OLD_TAG...$NEW_TAG | grep -E "^($PATTERN)" | cut -c3-)
+          DIFF_OUTPUT=$(git diff --name-status "$OLD_TAG"..."$NEW_TAG" | grep -E "^($PATTERN)" | cut -c3-)
           if [ -n "$DIFF_OUTPUT" ]; then
-            echo "$DIFF_OUTPUT" >> $GITHUB_STEP_SUMMARY
+            echo "$DIFF_OUTPUT" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "No files $DESCRIPTION found" >> $GITHUB_STEP_SUMMARY
+            echo "No files $DESCRIPTION found" >> "$GITHUB_STEP_SUMMARY"
           fi
 
   slack-notifications:
