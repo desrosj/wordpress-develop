@@ -36,8 +36,8 @@ jobs:
     if: ${{ github.repository == 'WordPress/wordpress-develop' || true }}
     strategy:
       matrix:
-        new_tag: '6.8.0'
-        old_tag: '6.7.3'
+        new_tag: [ '6.8.0' ]
+        old_tag: [ '6.7.3' ]
         pattern: [ 'A', 'D', 'M', 'R' ]
 
         include:
@@ -62,7 +62,9 @@ jobs:
       - name: Generate file list
         env:
           PATTERN: ${{ matrix.pattern }}
-        run: echo "$(git diff --name-status 6.7.3...6.8.0 | grep -E '^($PATTERN)' | cut -c3-)" >> $GITHUB_STEP_SUMMARY
+          NEW_TAG: ${{ matrix.new_tag }}
+          OLD_TAG: ${{ matrix.old_tag }}
+        run: echo "$(git diff --name-status $OLD_TAG...$NEW_TAG | grep -E '^($PATTERN)' | cut -c3-)" >> $GITHUB_STEP_SUMMARY
 
   slack-notifications:
     name: Slack Notifications
