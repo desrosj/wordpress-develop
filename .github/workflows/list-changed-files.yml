@@ -68,7 +68,11 @@ jobs:
         run: |
           DIFF_OUTPUT=$(git diff --name-status "$OLD_TAG"..."$NEW_TAG" | grep -E "^($PATTERN)" | cut -c3-)
           if [ -n "$DIFF_OUTPUT" ]; then
-            echo "```$DIFF_OUTPUT```" >> "$GITHUB_STEP_SUMMARY"
+            cat << EOF >> "$GITHUB_STEP_SUMMARY"
+          \`\`\`
+          $DIFF_OUTPUT
+          \`\`\`
+          EOF
           else
             echo "No files $DESCRIPTION found" >> "$GITHUB_STEP_SUMMARY"
           fi
