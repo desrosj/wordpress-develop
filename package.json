@@ -78,7 +78,7 @@
 		"webpack-livereload-plugin": "3.0.2"
 	},
 	"dependencies": {
-		"@wordpress/a11y": "4.8.2",
+		"@wordpress/a11y": "4.8.3",
 		"@wordpress/annotations": "3.8.3",
 		"@wordpress/api-fetch": "7.8.2",
 		"@wordpress/autop": "4.8.1",
