@@ -122,7 +122,10 @@ updates:
         patterns:
           - "backbone"
           - "clipboard"
+          - "codemirror"
+          - "espree"
           - "hoverintent"
+          - "htmlhint"
           - "json2php"
           - "lodash"
           - "moment"
