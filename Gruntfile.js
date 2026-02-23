@@ -1491,17 +1491,6 @@ module.exports = function(grunt) {
 		} );
 	} );
 
-	grunt.registerTask( 'gutenberg-sync', 'Syncs Gutenberg checkout and build if ref has changed.', function() {
-		const done = this.async();
-		grunt.util.spawn( {
-			cmd: 'node',
-			args: [ 'tools/gutenberg/sync-gutenberg.js' ],
-			opts: { stdio: 'inherit' }
-		}, function( error ) {
-			done( ! error );
-		} );
-	} );
-
 	grunt.registerTask( 'copy-vendor-scripts', 'Copies vendor scripts from node_modules to wp-includes/js/dist/vendor/.', function() {
 		const done = this.async();
 		const buildDir = grunt.option( 'dev' ) ? 'src' : 'build';
