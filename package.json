@@ -8,7 +8,7 @@
 	},
 	"gutenberg": {
 		"sha": "e0c5fc81de25a4f837c063ca2c2db32d74698a49",
-		"ghcrRepo": "Gdesrosj/gutenberg/gutenberg-build"
+		"ghcrRepo": "desrosj/gutenberg/gutenberg-build"
 	},
 	"engines": {
 		"node": ">=20.10.0",
