@@ -1468,11 +1468,11 @@ module.exports = function(grunt) {
 	} );
 
 	// Gutenberg integration tasks.
-	grunt.registerTask( 'gutenberg-checkout', 'Checks out the Gutenberg repository.', function() {
+	grunt.registerTask( 'gutenberg-download', 'Downloads the Gutenberg build artifact.', function() {
 		const done = this.async();
 		grunt.util.spawn( {
 			cmd: 'node',
-			args: [ 'tools/gutenberg/checkout-gutenberg.js' ],
+			args: [ 'tools/gutenberg/download-gutenberg.js' ],
 			opts: { stdio: 'inherit' }
 		}, function( error ) {
 			done( ! error );
@@ -1932,7 +1932,7 @@ module.exports = function(grunt) {
 				'build:js',
 				'build:css',
 				'build:codemirror',
-				'gutenberg-sync',
+				'gutenberg-download',
 				'gutenberg-copy',
 				'copy-vendor-scripts',
 				'build:certificates'
@@ -1944,7 +1944,7 @@ module.exports = function(grunt) {
 				'build:js',
 				'build:css',
 				'build:codemirror',
-				'gutenberg-sync',
+				'gutenberg-download',
 				'gutenberg-copy',
 				'copy-vendor-scripts',
 				'replace:source-maps',
