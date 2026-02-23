@@ -1479,17 +1479,6 @@ module.exports = function(grunt) {
 		} );
 	} );
 
-	grunt.registerTask( 'gutenberg-build', 'Builds the Gutenberg repository.', function() {
-		const done = this.async();
-		grunt.util.spawn( {
-			cmd: 'node',
-			args: [ 'tools/gutenberg/build-gutenberg.js' ],
-			opts: { stdio: 'inherit' }
-		}, function( error ) {
-			done( ! error );
-		} );
-	} );
-
 	grunt.registerTask( 'gutenberg-copy', 'Copies Gutenberg build output to WordPress Core.', function() {
 		const done = this.async();
 		const buildDir = grunt.option( 'dev' ) ? 'src' : 'build';
