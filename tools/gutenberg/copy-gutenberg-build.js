@@ -266,6 +266,7 @@ function copyBlockAssets( config ) {
 				const phpDest = path.join(
 					wpIncludesDir,
 					config.destination,
+					blockName,
 					`${ blockName }.php`
 				);
 				fs.copyFileSync( blockPhpSrc, phpDest );
