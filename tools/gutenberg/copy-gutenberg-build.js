@@ -274,9 +274,10 @@ function copyBlockAssets( config ) {
 			// 4. Copy PHP subdirectories from build (e.g., navigation-link/shared/*.php)
 			const blockPhpDir = path.join( phpSrc, blockName );
 			if ( fs.existsSync( blockPhpDir ) ) {
+				const rootIndex = path.join( blockPhpDir, 'index.php' );
 				fs.cpSync( blockPhpDir, blockDest, {
 					recursive: true,
-					filter: function hasPhpFiles( src ) => {
+					filter: function hasPhpFiles( src ) {
 						const stat = fs.statSync( src );
 						if ( stat.isDirectory() ) {
 							return fs.readdirSync( src, { withFileTypes: true } ).some(
