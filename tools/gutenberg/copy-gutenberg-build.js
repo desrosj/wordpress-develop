@@ -261,7 +261,7 @@ function copyBlockAssets( config ) {
 			}
 
 			// 3. Copy PHP from build
-			const blockPhpSrc = path.join( phpSrc, blockName, 'index.php' );
+			const blockPhpSrc = path.join( phpSrc, `${ blockName }.php` );
 			if ( fs.existsSync( blockPhpSrc ) ) {
 				const phpDest = path.join(
 					wpIncludesDir,
