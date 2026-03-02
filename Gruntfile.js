@@ -1493,6 +1493,32 @@ module.exports = function(grunt) {
 		} );
 	} );
 
+	grunt.registerTask( 'gutenberg:checkout', 'Clones the Gutenberg git repository at the SHA specified in package.json (local repository mode only).', function() {
+		const done = this.async();
+		const args = [ 'tools/gutenberg/checkout-gutenberg.js' ];
+		if ( grunt.option( 'force' ) ) {
+			args.push( '--force' );
+		}
+		grunt.util.spawn( {
+			cmd: 'node',
+			args,
+			opts: { stdio: 'inherit' }
+		}, function( error ) {
+			done( ! error );
+		} );
+	} );
+
+	grunt.registerTask( 'gutenberg:build', 'Builds Gutenberg from source for WordPress Core (local repository mode only).', function() {
+		const done = this.async();
+		grunt.util.spawn( {
+			cmd: 'node',
+			args: [ 'tools/gutenberg/build-gutenberg.js' ],
+			opts: { stdio: 'inherit' }
+		}, function( error ) {
+			done( ! error );
+		} );
+	} );
+
 	grunt.registerTask( 'gutenberg:copy', 'Copies Gutenberg build output to WordPress Core.', function() {
 		const done = this.async();
 		const buildDir = grunt.option( 'dev' ) ? 'src' : 'build';
@@ -1947,6 +1973,7 @@ module.exports = function(grunt) {
 				'build:js',
 				'build:css',
 				'build:codemirror',
+				'gutenberg:build',
 				'gutenberg:copy',
 				'copy-vendor-scripts',
 				'build:certificates'
@@ -1959,6 +1986,7 @@ module.exports = function(grunt) {
 				'build:js',
 				'build:css',
 				'build:codemirror',
+				'gutenberg:build',
 				'gutenberg:copy',
 				'copy-vendor-scripts',
 				'replace:source-maps',

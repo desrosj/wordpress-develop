@@ -867,7 +867,8 @@ async function main() {
 	// Verify Gutenberg build exists
 	if ( ! fs.existsSync( gutenbergBuildDir ) ) {
 		console.error( '❌ Gutenberg build directory not found' );
-		console.error( '   Run: node tools/gutenberg/build-gutenberg.js' );
+		console.error( '   In local repository mode: run `npm run grunt gutenberg:build`' );
+		console.error( '   In default mode:          run `npm run grunt gutenberg:download`' );
 		process.exit( 1 );
 	}
 

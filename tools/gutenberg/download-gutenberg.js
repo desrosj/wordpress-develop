@@ -17,7 +17,7 @@ const { spawn } = require( 'child_process' );
 const fs = require( 'fs' );
 const { pipeline } = require( 'stream/promises' );
 const path = require( 'path' );
-const { rootDir, gutenbergDir, readGutenbergConfig, verifyGutenbergVersion } = require( './gutenberg-utils' );
+const { rootDir, gutenbergDir, readGutenbergConfig, verifyGutenbergVersion, isLocalRepoMode } = require( './gutenberg-utils' );
 
 /**
  * Execute a command. By default, stdio is inherited so progress is visible in
@@ -68,6 +68,12 @@ function exec( command, args, options = {} ) {
  * @param {boolean} force - Whether to force a fresh download even if the gutenberg directory exists.
  */
 async function main( force ) {
+	if ( isLocalRepoMode() ) {
+		console.log( 'ℹ️  Skipping Gutenberg download: GUTENBERG_LOCAL_REPO=true is set.' );
+		console.log( '   Use `npm run grunt gutenberg:checkout` to set up the local repository.' );
+		return;
+	}
+
 	console.log( '🔍 Checking Gutenberg configuration...' );
 
 	/*

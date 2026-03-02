@@ -43,6 +43,7 @@ wp-tests-config.php
 /src/wp-includes/theme.json
 /packagehash.txt
 /.gutenberg-hash
+/.gutenberg-dir-hash
 /artifacts
 /setup.log
 /coverage
