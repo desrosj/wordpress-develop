@@ -1478,7 +1478,7 @@ module.exports = function(grunt) {
 		} );
 	} );
 
-	grunt.registerTask( 'gutenberg-download', 'Downloads the built Gutenberg artifact.', function() {
+	grunt.registerTask( 'gutenberg:download', 'Downloads the built Gutenberg artifact.', function() {
 		const done = this.async();
 		const args = [ 'tools/gutenberg/download-gutenberg.js' ];
 		if ( grunt.option( 'force' ) ) {
@@ -1493,7 +1493,7 @@ module.exports = function(grunt) {
 		} );
 	} );
 
-	grunt.registerTask( 'gutenberg-copy', 'Copies Gutenberg build output to WordPress Core.', function() {
+	grunt.registerTask( 'gutenberg:copy', 'Copies Gutenberg build output to WordPress Core.', function() {
 		const done = this.async();
 		const buildDir = grunt.option( 'dev' ) ? 'src' : 'build';
 		grunt.util.spawn( {
@@ -1947,7 +1947,7 @@ module.exports = function(grunt) {
 				'build:js',
 				'build:css',
 				'build:codemirror',
-				'gutenberg-copy',
+				'gutenberg:copy',
 				'copy-vendor-scripts',
 				'build:certificates'
 			] );
@@ -1959,7 +1959,7 @@ module.exports = function(grunt) {
 				'build:js',
 				'build:css',
 				'build:codemirror',
-				'gutenberg-copy',
+				'gutenberg:copy',
 				'copy-vendor-scripts',
 				'replace:source-maps',
 				'verify:build'
