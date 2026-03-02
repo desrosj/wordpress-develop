@@ -9,12 +9,14 @@
  * @package WordPress
  */
 
+const crypto = require( 'crypto' );
 const fs = require( 'fs' );
 const path = require( 'path' );
 
 // Paths
 const rootDir = path.resolve( __dirname, '../..' );
 const gutenbergDir = path.join( rootDir, 'gutenberg' );
+const gutenbergDirHashFile = path.join( rootDir, '.gutenberg-dir-hash' );
 
 /**
  * Read Gutenberg configuration from package.json.
@@ -75,8 +77,75 @@ function verifyGutenbergVersion() {
 	console.log( '✅ Version verified' );
 }
 
-module.exports = { rootDir, gutenbergDir, readGutenbergConfig, verifyGutenbergVersion };
+/**
+ * Calculate a hash of the Gutenberg directory and all its contents.
+ *
+ * This stores the hash of the Gutenberg directory in a `.gutenberg-hash` file
+ * to track when changes have been made to those files locally.
+ *
+ * Files are processed in sorted order so the result is deterministic. The hash
+ * incorporates each file's relative path and its contents.
+ */
+function hashGutenbergDir() {
+	const hash = crypto.createHash( 'sha256' );
+
+	/**
+	 * Recursively collect all file paths under a directory, sorted.
+	 *
+	 * @param {string} dir - Directory to walk.
+	 * @return {string[]} Sorted list of absolute file paths.
+	 */
+	function collectFiles( dir ) {
+		const files = [];
+		for ( const entry of fs.readdirSync( dir, { withFileTypes: true } ).sort( ( a, b ) => a.name.localeCompare( b.name ) ) ) {
+			const fullPath = path.join( dir, entry.name );
+			if ( entry.isDirectory() ) {
+				files.push( ...collectFiles( fullPath ) );
+			} else {
+				files.push( fullPath );
+			}
+		}
+		return files;
+	}
+
+	for ( const filePath of collectFiles( gutenbergDir ) ) {
+		// Hash the relative path so the result is location-independent.
+		hash.update( path.relative( gutenbergDir, filePath ) );
+		hash.update( fs.readFileSync( filePath ) );
+	}
+
+	const digest = hash.digest( 'hex' );
+	fs.writeFileSync( gutenbergDirHashFile, digest );
+	return digest;
+}
+
+/**
+ * Checks for changes to the local gutenberg directory.
+ *
+ * This detects changes to the local gutenberg directory that have occurred since
+ * the directory was created, which may cause unexpected results.
+ */
+function checkGutenbergDirHash() {
+	if ( ! fs.existsSync( gutenbergDirHashFile ) ) {
+		console.warn( '⚠️  .gutenberg-dir-hash not found. Files in the gutenberg directory may have changed since downloading.' );
+		return;
+	}
+
+	const storedHash = fs.readFileSync( gutenbergDirHashFile, 'utf8' ).trim();
+	const currentHash = hashGutenbergDir();
+
+	if ( currentHash !== storedHash ) {
+		console.warn( '⚠️  The gutenberg directory has changed since the last copy. The build scripts may produce unexpected results.' );
+		return;
+	}
+
+	console.log( '✅ The contents of the gutenberg directory have not been modified.' );
+}
+
+module.exports = { rootDir, gutenbergDir, readGutenbergConfig, verifyGutenbergVersion, hashGutenbergDir, checkGutenbergDirHash };
 
 if ( require.main === module ) {
 	verifyGutenbergVersion();
+
+	checkGutenbergDirHash();
 }
