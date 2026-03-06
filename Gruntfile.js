@@ -1429,20 +1429,15 @@ module.exports = function(grunt) {
 					},
 					{
 						expand: true,
-						flatten: true,
-						src: [
-							BUILD_DIR + 'wp-includes/js/dist/block-editor.js',
-							BUILD_DIR + 'wp-includes/js/dist/commands.js',
-						],
-						dest: BUILD_DIR + 'wp-includes/js/dist/'
+						cwd: BUILD_DIR + 'wp-includes/js/dist/',
+						src: [ '*.js' ],
+						dest: BUILD_DIR + 'wp-includes/js/dist/',
 					},
 					{
 						expand: true,
-						flatten: true,
-						src: [
-							BUILD_DIR + 'wp-includes/js/dist/vendor/**/*.js'
-						],
-						dest: BUILD_DIR + 'wp-includes/js/dist/vendor/'
+						cwd: BUILD_DIR + 'wp-includes/js/dist/vendor/',
+						src: [ '**/*.js' ],
+						dest: BUILD_DIR + 'wp-includes/js/dist/vendor/',
 					},
 					{
 						expand: true,

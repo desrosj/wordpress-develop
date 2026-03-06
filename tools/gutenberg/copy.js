@@ -856,15 +856,6 @@ async function main() {
 	const scriptsSrc = path.join( gutenbergBuildDir, scriptsConfig.source );
 	const scriptsDest = path.join( wpIncludesDir, scriptsConfig.destination );
 
-	/*
-	 * Transform function to remove source map comments from all JS files.
-	 * Only match actual source map comments at the start of a line (possibly
-	 * with whitespace), not occurrences inside string literals.
-	 */
-	const removeSourceMaps = ( content ) => {
-		return content.replace( /^\s*\/\/# sourceMappingURL=.*$/gm, '' ).trimEnd();
-	};
-
 	if ( fs.existsSync( scriptsSrc ) ) {
 		const entries = fs.readdirSync( scriptsSrc, { withFileTypes: true } );
 
@@ -899,12 +890,7 @@ async function main() {
 								const srcFile = path.join( src, file );
 								const destFile = path.join( dest, file );
 
-								let content = fs.readFileSync(
-									srcFile,
-									'utf8'
-								);
-								content = removeSourceMaps( content );
-								fs.writeFileSync( destFile, content );
+								fs.copyFileSync( srcFile, destFile );
 								copiedCount++;
 							}
 						}
@@ -913,7 +899,7 @@ async function main() {
 						);
 					} else {
 						// Copy other special directories normally.
-						copyDirectory( src, dest, removeSourceMaps );
+						copyDirectory( src, dest );
 						console.log(
 							`   ✅ ${ entry.name }/ → ${ destName }/`
 						);
@@ -941,18 +927,7 @@ async function main() {
 								recursive: true,
 							} );
 
-							// Apply source map removal for .js files.
-							if ( file.endsWith( '.js' ) ) {
-								let content = fs.readFileSync(
-									srcFile,
-									'utf8'
-								);
-								content = removeSourceMaps( content );
-								fs.writeFileSync( destPath, content );
-							} else {
-								// Copy other files as-is (.min.asset.php).
-								fs.copyFileSync( srcFile, destPath );
-							}
+							fs.copyFileSync( srcFile, destPath );
 						}
 					}
 				}
@@ -960,10 +935,7 @@ async function main() {
 				// Copy root-level JS files.
 				const dest = path.join( scriptsDest, entry.name );
 				fs.mkdirSync( path.dirname( dest ), { recursive: true } );
-
-				let content = fs.readFileSync( src, 'utf8' );
-				content = removeSourceMaps( content );
-				fs.writeFileSync( dest, content );
+				fs.copyFileSync( src, dest );
 			}
 		}
 
