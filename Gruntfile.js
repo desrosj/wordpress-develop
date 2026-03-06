@@ -588,16 +588,11 @@ module.exports = function(grunt) {
 				src: 'vendor/composer/ca-bundle/res/cacert.pem',
 				dest: SOURCE_DIR + 'wp-includes/certificates/ca-bundle.crt'
 			},
-
-			// Gutenberg: PHP infrastructure files (routes.php, pages.php, constants.php, pages/, routes/).
+			// Gutenberg PHP infrastructure files (routes.php, pages.php, constants.php, pages/, routes/).
 			'gutenberg-php': {
 				options: {
 					process: function( content ) {
-						/*
-						 * Fix boot module asset file path for Core's different directory structure.
-						 * FROM: __DIR__ . '/../../modules/boot/index.min.asset.php'
-						 * TO:   ABSPATH . WPINC . '/js/dist/script-modules/boot/index.min.asset.php'
-						 */
+						// Fix boot module asset file path for Core's different directory structure.
 						return content.replace(
 							/__DIR__\s*\.\s*['"]\/..\/\..\/modules\/boot\/index\.min\.asset\.php['"]/g,
 							"ABSPATH . WPINC . '/js/dist/script-modules/boot/index.min.asset.php'"
@@ -617,8 +612,6 @@ module.exports = function(grunt) {
 					dest: WORKING_DIR + 'wp-includes/build/',
 				} ],
 			},
-
-			// Gutenberg: script modules (gutenberg/build/modules/ -> wp-includes/js/dist/script-modules/).
 			'gutenberg-modules': {
 				files: [ {
 					expand: true,
@@ -627,8 +620,6 @@ module.exports = function(grunt) {
 					dest: WORKING_DIR + 'wp-includes/js/dist/script-modules/',
 				} ],
 			},
-
-			// Gutenberg: styles (gutenberg/build/styles/ -> wp-includes/css/dist/).
 			'gutenberg-styles': {
 				files: [ {
 					expand: true,
@@ -637,8 +628,6 @@ module.exports = function(grunt) {
 					dest: WORKING_DIR + 'wp-includes/css/dist/',
 				} ],
 			},
-
-			// Gutenberg: theme JSON files (gutenberg/lib/ -> wp-includes/).
 			'gutenberg-theme-json': {
 				options: {
 					process: function( content, srcpath ) {
@@ -663,16 +652,10 @@ module.exports = function(grunt) {
 					},
 				],
 			},
-
-			// Gutenberg: icon manifest and SVG library (gutenberg/packages/icons/src/ -> wp-includes/icons/).
 			'gutenberg-icons': {
 				options: {
 					process: function( content, srcpath ) {
-						/*
-						 * Remove the 'gutenberg' text domain from _x() calls in manifest.php.
-						 * FROM: _x( '...', 'icon label', 'gutenberg' )
-						 * TO:   _x( '...', 'icon label' )
-						 */
+						// Remove the 'gutenberg' text domain from _x() calls in manifest.php.
 						if ( path.basename( srcpath ) === 'manifest.php' ) {
 							return content.replace(
 								/_x\(\s*([^,]+),\s*([^,]+),\s*['"]gutenberg['"]\s*\)/g,
