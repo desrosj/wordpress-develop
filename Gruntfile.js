@@ -620,15 +620,6 @@ module.exports = function(grunt) {
 
 			// Gutenberg: script modules (gutenberg/build/modules/ -> wp-includes/js/dist/script-modules/).
 			'gutenberg-modules': {
-				options: {
-					process: function( content, srcpath ) {
-						// Strip sourceMappingURL comments from JS files.
-						if ( srcpath.endsWith( '.js' ) ) {
-							return content.replace( /^\s*\/\/#\s*sourceMappingURL=.*$/gm, '' ).trimEnd();
-						}
-						return content;
-					}
-				},
 				files: [ {
 					expand: true,
 					cwd: 'gutenberg/build/modules',
@@ -1452,6 +1443,12 @@ module.exports = function(grunt) {
 							BUILD_DIR + 'wp-includes/js/dist/vendor/**/*.js'
 						],
 						dest: BUILD_DIR + 'wp-includes/js/dist/vendor/'
+					},
+					{
+						expand: true,
+						cwd: BUILD_DIR + 'wp-includes/js/dist/script-modules/',
+						src: [ '**/*.js' ],
+						dest: BUILD_DIR + 'wp-includes/js/dist/script-modules/',
 					}
 				]
 			}
