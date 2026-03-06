@@ -587,7 +587,123 @@ module.exports = function(grunt) {
 			certificates: {
 				src: 'vendor/composer/ca-bundle/res/cacert.pem',
 				dest: SOURCE_DIR + 'wp-includes/certificates/ca-bundle.crt'
-			}
+			},
+
+			// Gutenberg: PHP infrastructure files (routes.php, pages.php, constants.php, pages/, routes/).
+			'gutenberg-php': {
+				options: {
+					process: function( content ) {
+						/*
+						 * Fix boot module asset file path for Core's different directory structure.
+						 * FROM: __DIR__ . '/../../modules/boot/index.min.asset.php'
+						 * TO:   ABSPATH . WPINC . '/js/dist/script-modules/boot/index.min.asset.php'
+						 */
+						return content.replace(
+							/__DIR__\s*\.\s*['"]\/..\/\..\/modules\/boot\/index\.min\.asset\.php['"]/g,
+							"ABSPATH . WPINC . '/js/dist/script-modules/boot/index.min.asset.php'"
+						);
+					}
+				},
+				files: [ {
+					expand: true,
+					cwd: 'gutenberg/build',
+					src: [
+						'routes.php',
+						'pages.php',
+						'constants.php',
+						'pages/**/*.php',
+						'routes/**/*.php',
+					],
+					dest: WORKING_DIR + 'wp-includes/build/',
+				} ],
+			},
+
+			// Gutenberg: script modules (gutenberg/build/modules/ -> wp-includes/js/dist/script-modules/).
+			'gutenberg-modules': {
+				options: {
+					process: function( content, srcpath ) {
+						// Strip sourceMappingURL comments from JS files.
+						if ( srcpath.endsWith( '.js' ) ) {
+							return content.replace( /^\s*\/\/#\s*sourceMappingURL=.*$/gm, '' ).trimEnd();
+						}
+						return content;
+					}
+				},
+				files: [ {
+					expand: true,
+					cwd: 'gutenberg/build/modules',
+					src: [ '**/*', '!**/*.map' ],
+					dest: WORKING_DIR + 'wp-includes/js/dist/script-modules/',
+				} ],
+			},
+
+			// Gutenberg: styles (gutenberg/build/styles/ -> wp-includes/css/dist/).
+			'gutenberg-styles': {
+				files: [ {
+					expand: true,
+					cwd: 'gutenberg/build/styles',
+					src: [ '**/*', '!**/*.map' ],
+					dest: WORKING_DIR + 'wp-includes/css/dist/',
+				} ],
+			},
+
+			// Gutenberg: theme JSON files (gutenberg/lib/ -> wp-includes/).
+			'gutenberg-theme-json': {
+				options: {
+					process: function( content, srcpath ) {
+						// Replace the local schema URL with the canonical public URL for Core.
+						if ( path.basename( srcpath ) === 'theme.json' ) {
+							return content.replace(
+								'"$schema": "../schemas/json/theme.json"',
+								'"$schema": "https://schemas.wp.org/trunk/theme.json"'
+							);
+						}
+						return content;
+					}
+				},
+				files: [
+					{
+						src: 'gutenberg/lib/theme.json',
+						dest: WORKING_DIR + 'wp-includes/theme.json',
+					},
+					{
+						src: 'gutenberg/lib/theme-i18n.json',
+						dest: WORKING_DIR + 'wp-includes/theme-i18n.json',
+					},
+				],
+			},
+
+			// Gutenberg: icon manifest and SVG library (gutenberg/packages/icons/src/ -> wp-includes/icons/).
+			'gutenberg-icons': {
+				options: {
+					process: function( content, srcpath ) {
+						/*
+						 * Remove the 'gutenberg' text domain from _x() calls in manifest.php.
+						 * FROM: _x( '...', 'icon label', 'gutenberg' )
+						 * TO:   _x( '...', 'icon label' )
+						 */
+						if ( path.basename( srcpath ) === 'manifest.php' ) {
+							return content.replace(
+								/_x\(\s*([^,]+),\s*([^,]+),\s*['"]gutenberg['"]\s*\)/g,
+								'_x( $1, $2 )'
+							);
+						}
+						return content;
+					}
+				},
+				files: [
+					{
+						src: 'gutenberg/packages/icons/src/manifest.php',
+						dest: WORKING_DIR + 'wp-includes/icons/manifest.php',
+					},
+					{
+						expand: true,
+						cwd: 'gutenberg/packages/icons/src/library',
+						src: '*.svg',
+						dest: WORKING_DIR + 'wp-includes/icons/library/',
+					},
+				],
+			},
 		},
 		sass: {
 			colors: {
@@ -1500,7 +1616,7 @@ module.exports = function(grunt) {
 		} );
 	} );
 
-	grunt.registerTask( 'gutenberg:copy', 'Copies Gutenberg build output to WordPress Core.', function() {
+	grunt.registerTask( 'gutenberg:copy', 'Copies Gutenberg JS packages and block assets to WordPress Core.', function() {
 		const done = this.async();
 		const buildDir = grunt.option( 'dev' ) ? 'src' : 'build';
 		grunt.util.spawn( {
@@ -1948,6 +2064,15 @@ module.exports = function(grunt) {
 			} );
 	} );
 
+	grunt.registerTask( 'build:gutenberg', [
+		'copy:gutenberg-php',
+		'gutenberg:copy',
+		'copy:gutenberg-modules',
+		'copy:gutenberg-styles',
+		'copy:gutenberg-theme-json',
+		'copy:gutenberg-icons',
+	] );
+
 	grunt.registerTask( 'build', function() {
 		if ( grunt.option( 'dev' ) ) {
 			grunt.task.run( [
@@ -1955,7 +2080,7 @@ module.exports = function(grunt) {
 				'build:js',
 				'build:css',
 				'build:codemirror',
-				'gutenberg:copy',
+				'build:gutenberg',
 				'copy-vendor-scripts',
 				'build:certificates'
 			] );
@@ -1967,7 +2092,7 @@ module.exports = function(grunt) {
 				'build:js',
 				'build:css',
 				'build:codemirror',
-				'gutenberg:copy',
+				'build:gutenberg',
 				'copy-vendor-scripts',
 				'replace:source-maps',
 				'verify:build'

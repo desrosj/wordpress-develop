@@ -12,7 +12,6 @@
 const fs = require( 'fs' );
 const path = require( 'path' );
 const json2php = require( 'json2php' );
-const glob = require( 'glob' );
 
 // Paths.
 const rootDir = path.resolve( __dirname, '../..' );
@@ -840,48 +839,6 @@ function parsePHPArray( phpArrayContent ) {
 }
 
 /**
- * Transform PHP file contents to work in Core.
- *
- * @param {string} content  - File content.
- * @return {string} Transformed content.
- */
-function transformPHPContent( content ) {
-	let transformed = content;
-
-	/*
-	 * Fix boot module asset file path for Core's different directory structure.
-	 * FROM: __DIR__ . '/../../modules/boot/index.min.asset.php'
-	 * TO:   ABSPATH . WPINC . '/js/dist/script-modules/boot/index.min.asset.php'
-	 * This is needed because Core copies modules to a different location than the plugin structure.
-	 */
-	transformed = transformed.replace(
-		/__DIR__\s*\.\s*['"]\/\.\.\/\.\.\/modules\/boot\/index\.min\.asset\.php['"]/g,
-		"ABSPATH . WPINC . '/js/dist/script-modules/boot/index.min.asset.php'"
-	);
-
-	return transformed;
-}
-
-/**
- * Transform manifest.php to remove gutenberg text domain.
- *
- * @param {string} content - File content.
- * @return {string} Transformed content.
- */
-function transformManifestPHP( content ) {
-	/*
-	 * Remove 'gutenberg' text domain from _x() calls.
-	 * FROM: _x( '...', 'icon label', 'gutenberg' )
-	 * TO:   _x( '...', 'icon label' )
-	 */
-	const transformedContent = content.replace(
-		/_x\(\s*([^,]+),\s*([^,]+),\s*['"]gutenberg['"]\s*\)/g,
-		'_x( $1, $2 )'
-	);
-	return transformedContent;
-}
-
-/**
  * Main execution function.
  */
 async function main() {
@@ -893,42 +850,7 @@ async function main() {
 		process.exit( 1 );
 	}
 
-	// 1. Copy PHP infrastructure.
-	console.log( '\n📦 Copying PHP infrastructure...' );
-	const phpConfig = COPY_CONFIG.phpInfrastructure;
-	const phpDest = path.join( wpIncludesDir, phpConfig.destination );
-
-	// Copy PHP files.
-	for ( const file of phpConfig.files ) {
-		const src = path.join( gutenbergBuildDir, file );
-		const dest = path.join( phpDest, file );
-
-		if ( fs.existsSync( src ) ) {
-			fs.mkdirSync( path.dirname( dest ), { recursive: true } );
-			let content = fs.readFileSync( src, 'utf8' );
-			content = transformPHPContent( content );
-			fs.writeFileSync( dest, content );
-			console.log( `   ✅ ${ file }` );
-		} else {
-			console.log(
-				`   ⚠️  ${ file } not found (may not exist in this Gutenberg version)`
-			);
-		}
-	}
-
-	// Copy PHP directories.
-	for ( const dir of phpConfig.directories ) {
-		const src = path.join( gutenbergBuildDir, dir );
-		const dest = path.join( phpDest, dir );
-
-		if ( fs.existsSync( src ) ) {
-			console.log( `   📁 Copying ${ dir }/...` );
-			copyDirectory( src, dest, transformPHPContent );
-			console.log( `   ✅ ${ dir }/ copied` );
-		}
-	}
-
-	// 2. Copy JavaScript packages.
+	// 1. Copy JavaScript packages.
 	console.log( '\n📦 Copying JavaScript packages...' );
 	const scriptsConfig = COPY_CONFIG.scripts;
 	const scriptsSrc = path.join( gutenbergBuildDir, scriptsConfig.source );
@@ -1048,112 +970,27 @@ async function main() {
 		console.log( '   ✅ JavaScript packages copied' );
 	}
 
-	// 3. Copy script modules.
-	console.log( '\n📦 Copying script modules...' );
-	const modulesConfig = COPY_CONFIG.modules;
-	const modulesSrc = path.join( gutenbergBuildDir, modulesConfig.source );
-	const modulesDest = path.join( wpIncludesDir, modulesConfig.destination );
-
-	if ( fs.existsSync( modulesSrc ) ) {
-		// Use the same source map removal transform.
-		copyDirectory( modulesSrc, modulesDest, removeSourceMaps );
-		console.log( '   ✅ Script modules copied' );
-	}
-
-	// 4. Copy styles.
-	console.log( '\n📦 Copying styles...' );
-	const stylesConfig = COPY_CONFIG.styles;
-	const stylesSrc = path.join( gutenbergBuildDir, stylesConfig.source );
-	const stylesDest = path.join( wpIncludesDir, stylesConfig.destination );
-
-	if ( fs.existsSync( stylesSrc ) ) {
-		copyDirectory( stylesSrc, stylesDest );
-		console.log( '   ✅ Styles copied' );
-	}
-
-	// 5. Copy blocks (unified: scripts, styles, PHP, JSON).
+	// 2. Copy blocks (unified: scripts, styles, PHP, JSON).
 	console.log( '\n📦 Copying blocks...' );
-	const blocksDest = path.join(
-		wpIncludesDir,
-		COPY_CONFIG.blocks.destination
-	);
 	copyBlockAssets( COPY_CONFIG.blocks );
 
-	// 6. Copy theme JSON files (from Gutenberg lib directory).
-	console.log( '\n📦 Copying theme JSON files...' );
-	const themeJsonConfig = COPY_CONFIG.themeJson;
-	const gutenbergLibDir = path.join( gutenbergDir, 'lib' );
-
-	for ( const fileMap of themeJsonConfig.files ) {
-		const src = path.join( gutenbergLibDir, fileMap.from );
-		const dest = path.join( wpIncludesDir, fileMap.to );
-
-		if ( fs.existsSync( src ) ) {
-			let content = fs.readFileSync( src, 'utf8' );
-
-			if ( themeJsonConfig.transform && fileMap.from === 'theme.json' ) {
-				// Transform schema URL for Core.
-				content = content.replace(
-					'"$schema": "../schemas/json/theme.json"',
-					'"$schema": "https://schemas.wp.org/trunk/theme.json"'
-				);
-			}
-
-			fs.writeFileSync( dest, content );
-			console.log( `   ✅ ${ fileMap.to }` );
-		} else {
-			console.log( `   ⚠️  Not found: ${ fileMap.from }` );
-		}
-	}
-
-	// Copy remaining files to wp-includes.
-	console.log( '\n📦 Copying remaining files to wp-includes...' );
-	for ( const fileMap of COPY_CONFIG.wpIncludes ) {
-		const dest = path.join( wpIncludesDir, fileMap.destination );
-		fs.mkdirSync( dest, { recursive: true } );
-		for ( const src of fileMap.files ) {
-			const matches = glob.sync( path.join( gutenbergDir, src ) );
-			if ( ! matches.length ) {
-				throw new Error( `No files found matching '${ src }'` );
-			}
-			for ( const match of matches ) {
-				const destPath = path.join( dest, path.basename( match ) );
-				// Apply transformation for manifest.php to remove gutenberg text domain.
-				if ( path.basename( match ) === 'manifest.php' ) {
-					let content = fs.readFileSync( match, 'utf8' );
-					content = transformManifestPHP( content );
-					fs.writeFileSync( destPath, content );
-				} else {
-					fs.copyFileSync( match, destPath );
-				}
-			}
-		}
-	}
-
-	// 7. Generate script-modules-packages.php from individual asset files.
+	// 3. Generate script-modules-packages.php from individual asset files.
 	console.log( '\n📦 Generating script-modules-packages.php...' );
 	generateScriptModulesPackages();
 
-	// 8. Generate script-loader-packages.php.
+	// 4. Generate script-loader-packages.php.
 	console.log( '\n📦 Generating script-loader-packages.php...' );
 	generateScriptLoaderPackages();
 
-	// 9. Generate require-dynamic-blocks.php and require-static-blocks.php.
+	// 5. Generate require-dynamic-blocks.php and require-static-blocks.php.
 	console.log( '\n📦 Generating block registration files...' );
 	generateBlockRegistrationFiles();
 
-	// 10. Generate blocks-json.php from block.json files.
+	// 6. Generate blocks-json.php from block.json files.
 	console.log( '\n📦 Generating blocks-json.php...' );
 	generateBlocksJson();
 
-	// Summary.
 	console.log( '\n✅ Copy complete!' );
-	console.log( '\n📊 Summary:' );
-	console.log( `   PHP infrastructure: ${ phpDest }` );
-	console.log( `   JavaScript: ${ scriptsDest }` );
-	console.log( `   Script modules: ${ modulesDest }` );
-	console.log( `   Styles: ${ stylesDest }` );
-	console.log( `   Blocks: ${ blocksDest }` );
 }
 
 // Run main function.
