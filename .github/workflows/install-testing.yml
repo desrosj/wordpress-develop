@@ -10,6 +10,7 @@ on:
   push:
     branches:
       - trunk
+      - 'test-install-tests'
     # Always test the workflow after it's updated.
     paths:
       - '.github/workflows/install-testing.yml'
@@ -50,7 +51,6 @@ jobs:
     permissions:
       contents: read
     secrets: inherit
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
     with:
       wp-version: ${{ inputs.wp-version }}
 
@@ -66,7 +66,6 @@ jobs:
     permissions:
       contents: read
     runs-on: ${{ matrix.os }}
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
     timeout-minutes: 10
     needs: [ build-test-matrix ]
     strategy:
