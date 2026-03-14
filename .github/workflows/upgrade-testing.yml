@@ -125,6 +125,7 @@ jobs:
     outputs:
       recent-from-versions: ${{ steps.from-versions.outputs.recent-from-versions }}
       older-from-versions: ${{ steps.from-versions.outputs.older-from-versions }}
+      has-older-versions: ${{ steps.from-versions.outputs.has-older-versions }}
       reduced-php-versions: ${{ steps.from-versions.outputs.reduced-php-versions }}
 
     steps:
@@ -194,6 +195,7 @@ jobs:
           done
 
           echo "older-from-versions=[${OLDER_VERSIONS}]" >> "$GITHUB_OUTPUT"
+          echo "has-older-versions=$( [ -n "$OLDER_VERSIONS" ] && echo 'true' || echo 'false' )" >> "$GITHUB_OUTPUT"
 
           # Reduced PHP versions: the oldest and newest version of each major PHP version,
           # for use when testing older FROM branches.
@@ -434,7 +436,7 @@ jobs:
     name: WP ${{ matrix.wp }} to ${{ inputs.new-version }} / PHP ${{ matrix.php }} / MySQL ${{ matrix.db-version }}${{ matrix.multisite && ' multisite' || '' }}
     uses: ./.github/workflows/reusable-upgrade-testing.yml
     needs: [ build-test-matrix, determine-from-versions ]
-    if: ${{ needs.determine-from-versions.outputs.older-from-versions != '[]' }}
+    if: ${{ needs.determine-from-versions.outputs.has-older-versions == 'true' }}
     permissions:
       contents: read
     strategy:
