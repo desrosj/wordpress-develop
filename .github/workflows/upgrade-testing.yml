@@ -72,7 +72,6 @@ jobs:
     name: Determine workflow type
     runs-on: 'ubuntu-24.04'
     timeout-minutes: 5
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
     outputs:
       testing-old-branch: ${{ steps.old-branch-check.outputs.testing-old-branch }}
     steps:
@@ -116,7 +115,6 @@ jobs:
     runs-on: 'ubuntu-24.04'
     timeout-minutes: 5
     needs: [ determine-workflow-type, build-test-matrix ]
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
     outputs:
       from-versions: ${{ steps.from-versions.outputs.from-versions }}
 
@@ -323,7 +321,6 @@ jobs:
   upgrade-tests-older-branch-mysql:
     name: WP ${{ matrix.wp }} to ${{ inputs.new-version }} / PHP ${{ matrix.php }} / MySQL ${{ matrix.db-version }}${{ matrix.multisite && ' multisite' || '' }}
     uses: ./.github/workflows/reusable-upgrade-testing.yml
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
     needs: [ build-test-matrix, determine-from-versions ]
     permissions:
       contents: read
