@@ -1,5 +1,8 @@
 name: test-exclude-array.yml
 on:
+  push:
+    branches:
+      - 'make-upgrade-test-workflow-context-aware'
 
 jobs:
   # Tests the full list of PHP/MySQL combinations for the two most recent versions of WordPress.
@@ -30,5 +33,5 @@ jobs:
       db-type: ${{ matrix.db-type }}
       db-version: ${{ matrix.db-version }}
       wp: ${{ matrix.wp }}
-      new-version: ${{ inputs.new-version && inputs.new-version || 'latest' }}
+      new-version: 'latest'
       multisite: ${{ matrix.multisite }}
