@@ -29,6 +29,6 @@ jobs:
       # actionlint is static checker for GitHub Actions workflow files.
       # See https://github.com/rhysd/actionlint.
       - name: Run actionlint
-        uses: docker://rhysd/actionlint@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9 # v1.7.7
+        uses: docker://rhysd/actionlint@sha256:6f03470d0152251d7f07f7c4dc019dbe7024c72cd952f839544c7798843efa8f # v1.7.11
         with:
           args: "-color -verbose"
