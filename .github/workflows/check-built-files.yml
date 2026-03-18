@@ -53,7 +53,7 @@ jobs:
   # Compares the results of the build script with WordPress/WordPress.
   compare-build-script-results:
     name: Compare built files to WordPress/WordPress
-    uses: reusable-compare-built-files-v1.yml
+    uses: ./.github/workflows/reusable-compare-built-files-v1.yml
     permissions:
       contents: read
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
