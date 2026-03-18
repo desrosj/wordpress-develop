@@ -265,7 +265,7 @@ jobs:
             const comments = ( await github.rest.issues.listComments( commentInfo ) ).data;
 
             for ( const currentComment of comments ) {
-              if ( currentComment.user.type === 'Bot' && currentComment.body.includes( 'Build Script Results Comparison' ) ) {
+              if ( currentComment.user.type === 'Bot' && currentComment.body.includes( 'Build Server Comparison' ) ) {
                 commentInfo.comment_id = currentComment.id;
                 break;
               }
