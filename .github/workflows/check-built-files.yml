@@ -29,7 +29,7 @@ on:
       # Confirm any changes to relevant workflow files.
       - '.github/workflows/check-built-files.yml'
       - '.github/workflows/reusable-check-built-files.yml'
-      - '.github/workflows/reusable-compare-built-files.yml'
+      - '.github/workflows/reusable-compare-built-files-*.yml'
       # Changes to the default themes should be handled by the themes workflows.
       - '!src/wp-content/themes/twenty**'
 
