@@ -5,7 +5,7 @@ on:
   pull_request_target:
     types: [ 'opened', 'synchronize', 'reopened', 'edited' ]
   workflow_run:
-    workflows: [ 'Compares Built Files', 'Test Build Processes' ]
+    workflows: [ 'Check Built Files (PRs)', 'Test Build Processes' ]
     types:
       - completed
 
@@ -87,6 +87,7 @@ jobs:
     if: >
       github.repository == 'WordPress/wordpress-develop' &&
       github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.name == 'Test Build Processes' &&
       github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Download artifact
@@ -190,6 +191,7 @@ jobs:
     if: >
       github.repository == 'WordPress/wordpress-develop' &&
       github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.name == 'Check Built Files (PRs)' &&
       github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Download artifact
