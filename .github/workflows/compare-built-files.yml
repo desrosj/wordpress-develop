@@ -1,8 +1,6 @@
 name: Compares Built Files
 
 on:
-  # JSHint was introduced in WordPress 3.8.
-  # PHPCS checking was introduced in WordPress 5.1.
   push:
     branches:
       - trunk
@@ -42,8 +40,8 @@ permissions: {}
 jobs:
   # Compares the results of the build script with WordPress/WordPress.
   compare-build-script-results:
-    name: Compare built PR to WordPress/WordPress
-    uses: ./.github/workflows/reusable-compare-build-script-results-v1.yml
+    name: Compare PR's built files to WordPress/WordPress
+    uses: reusable-compare-built-files-v1.yml
     permissions:
       contents: read
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
