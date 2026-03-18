@@ -274,7 +274,7 @@ jobs:
             if ( fileChanges.trim() === '' ) {
               commentInfo.body += 'The contents of the `build` directory after running `npm run build` matches the contents of the WordPress/WordPress repository. No differences were found.';
             } else {
-              commentInfo.body += 'The contents of the `build` directory after running `npm run build` has been compared with the contents of the WordPress/WordPress repository.
+              commentInfo.body += `The contents of the \`build\` directory after running \`npm run build\` has been compared with the contents of the WordPress/WordPress repository.
 
             **Review these differences carefully for any unexpected results.**
 
