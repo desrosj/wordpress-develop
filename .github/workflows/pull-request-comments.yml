@@ -190,7 +190,6 @@ jobs:
       issues: write
       pull-requests: write
     if: >
-      github.repository == 'WordPress/wordpress-develop' &&
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.name == 'Check Built Files (PRs)' &&
       github.event.workflow_run.conclusion == 'success'
