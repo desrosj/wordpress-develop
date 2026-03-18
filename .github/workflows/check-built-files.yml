@@ -61,4 +61,4 @@ jobs:
     uses: ./.github/workflows/reusable-compare-built-files-v1.yml
     permissions:
       contents: read
-    if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
+    #if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
