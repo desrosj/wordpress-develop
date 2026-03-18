@@ -268,7 +268,7 @@ jobs:
               }
             };
 
-            commentInfo.body = '## Build Server Comparison';
+            commentInfo.body = "## Build Server Comparison\n\n";
 
             // Post or update the comment.
             if ( fileChanges.trim() === '' ) {
