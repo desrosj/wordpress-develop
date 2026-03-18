@@ -312,7 +312,7 @@ jobs:
               </details>`;
               }
 
-              commentInfo.body += `[Download the complete .diff file from the workflow run](https://github.com/${ context.repo.owner }/${ context.repo.repo }/actions/runs/${ context.payload.workflow_run.id }).`;
+              commentInfo.body += `\n\n[Download the complete .diff file from the workflow run](https://github.com/${ context.repo.owner }/${ context.repo.repo }/actions/runs/${ context.payload.workflow_run.id }).`;
             }
 
             if ( commentInfo.comment_id ) {
