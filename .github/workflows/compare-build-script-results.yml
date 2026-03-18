@@ -1,4 +1,4 @@
-name: Compares Build Script Results
+name: Compares Built Files
 
 on:
   # JSHint was introduced in WordPress 3.8.
