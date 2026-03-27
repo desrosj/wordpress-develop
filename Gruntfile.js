@@ -148,6 +148,25 @@ module.exports = function(grunt) {
 	// Load PostCSS tasks.
 	grunt.loadNpmTasks('@lodder/grunt-postcss');
 
+	/**
+	 * Checks if a block is experimental by reading its block.json.
+	 *
+	 * @param {string} blockName     Block name (directory name).
+	 * @param {string} scriptsBaseDir Absolute path to the directory containing block scripts.
+	 * @return {boolean} True if the block has `__experimental` set in block.json.
+	 */
+	function isBlockExperimental( blockName, scriptsBaseDir ) {
+		var blockJsonPath = path.join( scriptsBaseDir, blockName, 'block.json' );
+		try {
+			if ( ! fs.existsSync( blockJsonPath ) ) {
+				return false;
+			}
+			return !! JSON.parse( fs.readFileSync( blockJsonPath, 'utf8' ) ).__experimental;
+		} catch ( e ) {
+			return false;
+		}
+	}
+
 	// Project configuration.
 	grunt.initConfig({
 		postcss: {
@@ -666,7 +685,7 @@ module.exports = function(grunt) {
 					src: [
 						'**/*',
 						'!**/*.map',
-						// Per-block CSS is copied to wp-includes/blocks/ by tools/gutenberg/copy.js.
+						// Per-block CSS is copied to wp-includes/blocks/ by copy:block-files.
 						'!block-library/*/**',
 					],
 					dest: WORKING_DIR + 'wp-includes/css/dist/',
@@ -725,6 +744,87 @@ module.exports = function(grunt) {
 					src: 'gutenberg/packages/icons/src/manifest.php',
 					dest: WORKING_DIR + 'wp-includes/assets/icon-library-manifest.php',
 				} ],
+			},
+			/*
+			 * Copy block files from the Gutenberg build to SOURCE_DIR (src/).
+			 * Block files are tracked in version control, so they always go to src/ regardless
+			 * of the build target. The copy:files task then propagates them to build/.
+			 */
+			'block-files': {
+				files: [
+					// Scripts and JSON for block-library blocks (non-PHP files).
+					{
+						expand: true,
+						cwd: 'gutenberg/build/scripts/block-library',
+						src: [ '*/**/*', '!**/*.php' ],
+						dest: SOURCE_DIR + 'wp-includes/blocks/',
+						filter: function( src ) {
+							if ( ! fs.statSync( src ).isFile() ) {
+								return false;
+							}
+							const base = path.resolve( 'gutenberg/build/scripts/block-library' );
+							const rel = path.relative( base, path.resolve( src ) );
+							const blockName = rel.split( path.sep )[ 0 ];
+							return ! isBlockExperimental( blockName, base );
+						},
+					},
+					// Per-block CSS for block-library (from the styles directory).
+					{
+						expand: true,
+						cwd: 'gutenberg/build/styles/block-library',
+						src: [ '*/**/*.css' ],
+						dest: SOURCE_DIR + 'wp-includes/blocks/',
+						filter: function( src ) {
+							const base = path.resolve( 'gutenberg/build/styles/block-library' );
+							const rel = path.relative( base, path.resolve( src ) );
+							const blockName = rel.split( path.sep )[ 0 ];
+							return ! isBlockExperimental( blockName, path.resolve( 'gutenberg/build/scripts/block-library' ) );
+						},
+					},
+					// PHP files for block-library blocks.
+					// Excludes <blockName>/index.php which duplicates the root-level <blockName>.php.
+					{
+						expand: true,
+						cwd: 'gutenberg/build/scripts/block-library',
+						src: [ '**/*.php', '!*/index.php' ],
+						dest: SOURCE_DIR + 'wp-includes/blocks/',
+						filter: function( src ) {
+							const base = path.resolve( 'gutenberg/build/scripts/block-library' );
+							const rel = path.relative( base, path.resolve( src ) );
+							const parts = rel.split( path.sep );
+							const blockName = parts[ 0 ].endsWith( '.php' )
+								? path.basename( parts[ 0 ], '.php' )
+								: parts[ 0 ];
+							// Root-level PHP must correspond to an actual block directory.
+							if ( parts.length === 1 && ! fs.existsSync( path.join( base, blockName ) ) ) {
+								return false;
+							}
+							return ! isBlockExperimental( blockName, base );
+						},
+					},
+					// Scripts and JSON for widget blocks (non-PHP files).
+					{
+						expand: true,
+						cwd: 'gutenberg/build/scripts/widgets/blocks',
+						src: [ '*/**/*', '!**/*.php' ],
+						dest: SOURCE_DIR + 'wp-includes/blocks/',
+						filter: 'isFile',
+					},
+					// Per-block CSS for widget blocks.
+					{
+						expand: true,
+						cwd: 'gutenberg/build/styles/widgets',
+						src: [ '*/**/*.css' ],
+						dest: SOURCE_DIR + 'wp-includes/blocks/',
+					},
+					// PHP files for widget blocks (excludes blocks-manifest.php and <blockName>/index.php).
+					{
+						expand: true,
+						cwd: 'gutenberg/build/scripts/widgets/blocks',
+						src: [ '**/*.php', '!blocks-manifest.php', '!*/index.php' ],
+						dest: SOURCE_DIR + 'wp-includes/blocks/',
+					},
+				],
 			},
 		},
 		sass: {
@@ -2113,6 +2213,7 @@ module.exports = function(grunt) {
 	} );
 
 	grunt.registerTask( 'build:gutenberg', [
+		'copy:block-files',
 		'copy:gutenberg-php',
 		'routes:setup',
 		'copy:routes',
@@ -2140,6 +2241,7 @@ module.exports = function(grunt) {
 			grunt.task.run( [
 				'gutenberg:verify',
 				'build:certificates',
+				'copy:block-files',
 				'build:files',
 				'build:js',
 				'build:css',
