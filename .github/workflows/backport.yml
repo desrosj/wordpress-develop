@@ -23,6 +23,14 @@ on:
         required: false
         type: string
         default: ''
+      pr-source:
+        description: 'The repository the PR numbers belong to.'
+        required: false
+        type: choice
+        default: 'upstream'
+        options:
+          - upstream
+          - current
 
 # Disable permissions for all available scopes by default.
 # Any needed permissions should be configured at the job level.
@@ -149,17 +157,22 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STEPS_UPSTREAM_OUTPUTS_REPO: ${{ steps.upstream.outputs.repo }}
           INPUTS_PR_NUMBERS: ${{ inputs.pr_numbers }}
+          INPUTS_PR_SOURCE: ${{ inputs.pr-source }}
         run: |
-          UPSTREAM_REPO="${STEPS_UPSTREAM_OUTPUTS_REPO}"
+          if [ "${INPUTS_PR_SOURCE}" = "upstream" ]; then
+            PR_REPO="${STEPS_UPSTREAM_OUTPUTS_REPO}"
+          else
+            PR_REPO="${GITHUB_REPOSITORY}"
+          fi
 
           IFS=',' read -ra PR_LIST <<< "${INPUTS_PR_NUMBERS}"
 
-          UPSTREAM_URL="https://github.com/${UPSTREAM_REPO}.git"
+          UPSTREAM_URL="https://github.com/${STEPS_UPSTREAM_OUTPUTS_REPO}.git"
 
           for PR_NUMBER in "${PR_LIST[@]}"; do
             PR_NUMBER=$(echo "$PR_NUMBER" | tr -d ' ')
 
-            PR_DATA=$(gh pr view "$PR_NUMBER" --repo "$UPSTREAM_REPO" --json title,mergeCommit,baseRefName)
+            PR_DATA=$(gh pr view "$PR_NUMBER" --repo "$PR_REPO" --json title,mergeCommit,baseRefName)
             PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
             MERGE_COMMIT=$(echo "$PR_DATA" | jq -r '.mergeCommit.oid')
 
@@ -204,9 +217,14 @@ jobs:
           MATRIX_BRANCH: ${{ matrix.branch }}
           INPUTS_COMMIT_SHA: ${{ inputs.commit-sha }}
           INPUTS_PR_NUMBERS: ${{ inputs.pr_numbers }}
+          INPUTS_PR_SOURCE: ${{ inputs.pr-source }}
           STEPS_BACKPORT_BRANCH_OUTPUTS_NAME: ${{ steps.backport-branch.outputs.name }}
         run: |
-          UPSTREAM_REPO="${STEPS_UPSTREAM_OUTPUTS_REPO}"
+          if [ "${INPUTS_PR_SOURCE}" = "upstream" ]; then
+            PR_REPO="${STEPS_UPSTREAM_OUTPUTS_REPO}"
+          else
+            PR_REPO="${GITHUB_REPOSITORY}"
+          fi
 
           if [ -n "${INPUTS_PR_NAME}" ]; then
             PR_TITLE="${INPUTS_PR_NAME} - ${MATRIX_BRANCH} branch"
@@ -225,7 +243,7 @@ jobs:
             IFS=',' read -ra PR_LIST <<< "${INPUTS_PR_NUMBERS}"
             for PR_NUMBER in "${PR_LIST[@]}"; do
               PR_NUMBER=$(echo "$PR_NUMBER" | tr -d ' ')
-              BODY="${BODY}\n- ${UPSTREAM_REPO}#${PR_NUMBER}"
+              BODY="${BODY}\n- ${PR_REPO}#${PR_NUMBER}"
             done
           fi
 
