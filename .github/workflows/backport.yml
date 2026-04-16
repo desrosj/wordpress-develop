@@ -236,7 +236,8 @@ jobs:
           BODY="${BODY}\n\n## Changes\n"
 
           if [ -n "${INPUTS_COMMIT_SHA}" ]; then
-            BODY="${BODY}\n- Cherry-picked commit: \`${INPUTS_COMMIT_SHA}\`"
+            COMMIT_MESSAGE=$(git log --format=%B -n 1 "${INPUTS_COMMIT_SHA}")
+            BODY="${BODY}\n${COMMIT_MESSAGE}\nCherry-picked from \`${INPUTS_COMMIT_SHA}\`."
           fi
 
           if [ -n "${INPUTS_PR_NUMBERS}" ] && [ -z "${INPUTS_COMMIT_SHA}" ]; then
