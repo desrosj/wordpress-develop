@@ -135,7 +135,13 @@ jobs:
         env:
           STEPS_BACKPORT_BRANCH_OUTPUTS_NAME: ${{ steps.backport-branch.outputs.name }}
           MATRIX_BRANCH: ${{ matrix.branch }}
-        run: git checkout -b "${STEPS_BACKPORT_BRANCH_OUTPUTS_NAME}" "origin/${MATRIX_BRANCH}"
+        run: |
+          if git ls-remote --exit-code --heads origin "${STEPS_BACKPORT_BRANCH_OUTPUTS_NAME}" > /dev/null 2>&1; then
+            echo "::error::Branch '${STEPS_BACKPORT_BRANCH_OUTPUTS_NAME}' already exists on origin."
+            exit 1
+          fi
+
+          git checkout -b "${STEPS_BACKPORT_BRANCH_OUTPUTS_NAME}" "origin/${MATRIX_BRANCH}"
 
       - name: Cherry-pick commit
         if: ${{ inputs['commit-sha'] != '' }}
