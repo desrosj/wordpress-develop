@@ -238,12 +238,18 @@ jobs:
             PR_TITLE="Backport to ${MATRIX_BRANCH}"
           fi
 
-          BODY="Backport to the \`${MATRIX_BRANCH}\` branch."
+          if [ -n "${INPUTS_COMMIT_SHA}" ]; then
+            BODY="This pull request backports \`${INPUTS_COMMIT_SHA}\` to the \`${MATRIX_BRANCH}\` branch."
+          else
+            BODY="Backport to the \`${MATRIX_BRANCH}\` branch."
+          fi
+
           BODY="${BODY}\n\n## Changes\n"
 
           if [ -n "${INPUTS_COMMIT_SHA}" ]; then
             COMMIT_MESSAGE=$(git log --format=%B -n 1 "${INPUTS_COMMIT_SHA}")
-            BODY="${BODY}\n${COMMIT_MESSAGE}\nCherry-picked from \`${INPUTS_COMMIT_SHA}\`."
+            BLOCKQUOTE=$(echo "${COMMIT_MESSAGE}" | sed 's/^/> /')
+            BODY="${BODY}\n${BLOCKQUOTE}"
           fi
 
           if [ -n "${INPUTS_PR_NUMBERS}" ] && [ -z "${INPUTS_COMMIT_SHA}" ]; then
