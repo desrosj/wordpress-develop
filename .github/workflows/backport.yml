@@ -48,8 +48,8 @@ jobs:
         env:
           INPUTS_END_BRANCH: ${{ inputs.end_branch }}
         run: |
-          END_X=$(echo '${INPUTS_END_BRANCH}' | cut -d. -f1)
-          END_Y=$(echo '${INPUTS_END_BRANCH}' | cut -d. -f2)
+          END_X=$(echo "${INPUTS_END_BRANCH}" | cut -d. -f1)
+          END_Y=$(echo "${INPUTS_END_BRANCH}" | cut -d. -f2)
 
           BRANCHES=$(jq -c \
             --argjson x "$END_X" \
@@ -115,12 +115,12 @@ jobs:
           INPUTS_COMMIT_SHA: ${{ inputs.commit-sha }}
           INPUTS_PR_NUMBERS: ${{ inputs.pr_numbers }}
         run: |
-          if [ -n '${INPUTS_PR_NAME}' ]; then
-            echo "name=backport/${MATRIX_BRANCH}-$(echo '${INPUTS_PR_NAME}' | tr -cs '[:alnum:].-' '-' | sed 's/^-//;s/-$//')" >> "$GITHUB_OUTPUT"
-          elif [ -n '${INPUTS_COMMIT_SHA}' ]; then
+          if [ -n "${INPUTS_PR_NAME}" ]; then
+            echo "name=backport/${MATRIX_BRANCH}-$(echo "${INPUTS_PR_NAME}" | tr -cs '[:alnum:].-' '-' | sed 's/^-//;s/-$//')" >> "$GITHUB_OUTPUT"
+          elif [ -n "${INPUTS_COMMIT_SHA}" ]; then
             echo "name=backport/${MATRIX_BRANCH}-${INPUTS_COMMIT_SHA}" >> "$GITHUB_OUTPUT"
           else
-            echo "name=backport/${MATRIX_BRANCH}-$(echo '${INPUTS_PR_NUMBERS}' | tr -d ' ' | tr ',' '-')" >> "$GITHUB_OUTPUT"
+            echo "name=backport/${MATRIX_BRANCH}-$(echo "${INPUTS_PR_NUMBERS}" | tr -d ' ' | tr ',' '-')" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Create backport branch
@@ -134,7 +134,7 @@ jobs:
         env:
           INPUTS_COMMIT_SHA: ${{ inputs.commit-sha }}
         run: |
-          COMMIT='${INPUTS_COMMIT_SHA}'
+          COMMIT="${INPUTS_COMMIT_SHA}"
           PARENTS=$(git cat-file -p "$COMMIT" | grep -c '^parent ' || true)
 
           if [ "$PARENTS" -gt 1 ]; then
@@ -208,20 +208,20 @@ jobs:
         run: |
           UPSTREAM_REPO="${STEPS_UPSTREAM_OUTPUTS_REPO}"
 
-          if [ -n '${INPUTS_PR_NAME}' ]; then
-            PR_TITLE='${INPUTS_PR_NAME} - ${MATRIX_BRANCH} branch'
+          if [ -n "${INPUTS_PR_NAME}" ]; then
+            PR_TITLE="${INPUTS_PR_NAME} - ${MATRIX_BRANCH} branch"
           else
-            PR_TITLE='Backport to ${MATRIX_BRANCH}'
+            PR_TITLE="Backport to ${MATRIX_BRANCH}"
           fi
 
           BODY="Backport to the \`${MATRIX_BRANCH}\` branch."
           BODY="${BODY}\n\n## Changes\n"
 
-          if [ -n '${INPUTS_COMMIT_SHA}' ]; then
+          if [ -n "${INPUTS_COMMIT_SHA}" ]; then
             BODY="${BODY}\n- Cherry-picked commit: \`${INPUTS_COMMIT_SHA}\`"
           fi
 
-          if [ -n "${INPUTS_PR_NUMBERS}" ] && [ -z '${INPUTS_COMMIT_SHA}' ]; then
+          if [ -n "${INPUTS_PR_NUMBERS}" ] && [ -z "${INPUTS_COMMIT_SHA}" ]; then
             IFS=',' read -ra PR_LIST <<< "${INPUTS_PR_NUMBERS}"
             for PR_NUMBER in "${PR_LIST[@]}"; do
               PR_NUMBER=$(echo "$PR_NUMBER" | tr -d ' ')
