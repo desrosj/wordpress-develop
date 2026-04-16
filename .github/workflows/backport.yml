@@ -1,0 +1,237 @@
+name: Create backport pull requests
+
+on:
+  workflow_dispatch:
+    inputs:
+      end_branch:
+        description: 'The branch to end at (e.g. 4.7). Defaults to the oldest branch receiving security updates.'
+        required: false
+        type: string
+        default: '4.7'
+      pr-name:
+        description: 'The name for the pull requests. When provided, PRs are titled "<name> - <branch> branch".'
+        required: false
+        type: string
+        default: ''
+      commit-sha:
+        description: 'The full length commit hash to cherry-pick. When provided, PR numbers are ignored.'
+        required: false
+        type: string
+        default: ''
+      pr_numbers:
+        description: 'Comma-separated PR numbers. Each PR is merged as a single commit using the PR title as the commit message. Ignored when a commit SHA is provided.'
+        required: false
+        type: string
+        default: ''
+
+# Disable permissions for all available scopes by default.
+# Any needed permissions should be configured at the job level.
+permissions: {}
+
+jobs:
+  get-branches:
+    name: Get target branches
+    runs-on: ubuntu-24.04
+    outputs:
+      branches: ${{ steps.branches.outputs.result }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      # Read keys from .version-support-php.json, filter to those >= end_branch,
+      # convert dashes to dots, and sort numerically descending.
+      # The first key is always the version in active development on trunk, so skip it.
+      - name: Get target branches
+        id: branches
+        env:
+          INPUTS_END_BRANCH: ${{ inputs.end_branch }}
+        run: |
+          END_X=$(echo '${INPUTS_END_BRANCH}' | cut -d. -f1)
+          END_Y=$(echo '${INPUTS_END_BRANCH}' | cut -d. -f2)
+
+          BRANCHES=$(jq -c \
+            --argjson x "$END_X" \
+            --argjson y "$END_Y" \
+            '[ keys[] |
+                . as $k | ($k | split("-")) as $p |
+                select( ($p[0]|tonumber) > $x or
+                        (($p[0]|tonumber) == $x and ($p[1]|tonumber) >= $y) ) |
+                { v: ($k | gsub("-"; ".")), x: ($p[0]|tonumber), y: ($p[1]|tonumber) }
+             ] | sort_by(.x, .y) | reverse | .[1:] | map(.v)' \
+            .version-support-php.json)
+
+          echo "result=$BRANCHES" >> "$GITHUB_OUTPUT"
+
+  backport:
+    name: 'Backport to ${{ matrix.branch }}'
+    needs: [ 'get-branches' ]
+    if: ${{ needs.get-branches.outputs.branches != '[]' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: ${{ fromJson( needs.get-branches.outputs.branches ) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: 'true'
+
+      - name: Set up git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        id: upstream
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          UPSTREAM=$(gh repo view "${{ github.repository }}" --json parent --jq '.parent.full_name // empty')
+          if [ -n "$UPSTREAM" ]; then
+            git remote add upstream "https://github.com/${UPSTREAM}.git"
+            git fetch upstream
+            echo "repo=$UPSTREAM" >> "$GITHUB_OUTPUT"
+          else
+            echo "repo=${{ github.repository }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Determine the name of the branch for the pull request.
+      #
+      # 1. pr-name (normalized to alphanumeric, hyphens, and periods only)
+      # 2. commit-sha
+      # 3. pr_numbers with commas replaced by hyphens
+      - name: Determine backport branch name
+        id: backport-branch
+        env:
+          INPUTS_PR_NAME: ${{ inputs.pr-name }}
+          MATRIX_BRANCH: ${{ matrix.branch }}
+          INPUTS_COMMIT_SHA: ${{ inputs.commit-sha }}
+          INPUTS_PR_NUMBERS: ${{ inputs.pr_numbers }}
+        run: |
+          if [ -n '${INPUTS_PR_NAME}' ]; then
+            echo "name=backport/${MATRIX_BRANCH}-$(echo '${INPUTS_PR_NAME}' | tr -cs '[:alnum:].-' '-' | sed 's/^-//;s/-$//')" >> "$GITHUB_OUTPUT"
+          elif [ -n '${INPUTS_COMMIT_SHA}' ]; then
+            echo "name=backport/${MATRIX_BRANCH}-${INPUTS_COMMIT_SHA}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=backport/${MATRIX_BRANCH}-$(echo '${INPUTS_PR_NUMBERS}' | tr -d ' ' | tr ',' '-')" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create backport branch
+        env:
+          STEPS_BACKPORT_BRANCH_OUTPUTS_NAME: ${{ steps.backport-branch.outputs.name }}
+          MATRIX_BRANCH: ${{ matrix.branch }}
+        run: git checkout -b "${STEPS_BACKPORT_BRANCH_OUTPUTS_NAME}" "origin/${MATRIX_BRANCH}"
+
+      - name: Cherry-pick commit
+        if: ${{ inputs['commit-sha'] != '' }}
+        env:
+          INPUTS_COMMIT_SHA: ${{ inputs.commit-sha }}
+        run: |
+          COMMIT='${INPUTS_COMMIT_SHA}'
+          PARENTS=$(git cat-file -p "$COMMIT" | grep -c '^parent ' || true)
+
+          if [ "$PARENTS" -gt 1 ]; then
+            git cherry-pick -m 1 "$COMMIT"
+          else
+            git cherry-pick "$COMMIT"
+          fi
+
+      - name: Merge PRs
+        if: ${{ inputs['commit-sha'] == '' && inputs.pr_numbers != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STEPS_UPSTREAM_OUTPUTS_REPO: ${{ steps.upstream.outputs.repo }}
+          INPUTS_PR_NUMBERS: ${{ inputs.pr_numbers }}
+        run: |
+          UPSTREAM_REPO="${STEPS_UPSTREAM_OUTPUTS_REPO}"
+
+          IFS=',' read -ra PR_LIST <<< "${INPUTS_PR_NUMBERS}"
+
+          UPSTREAM_URL="https://github.com/${UPSTREAM_REPO}.git"
+
+          for PR_NUMBER in "${PR_LIST[@]}"; do
+            PR_NUMBER=$(echo "$PR_NUMBER" | tr -d ' ')
+
+            PR_DATA=$(gh pr view "$PR_NUMBER" --repo "$UPSTREAM_REPO" --json title,mergeCommit,baseRefName)
+            PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
+            MERGE_COMMIT=$(echo "$PR_DATA" | jq -r '.mergeCommit.oid')
+
+            if [ -n "$MERGE_COMMIT" ] && [ "$MERGE_COMMIT" != "null" ]; then
+              # PR is merged: cherry-pick its merge commit.
+              # Determine if it is a merge commit or squash commit.
+              PARENTS=$(git cat-file -p "$MERGE_COMMIT" | grep -c '^parent ' || true)
+
+              if [ "$PARENTS" -gt 1 ]; then
+                git cherry-pick -m 1 --no-commit "$MERGE_COMMIT"
+              else
+                git cherry-pick --no-commit "$MERGE_COMMIT"
+              fi
+            else
+              # PR is open or closed without merging: apply its changes as a diff
+              # against the point where it diverged from its base branch.
+              BASE_REF=$(echo "$PR_DATA" | jq -r '.baseRefName')
+
+              git fetch "$UPSTREAM_URL" "$BASE_REF"
+              BASE_SHA=$(git rev-parse FETCH_HEAD)
+
+              git fetch "$UPSTREAM_URL" "refs/pull/${PR_NUMBER}/head"
+              PR_HEAD_SHA=$(git rev-parse FETCH_HEAD)
+
+              MERGE_BASE=$(git merge-base "$PR_HEAD_SHA" "$BASE_SHA")
+              git diff "$MERGE_BASE" "$PR_HEAD_SHA" | git apply --index
+            fi
+
+            git commit -m "$PR_TITLE"
+          done
+
+      - name: Push backport branch
+        env:
+          STEPS_BACKPORT_BRANCH_OUTPUTS_NAME: ${{ steps.backport-branch.outputs.name }}
+        run: git push -u origin "${STEPS_BACKPORT_BRANCH_OUTPUTS_NAME}"
+
+      - name: Create pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STEPS_UPSTREAM_OUTPUTS_REPO: ${{ steps.upstream.outputs.repo }}
+          INPUTS_PR_NAME: ${{ inputs.pr-name }}
+          MATRIX_BRANCH: ${{ matrix.branch }}
+          INPUTS_COMMIT_SHA: ${{ inputs.commit-sha }}
+          INPUTS_PR_NUMBERS: ${{ inputs.pr_numbers }}
+          STEPS_BACKPORT_BRANCH_OUTPUTS_NAME: ${{ steps.backport-branch.outputs.name }}
+        run: |
+          UPSTREAM_REPO="${STEPS_UPSTREAM_OUTPUTS_REPO}"
+
+          if [ -n '${INPUTS_PR_NAME}' ]; then
+            PR_TITLE='${INPUTS_PR_NAME} - ${MATRIX_BRANCH} branch'
+          else
+            PR_TITLE='Backport to ${MATRIX_BRANCH}'
+          fi
+
+          BODY="Backport to the \`${MATRIX_BRANCH}\` branch."
+          BODY="${BODY}\n\n## Changes\n"
+
+          if [ -n '${INPUTS_COMMIT_SHA}' ]; then
+            BODY="${BODY}\n- Cherry-picked commit: \`${INPUTS_COMMIT_SHA}\`"
+          fi
+
+          if [ -n "${INPUTS_PR_NUMBERS}" ] && [ -z '${INPUTS_COMMIT_SHA}' ]; then
+            IFS=',' read -ra PR_LIST <<< "${INPUTS_PR_NUMBERS}"
+            for PR_NUMBER in "${PR_LIST[@]}"; do
+              PR_NUMBER=$(echo "$PR_NUMBER" | tr -d ' ')
+              BODY="${BODY}\n- ${UPSTREAM_REPO}#${PR_NUMBER}"
+            done
+          fi
+
+          gh pr create \
+            --base "${MATRIX_BRANCH}" \
+            --head "${STEPS_BACKPORT_BRANCH_OUTPUTS_NAME}" \
+            --title "$PR_TITLE" \
+            --assignee "${GITHUB_ACTOR}" \
+            --body "$(echo -e "$BODY")"
