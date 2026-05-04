@@ -19,7 +19,7 @@
 	"devDependencies": {
 		"@wordpress/browserslist-config": "^6.34.0",
 		"@wordpress/eslint-plugin": "^22.20.0",
-		"@wordpress/stylelint-config": "^21.30.0",
+		"@wordpress/stylelint-config": "^23.37.0",
 		"autoprefixer": "^10.4.22",
 		"chokidar-cli": "^3.0.0",
 		"eslint": "^8.57.1",
@@ -37,7 +37,7 @@
 		"postcss-nested": "^7.0.2",
 		"rtlcss": "^4.3.0",
 		"sass": "^1.83.0",
-		"stylelint": "^14.16.1",
+		"stylelint": "^17.10.0",
 		"stylelint-config-recommended-scss": "^16.0.2"
 	},
 	"rtlcssConfig": {
