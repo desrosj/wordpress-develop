@@ -144,37 +144,49 @@ jQuery( document ).ready( function () {
 		QUnit.module( 'communityEvents.getTimeZone', function() {
 			QUnit.test( 'modern browsers should return a time zone name', function( assert ) {
 				// Simulate a modern browser.
-				var stub = sinon.stub( Intl.DateTimeFormat.prototype, 'resolvedOptions' );
-				stub.returns( { timeZone: 'America/Chicago' } );
+				var originalDateTimeFormat = Intl.DateTimeFormat;
+				Intl.DateTimeFormat = function() {
+					return {
+						resolvedOptions: function() {
+							return { timeZone: 'America/Chicago' };
+						}
+					};
+				};
 
 				var actual = getTimeZone( startDate );
 
-				stub.restore();
+				Intl.DateTimeFormat = originalDateTimeFormat;
 
 				assert.strictEqual( actual, 'America/Chicago' );
 			} );
 
 			QUnit.test( 'older browsers should fallback to a raw UTC offset', function( assert ) {
 				// Simulate IE11.
-				var resolvedOptionsStub = sinon.stub( Intl.DateTimeFormat.prototype, 'resolvedOptions' );
-				var getTimezoneOffsetStub = sinon.stub( Date.prototype, 'getTimezoneOffset' );
+				var originalDateTimeFormat = Intl.DateTimeFormat;
+				var getFlippedTimeZoneOffsetStub = sinon.stub( wp.communityEvents, 'getFlippedTimeZoneOffset' );
 
-				resolvedOptionsStub.returns( { timeZone: undefined } );
+				Intl.DateTimeFormat = function() {
+					return {
+						resolvedOptions: function() {
+							return { timeZone: undefined };
+						}
+					};
+				};
 
-				getTimezoneOffsetStub.returns( 300 );
+				getFlippedTimeZoneOffsetStub.returns( -300 );
 				var actual = getTimeZone( startDate );
 				assert.strictEqual( actual, -300, 'negative offset' ); // Intentionally opposite, see `getTimeZone()`.
 
-				getTimezoneOffsetStub.returns( 0 );
+				getFlippedTimeZoneOffsetStub.returns( 0 );
 				actual = getTimeZone( startDate );
 				assert.strictEqual( actual, 0, 'no offset' );
 
-				getTimezoneOffsetStub.returns( -300 );
+				getFlippedTimeZoneOffsetStub.returns( 300 );
 				actual = getTimeZone( startDate );
 				assert.strictEqual( actual, 300, 'positive offset' ); // Intentionally opposite, see `getTimeZone()`.
 
-				resolvedOptionsStub.restore();
-				getTimezoneOffsetStub.restore();
+				Intl.DateTimeFormat = originalDateTimeFormat;
+				getFlippedTimeZoneOffsetStub.restore();
 			} );
 		} );
 
