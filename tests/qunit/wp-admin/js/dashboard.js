@@ -145,7 +145,7 @@ jQuery( document ).ready( function () {
 			QUnit.test( 'modern browsers should return a time zone name', function( assert ) {
 				// Simulate a modern browser.
 				var originalDateTimeFormat = Intl.DateTimeFormat;
-				Intl.DateTimeFormat = function() {
+				Intl.DateTimeFormat = function( locales, options ) {
 					return {
 						resolvedOptions: function() {
 							return { timeZone: 'America/Chicago' };
@@ -166,7 +166,7 @@ jQuery( document ).ready( function () {
 				var originalDateTimeFormat = Intl.DateTimeFormat;
 				var getFlippedTimeZoneOffsetStub = sinon.stub( wp.communityEvents, 'getFlippedTimeZoneOffset' );
 
-				Intl.DateTimeFormat = function() {
+				Intl.DateTimeFormat = function( locales, options ) {
 					return {
 						resolvedOptions: function() {
 							return { timeZone: undefined };
