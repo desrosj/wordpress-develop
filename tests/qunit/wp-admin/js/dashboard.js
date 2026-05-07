@@ -152,6 +152,7 @@ jQuery( document ).ready( function () {
 						}
 					};
 				};
+				Intl.DateTimeFormat.prototype = originalDateTimeFormat.prototype;
 
 				var actual = getTimeZone( startDate );
 
@@ -172,6 +173,7 @@ jQuery( document ).ready( function () {
 						}
 					};
 				};
+				Intl.DateTimeFormat.prototype = originalDateTimeFormat.prototype;
 
 				getFlippedTimeZoneOffsetStub.returns( -300 );
 				var actual = getTimeZone( startDate );
