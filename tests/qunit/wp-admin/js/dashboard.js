@@ -145,14 +145,15 @@ jQuery( document ).ready( function () {
 			QUnit.test( 'modern browsers should return a time zone name', function( assert ) {
 				// Simulate a modern browser.
 				var originalDateTimeFormat = Intl.DateTimeFormat;
-				Intl.DateTimeFormat = function( locales, options ) {
-					return {
-						resolvedOptions: function() {
-							return { timeZone: 'America/Chicago' };
-						}
-					};
+				Intl.DateTimeFormat = function DateTimeFormatMock() {
+					if ( ! ( this instanceof DateTimeFormatMock ) ) {
+						return new DateTimeFormatMock();
+					}
 				};
-				Intl.DateTimeFormat.prototype = originalDateTimeFormat.prototype;
+				Intl.DateTimeFormat.prototype = Object.create( originalDateTimeFormat.prototype );
+				Intl.DateTimeFormat.prototype.resolvedOptions = function() {
+					return { timeZone: 'America/Chicago' };
+				};
 
 				var actual = getTimeZone( startDate );
 
@@ -166,14 +167,15 @@ jQuery( document ).ready( function () {
 				var originalDateTimeFormat = Intl.DateTimeFormat;
 				var getFlippedTimeZoneOffsetStub = sinon.stub( wp.communityEvents, 'getFlippedTimeZoneOffset' );
 
-				Intl.DateTimeFormat = function( locales, options ) {
-					return {
-						resolvedOptions: function() {
-							return { timeZone: undefined };
-						}
-					};
+				Intl.DateTimeFormat = function DateTimeFormatMock() {
+					if ( ! ( this instanceof DateTimeFormatMock ) ) {
+						return new DateTimeFormatMock();
+					}
 				};
-				Intl.DateTimeFormat.prototype = originalDateTimeFormat.prototype;
+				Intl.DateTimeFormat.prototype = Object.create( originalDateTimeFormat.prototype );
+				Intl.DateTimeFormat.prototype.resolvedOptions = function() {
+					return { timeZone: undefined };
+				};
 
 				getFlippedTimeZoneOffsetStub.returns( -300 );
 				var actual = getTimeZone( startDate );
