@@ -21,6 +21,41 @@ const { pipeline } = require( 'stream/promises' );
 const zlib = require( 'zlib' );
 const { gutenbergDir, readGutenbergConfig } = require( './utils' );
 
+const MAX_RETRIES = 3;
+const RETRY_BASE_DELAY_MS = 1000;
+
+/**
+ * Run an async operation with exponential backoff retries.
+ *
+ * Attempts the operation up to 1 + MAX_RETRIES times. Between attempts,
+ * waits RETRY_BASE_DELAY_MS * 2^(attempt-1) milliseconds.
+ *
+ * @param {string}                   label Short description used in retry log output.
+ * @param {() => Promise<any>}       fn    The operation to execute. Receives the
+ *                                         current attempt number (1-indexed).
+ * @return {Promise<any>} Resolves with the value returned by fn.
+ */
+async function withRetry( label, fn ) {
+	let lastError;
+	for ( let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++ ) {
+		try {
+			return await fn( attempt );
+		} catch ( error ) {
+			lastError = error;
+			if ( attempt > MAX_RETRIES ) {
+				break;
+			}
+			const delay = RETRY_BASE_DELAY_MS * Math.pow( 2, attempt - 1 );
+			console.warn(
+				`⚠️  ${ label } failed (attempt ${ attempt }/${ MAX_RETRIES + 1 }): ${ error.message }`
+			);
+			console.warn( `   Retrying in ${ delay }ms...` );
+			await new Promise( ( resolve ) => setTimeout( resolve, delay ) );
+		}
+	}
+	throw lastError;
+}
+
 /**
  * Main execution function.
  */
@@ -47,15 +82,17 @@ async function main() {
 	console.log( '\n🔑 Fetching GHCR token...' );
 	let token;
 	try {
-		const response = await fetch( `https://ghcr.io/token?scope=repository:${ ghcrRepo }:pull&service=ghcr.io` );
-		if ( ! response.ok ) {
-			throw new Error( `Failed to fetch token: ${ response.status } ${ response.statusText }` );
-		}
-		const data = await response.json();
-		token = data.token;
-		if ( ! token ) {
-			throw new Error( 'No token in response' );
-		}
+		token = await withRetry( 'Token fetch', async () => {
+			const response = await fetch( `https://ghcr.io/token?scope=repository:${ ghcrRepo }:pull&service=ghcr.io` );
+			if ( ! response.ok ) {
+				throw new Error( `Failed to fetch token: ${ response.status } ${ response.statusText }` );
+			}
+			const data = await response.json();
+			if ( ! data.token ) {
+				throw new Error( 'No token in response' );
+			}
+			return data.token;
+		} );
 		console.log( '✅ Token acquired' );
 	} catch ( error ) {
 		console.error( '❌ Failed to fetch token:', error.message );
@@ -66,80 +103,86 @@ async function main() {
 	console.log( `\n📋 Fetching manifest for ${ sha }...` );
 	let digest;
 	try {
-		const response = await fetch( `https://ghcr.io/v2/${ ghcrRepo }/manifests/${ sha }`, {
-			headers: {
-				Authorization: `Bearer ${ token }`,
-				Accept: 'application/vnd.oci.image.manifest.v1+json',
-			},
+		digest = await withRetry( 'Manifest fetch', async () => {
+			const response = await fetch( `https://ghcr.io/v2/${ ghcrRepo }/manifests/${ sha }`, {
+				headers: {
+					Authorization: `Bearer ${ token }`,
+					Accept: 'application/vnd.oci.image.manifest.v1+json',
+				},
+			} );
+			if ( ! response.ok ) {
+				throw new Error( `Failed to fetch manifest: ${ response.status } ${ response.statusText }` );
+			}
+			const manifest = await response.json();
+			const layerDigest = manifest?.layers?.[ 0 ]?.digest;
+			if ( ! layerDigest ) {
+				throw new Error( 'No layer digest found in manifest' );
+			}
+			return layerDigest;
 		} );
-		if ( ! response.ok ) {
-			throw new Error( `Failed to fetch manifest: ${ response.status } ${ response.statusText }` );
-		}
-		const manifest = await response.json();
-		digest = manifest?.layers?.[ 0 ]?.digest;
-		if ( ! digest ) {
-			throw new Error( 'No layer digest found in manifest' );
-		}
 		console.log( `✅ Blob digest: ${ digest }` );
 	} catch ( error ) {
 		console.error( '❌ Failed to fetch manifest:', error.message );
 		process.exit( 1 );
 	}
 
-	// Remove existing gutenberg directory so the extraction is clean.
-	if ( fs.existsSync( gutenbergDir ) ) {
-		console.log( '\n🗑️  Removing existing gutenberg directory...' );
-		fs.rmSync( gutenbergDir, { recursive: true, force: true } );
-	}
-
-	fs.mkdirSync( gutenbergDir, { recursive: true } );
-
 	/*
 	 * Step 3: Stream the blob directly through gunzip into tar, writing
 	 * into ./gutenberg with no temporary file on disk.
+	 *
+	 * The download/extract is wrapped in retry: a mid-stream failure can
+	 * leave a partially extracted gutenberg directory, so each attempt
+	 * starts by clearing and recreating the destination.
 	 */
 	console.log( `\n📥 Downloading and extracting artifact...` );
 	try {
-		const response = await fetch( `https://ghcr.io/v2/${ ghcrRepo }/blobs/${ digest }`, {
-			headers: {
-				Authorization: `Bearer ${ token }`,
-			},
-		} );
-		if ( ! response.ok ) {
-			throw new Error( `Failed to download blob: ${ response.status } ${ response.statusText }` );
-		}
+		await withRetry( 'Blob download/extract', async () => {
+			if ( fs.existsSync( gutenbergDir ) ) {
+				fs.rmSync( gutenbergDir, { recursive: true, force: true } );
+			}
+			fs.mkdirSync( gutenbergDir, { recursive: true } );
 
-		/*
-		 * Spawn tar to read from stdin and extract into gutenbergDir.
-		 * `tar` is available on macOS, Linux, and Windows 10+.
-		 */
-		const tar = spawn( 'tar', [ '-x', '-C', gutenbergDir ], {
-			stdio: [ 'pipe', 'inherit', 'inherit' ],
-		} );
-
-		const tarDone = new Promise( ( resolve, reject ) => {
-			tar.on( 'close', ( code ) => {
-				if ( code !== 0 ) {
-					reject( new Error( `tar exited with code ${ code }` ) );
-				} else {
-					resolve();
-				}
+			const response = await fetch( `https://ghcr.io/v2/${ ghcrRepo }/blobs/${ digest }`, {
+				headers: {
+					Authorization: `Bearer ${ token }`,
+				},
 			} );
-			tar.on( 'error', reject );
+			if ( ! response.ok ) {
+				throw new Error( `Failed to download blob: ${ response.status } ${ response.statusText }` );
+			}
+
+			/*
+			 * Spawn tar to read from stdin and extract into gutenbergDir.
+			 * `tar` is available on macOS, Linux, and Windows 10+.
+			 */
+			const tar = spawn( 'tar', [ '-x', '-C', gutenbergDir ], {
+				stdio: [ 'pipe', 'inherit', 'inherit' ],
+			} );
+
+			const tarDone = new Promise( ( resolve, reject ) => {
+				tar.on( 'close', ( code ) => {
+					if ( code !== 0 ) {
+						reject( new Error( `tar exited with code ${ code }` ) );
+					} else {
+						resolve();
+					}
+				} );
+				tar.on( 'error', reject );
+			} );
+
+			/*
+			 * Pipe: fetch body → gunzip → tar stdin.
+			 * Decompressing in Node keeps the pipeline error handling
+			 * consistent and means tar only sees plain tar data on stdin.
+			 */
+			await pipeline(
+				response.body,
+				zlib.createGunzip(),
+				Writable.toWeb( tar.stdin ),
+			);
+
+			await tarDone;
 		} );
-
-		/*
-		 * Pipe: fetch body → gunzip → tar stdin.
-		 * Decompressing in Node keeps the pipeline error handling
-		 * consistent and means tar only sees plain tar data on stdin.
-		 */
-		await pipeline(
-			response.body,
-			zlib.createGunzip(),
-			Writable.toWeb( tar.stdin ),
-		);
-
-		await tarDone;
 
 		console.log( '✅ Download and extraction complete' );
 	} catch ( error ) {
