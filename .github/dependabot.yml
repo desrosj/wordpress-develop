@@ -8,6 +8,8 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 50
+    cooldown:
+      default-days: 7
     groups:
       github-actions:
         applies-to: version-updates
@@ -21,6 +23,8 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 50
+    cooldown:
+      default-days: 7
     ignore:
       # These dependencies do not currently need to be managed with Dependabot.
       - dependency-name: "squizlabs/php_codesniffer"
@@ -29,6 +33,10 @@ updates:
       - dependency-name: "yoast/phpunit-polyfills"
     groups:
       composer-packages:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
         patterns:
           - "composer/ca-bundle"
 
@@ -38,6 +46,8 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 50
+    cooldown:
+      default-days: 7
     ignore:
       - dependency-name: "@wordpress/*"
     groups:
@@ -188,6 +198,8 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 50
+    cooldown:
+      default-days: 7
     groups:
       twentytwentyfive-css:
         applies-to: version-updates
@@ -203,6 +215,8 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 50
+    cooldown:
+      default-days: 7
     groups:
       twentytwentytwo-css:
         applies-to: version-updates
@@ -218,6 +232,8 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 50
+    cooldown:
+      default-days: 7
     groups:
       twentytwentyone-sass-css:
         applies-to: version-updates
@@ -259,6 +275,8 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 50
+    cooldown:
+      default-days: 7
     groups:
       twentytwenty-css:
         applies-to: version-updates
@@ -278,7 +296,6 @@ updates:
           - "*stylelint*"
       twentytwenty-miscellaneous:
         applies-to: version-updates
-        applies-to: version-updates
         update-types:
           - minor
           - patch
@@ -291,6 +308,8 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 50
+    cooldown:
+      default-days: 7
     groups:
       twentynineteen-css-sass:
         applies-to: version-updates
