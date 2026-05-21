@@ -33,6 +33,10 @@ updates:
       - dependency-name: "yoast/phpunit-polyfills"
     groups:
       composer-packages:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
         patterns:
           - "composer/ca-bundle"
 
@@ -291,7 +295,6 @@ updates:
         patterns:
           - "*stylelint*"
       twentytwenty-miscellaneous:
-        applies-to: version-updates
         applies-to: version-updates
         update-types:
           - minor
