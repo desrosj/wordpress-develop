@@ -1,0 +1,64 @@
+# Opens draft pull requests that update the bundled Gutenberg commit reference
+# (package.json -> gutenberg.sha):
+#   - trunk: the commit for Gutenberg's latest public (non-prerelease) release.
+#   - the most recent X.Y version branch: the head of Gutenberg's wp/X.Y branch.
+name: Gutenberg Sync
+
+on:
+  schedule:
+    # Daily. Drives the version-branch update and the trunk release poll.
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Which branches to update.'
+        type: choice
+        options:
+          - both
+          - trunk
+          - version-branch
+        default: both
+      dry_run:
+        description: 'Log intended actions without creating or updating PRs.'
+        type: boolean
+        default: false
+
+# Disable permissions for all available scopes by default.
+# Any needed permissions are configured at the job level.
+permissions: {}
+
+# Prevent overlapping daily/manual runs from racing on the same PR branches.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  # Detects the most recent X.Y version branch and whether Gutenberg has a
+  # matching wp/X.Y branch. Shared by the version-branch job.
+  setup:
+    name: Determine target branches
+    runs-on: ubuntu-24.04
+    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      latest_version_branch: ${{ steps.detect.outputs.latest_version_branch }}
+      wp_branch_exists: ${{ steps.detect.outputs.wp_branch_exists }}
+    steps:
+      - name: Detect latest version branch and wp/X.Y existence
+        id: detect
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          latest=$(gh api --paginate "repos/${REPO}/branches" --jq '.[].name' \
+            | grep -E '^[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          echo "latest_version_branch=${latest}" >> "$GITHUB_OUTPUT"
+
+          if [ -n "${latest}" ] && git ls-remote --exit-code --heads \
+            https://github.com/WordPress/gutenberg.git "wp/${latest}" >/dev/null 2>&1; then
+            echo "wp_branch_exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "wp_branch_exists=false" >> "$GITHUB_OUTPUT"
+          fi
