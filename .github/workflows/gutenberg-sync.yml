@@ -70,7 +70,6 @@ jobs:
   update-trunk:
     name: Update trunk to latest release
     runs-on: ubuntu-24.04
-    needs: setup
     if: >-
       ${{ github.repository == 'WordPress/wordpress-develop' &&
           ( github.event_name != 'workflow_dispatch' ||
@@ -289,9 +288,25 @@ jobs:
 
           git clone --filter=tree:0 --no-checkout \
             https://github.com/WordPress/gutenberg.git gutenberg-src
-          git -C gutenberg-src log --reverse --format="- %s" "${OLD_SHA}...${NEW_SHA}" \
-            | sed 's|#\([0-9][0-9]*\)|https://github.com/WordPress/gutenberg/pull/\1|g; /github\.com\/WordPress\/gutenberg\/pull/!d' \
-            > commit_list.md
+
+          if ! git -C gutenberg-src cat-file -e "${OLD_SHA}^{commit}" 2>/dev/null; then
+            # shellcheck disable=SC2016  # Backticks are markdown literals, not shell expansions.
+            printf -- '_Previous reference `%s` was not found in Gutenberg history; changelog omitted._\n' "${OLD_SHA}" > commit_list.md
+          else
+            git -C gutenberg-src log --reverse --format="- %s" "${OLD_SHA}...${NEW_SHA}" \
+              | sed 's|#\([0-9][0-9]*\)|https://github.com/WordPress/gutenberg/pull/\1|g; /github\.com\/WordPress\/gutenberg\/pull/!d' \
+              > commit_list_full.md
+
+            # Cap the changelog so the PR body cannot exceed GitHub's body limit.
+            total=$(wc -l < commit_list_full.md)
+            if [ "${total}" -gt 300 ]; then
+              head -n 300 commit_list_full.md > commit_list.md
+              # shellcheck disable=SC2016  # Backticks are markdown literals, not shell expansions.
+              printf -- '- _…and %s more commits; see the compare link above._\n' "$(( total - 300 ))" >> commit_list.md
+            else
+              cp commit_list_full.md commit_list.md
+            fi
+          fi
 
           # shellcheck disable=SC2016  # Backticks are markdown literals, not shell expansions.
           {
