@@ -1,31 +1,33 @@
 # Opens draft pull requests that update the bundled Gutenberg commit reference
 # (package.json -> gutenberg.sha):
 #   - trunk: the commit for Gutenberg's latest public (non-prerelease) release.
-#   - the most recent X.Y version branch: the head of Gutenberg's wp/X.Y branch.
+#   - the currently supported X.Y branch: the head of Gutenberg's wp/X.Y branch.
+#
+# Scheduled runs update both trunk and the currently supported branch
+# (CURRENTLY_SUPPORTED_BRANCH). A manual run targets a single branch: either
+# "trunk" or a specific X.Y branch name.
 name: Gutenberg Sync
 
 on:
   schedule:
-    # Daily. Drives the version-branch update and the trunk release poll.
+    # Daily. Drives the supported-branch update and the trunk release poll.
     - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
-      target:
-        description: 'Which branches to update.'
-        type: choice
-        options:
-          - both
-          - trunk
-          - version-branch
-        default: both
-      dry_run:
-        description: 'Log intended actions without creating or updating PRs.'
-        type: boolean
-        default: false
+      branch:
+        description: 'Create/update a PR for a single branch: "trunk" or an X.Y branch name (e.g. "6.8"). Leave blank to target the currently supported branch.'
+        required: false
+        type: string
+        default: ''
 
 # Disable permissions for all available scopes by default.
 # Any needed permissions are configured at the job level.
 permissions: {}
+
+# The most recent stable release branch that should track Gutenberg's wp/X.Y.
+# Bump this once per release cycle (mirrors test-old-branches.yml).
+env:
+  CURRENTLY_SUPPORTED_BRANCH: '7.0'
 
 # Prevent overlapping daily/manual runs from racing on the same PR branches.
 concurrency:
@@ -33,47 +35,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Detects the most recent X.Y version branch and whether Gutenberg has a
-  # matching wp/X.Y branch. Shared by the version-branch job.
-  setup:
-    name: Determine target branches
-    runs-on: ubuntu-24.04
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    outputs:
-      latest_version_branch: ${{ steps.detect.outputs.latest_version_branch }}
-      wp_branch_exists: ${{ steps.detect.outputs.wp_branch_exists }}
-    steps:
-      - name: Detect latest version branch and wp/X.Y existence
-        id: detect
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-        run: |
-          latest=$(gh api --paginate "repos/${REPO}/branches" --jq '.[].name' \
-            | grep -E '^[0-9]+\.[0-9]+$' | sort -V | tail -1)
-          if [ -z "${latest}" ]; then
-            echo "::error::Could not detect latest version branch." >&2
-            exit 1
-          fi
-          echo "latest_version_branch=${latest}" >> "$GITHUB_OUTPUT"
-
-          if gh api "repos/WordPress/gutenberg/git/refs/heads/wp/${latest}" >/dev/null 2>&1; then
-            echo "wp_branch_exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "wp_branch_exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
   # Updates trunk to the commit referenced by Gutenberg's latest public release.
+  # Runs automatically on a schedule, or manually when dispatched with branch "trunk".
   update-trunk:
     name: Update trunk to latest release
     runs-on: ubuntu-24.04
     if: >-
       ${{ github.repository == 'WordPress/wordpress-develop' &&
-          ( github.event_name != 'workflow_dispatch' ||
-            inputs.target == 'both' || inputs.target == 'trunk' ) }}
+          ( github.event_name != 'workflow_dispatch' || inputs.branch == 'trunk' ) }}
     timeout-minutes: 10
     permissions:
       contents: read
@@ -163,7 +132,6 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.access-token }}
           REPO: ${{ github.repository }}
-          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
           COMMIT_MSG: 'Build/Test Tools: Update the bundled Gutenberg commit reference.'
         run: |
           set -euo pipefail
@@ -171,16 +139,6 @@ jobs:
           pr_json=$(gh pr list --repo "$REPO" --state open --base "$BASE" \
             --label "Gutenberg Sync" --json number,headRefName,isCrossRepository \
             --jq '.[0] // empty')
-
-          if [ "${DRY_RUN}" = "true" ]; then
-            echo "DRY RUN: base '$BASE' -> sha '$NEW_SHA'."
-            if [ -n "$pr_json" ]; then
-              echo "DRY RUN: would update existing PR #$(jq -r '.number' <<<"$pr_json")."
-            else
-              echo "DRY RUN: would create draft PR from '$HEAD_BRANCH'."
-            fi
-            exit 0
-          fi
 
           if [ -n "$pr_json" ]; then
             number=$(jq -r '.number' <<<"$pr_json")
@@ -221,22 +179,35 @@ jobs:
               --title "$PR_TITLE" --body-file pr_body.md --label "Gutenberg Sync"
           fi
 
-  # Updates the most recent X.Y version branch to the head of Gutenberg's wp/X.Y.
+  # Updates a version branch to the head of Gutenberg's matching wp/X.Y branch.
+  # Runs automatically on a schedule for CURRENTLY_SUPPORTED_BRANCH, or manually
+  # when dispatched with a specific X.Y branch name (or blank for the supported branch).
   update-version-branch:
     name: Update version branch to wp/X.Y head
     runs-on: ubuntu-24.04
-    needs: setup
     if: >-
       ${{ github.repository == 'WordPress/wordpress-develop' &&
-          needs.setup.outputs.wp_branch_exists == 'true' &&
-          ( github.event_name != 'workflow_dispatch' ||
-            inputs.target == 'both' || inputs.target == 'version-branch' ) }}
+          ( github.event_name != 'workflow_dispatch' || inputs.branch != 'trunk' ) }}
     timeout-minutes: 10
     permissions:
       contents: read
-    env:
-      BASE_BRANCH: ${{ needs.setup.outputs.latest_version_branch }}
     steps:
+      - name: Determine target branch
+        env:
+          INPUT_BRANCH: ${{ inputs.branch }}
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${INPUT_BRANCH}" ]; then
+            if ! printf '%s' "${INPUT_BRANCH}" | grep -Eq '^[0-9]+\.[0-9]+$'; then
+              echo "::error::Invalid branch input '${INPUT_BRANCH}'. Use 'trunk' or an X.Y branch name (e.g. 6.8)." >&2
+              exit 1
+            fi
+            base="${INPUT_BRANCH}"
+          else
+            base="${CURRENTLY_SUPPORTED_BRANCH}"
+          fi
+          echo "BASE_BRANCH=${base}" >> "$GITHUB_ENV"
+
       - name: Generate installation token
         id: generate_token
         env:
@@ -265,7 +236,7 @@ jobs:
       - name: Checkout version branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ needs.setup.outputs.latest_version_branch }}
+          ref: ${{ env.BASE_BRANCH }}
           fetch-depth: 0
           token: ${{ steps.generate_token.outputs.access-token }}
           persist-credentials: true
@@ -283,6 +254,14 @@ jobs:
           GH_TOKEN: ${{ steps.generate_token.outputs.access-token }}
         run: |
           set -euo pipefail
+
+          # Skip gracefully if Gutenberg has not cut wp/<branch> yet (e.g. early in a cycle).
+          if ! gh api "repos/WordPress/gutenberg/git/refs/heads/wp/${BASE_BRANCH}" >/dev/null 2>&1; then
+            echo "::notice::Gutenberg branch wp/${BASE_BRANCH} does not exist; nothing to sync."
+            echo "PROCEED=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
           NEW_SHA=$(gh api "repos/WordPress/gutenberg/commits/wp/${BASE_BRANCH}" --jq '.sha')
           OLD_SHA=$(jq -r '.gutenberg.sha' package.json)
 
@@ -330,7 +309,6 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.access-token }}
           REPO: ${{ github.repository }}
-          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
           COMMIT_MSG: 'Build/Test Tools: Update the bundled Gutenberg commit reference.'
         run: |
           set -euo pipefail
@@ -338,16 +316,6 @@ jobs:
           pr_json=$(gh pr list --repo "$REPO" --state open --base "$BASE" \
             --label "Gutenberg Sync" --json number,headRefName,isCrossRepository \
             --jq '.[0] // empty')
-
-          if [ "${DRY_RUN}" = "true" ]; then
-            echo "DRY RUN: base '$BASE' -> sha '$NEW_SHA'."
-            if [ -n "$pr_json" ]; then
-              echo "DRY RUN: would update existing PR #$(jq -r '.number' <<<"$pr_json")."
-            else
-              echo "DRY RUN: would create draft PR from '$HEAD_BRANCH'."
-            fi
-            exit 0
-          fi
 
           if [ -n "$pr_json" ]; then
             number=$(jq -r '.number' <<<"$pr_json")
