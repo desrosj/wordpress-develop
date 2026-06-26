@@ -54,10 +54,13 @@ jobs:
         run: |
           latest=$(gh api --paginate "repos/${REPO}/branches" --jq '.[].name' \
             | grep -E '^[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          if [ -z "${latest}" ]; then
+            echo "::error::Could not detect latest version branch." >&2
+            exit 1
+          fi
           echo "latest_version_branch=${latest}" >> "$GITHUB_OUTPUT"
 
-          if [ -n "${latest}" ] && git ls-remote --exit-code --heads \
-            https://github.com/WordPress/gutenberg.git "wp/${latest}" >/dev/null 2>&1; then
+          if gh api "repos/WordPress/gutenberg/git/refs/heads/wp/${latest}" >/dev/null 2>&1; then
             echo "wp_branch_exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "wp_branch_exists=false" >> "$GITHUB_OUTPUT"
