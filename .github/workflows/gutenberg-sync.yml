@@ -221,3 +221,154 @@ jobs:
             gh pr create --repo "$REPO" --draft --base "$BASE" --head "$HEAD_BRANCH" \
               --title "$PR_TITLE" --body-file pr_body.md --label "Gutenberg Sync"
           fi
+
+  # Updates the most recent X.Y version branch to the head of Gutenberg's wp/X.Y.
+  update-version-branch:
+    name: Update version branch to wp/X.Y head
+    runs-on: ubuntu-24.04
+    needs: setup
+    if: >-
+      ${{ github.repository == 'WordPress/wordpress-develop' &&
+          needs.setup.outputs.wp_branch_exists == 'true' &&
+          ( github.event_name != 'workflow_dispatch' ||
+            inputs.target == 'both' || inputs.target == 'version-branch' ) }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      BASE_BRANCH: ${{ needs.setup.outputs.latest_version_branch }}
+    steps:
+      - name: Generate installation token
+        id: generate_token
+        env:
+          GH_APP_ID: ${{ vars.GH_PR_BUILT_FILES_APP_ID }}
+          GH_APP_PRIVATE_KEY: ${{ secrets.GH_PR_BUILT_FILES_PRIVATE_KEY }}
+        run: |
+          JWT=$(python3 - <<'EOF'
+          import jwt, time, os
+          payload = {
+              "iat": int(time.time()),
+              "exp": int(time.time()) + 600,  # 10-minute expiration
+              "iss": int(os.environ["GH_APP_ID"]),
+          }
+          print(jwt.encode(payload, os.environ["GH_APP_PRIVATE_KEY"], algorithm="RS256"))
+          EOF
+          )
+          INSTALLATION_ID=$(curl -s -X GET -H "Authorization: Bearer $JWT" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/app/installations | jq -r '.[0].id')
+          ACCESS_TOKEN=$(curl -s -X POST -H "Authorization: Bearer $JWT" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/app/installations/$INSTALLATION_ID/access_tokens" | jq -r '.token')
+          echo "::add-mask::$ACCESS_TOKEN"
+          echo "access-token=$ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout version branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ needs.setup.outputs.latest_version_branch }}
+          fetch-depth: 0
+          token: ${{ steps.generate_token.outputs.access-token }}
+          persist-credentials: true
+          show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
+
+      - name: Configure git author
+        env:
+          GH_APP_ID: ${{ vars.GH_PR_BUILT_FILES_APP_ID }}
+        run: |
+          git config user.name "wordpress-develop-pr-bot[bot]"
+          git config user.email "${GH_APP_ID}+wordpress-develop-pr-bot[bot]@users.noreply.github.com"
+
+      - name: Resolve wp/X.Y head and build PR body
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.access-token }}
+        run: |
+          set -euo pipefail
+          NEW_SHA=$(gh api "repos/WordPress/gutenberg/commits/wp/${BASE_BRANCH}" --jq '.sha')
+          OLD_SHA=$(jq -r '.gutenberg.sha' package.json)
+
+          git clone --filter=tree:0 --no-checkout \
+            https://github.com/WordPress/gutenberg.git gutenberg-src
+          git -C gutenberg-src log --reverse --format="- %s" "${OLD_SHA}...${NEW_SHA}" \
+            | sed 's|#\([0-9][0-9]*\)|https://github.com/WordPress/gutenberg/pull/\1|g; /github\.com\/WordPress\/gutenberg\/pull/!d' \
+            > commit_list.md
+
+          # shellcheck disable=SC2016  # Backticks are markdown literals, not shell expansions.
+          {
+            printf 'Updates the bundled Gutenberg commit reference for `%s` to the latest `wp/%s` commit `%s`.\n\n' \
+              "$BASE_BRANCH" "$BASE_BRANCH" "$NEW_SHA"
+            printf 'Compare: https://github.com/WordPress/gutenberg/compare/%s...%s\n\n' "$OLD_SHA" "$NEW_SHA"
+            printf '## Changes\n\n'
+            cat commit_list.md
+          } > pr_body.md
+
+          {
+            echo "BASE=${BASE_BRANCH}"
+            echo "HEAD_BRANCH=gutenberg-sync/${BASE_BRANCH}"
+            echo "NEW_SHA=${NEW_SHA}"
+            echo "PR_TITLE=Gutenberg Sync: Update ${BASE_BRANCH} to latest wp/${BASE_BRANCH}"
+            if [ "${NEW_SHA}" != "${OLD_SHA}" ]; then echo "PROCEED=true"; else echo "PROCEED=false"; fi
+          } >> "$GITHUB_ENV"
+
+      - name: Create or update the draft pull request
+        if: ${{ env.PROCEED == 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.access-token }}
+          REPO: ${{ github.repository }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+          COMMIT_MSG: 'Build/Test Tools: Update the bundled Gutenberg commit reference.'
+        run: |
+          set -euo pipefail
+
+          pr_json=$(gh pr list --repo "$REPO" --state open --base "$BASE" \
+            --label "Gutenberg Sync" --json number,headRefName,isCrossRepository \
+            --jq '.[0] // empty')
+
+          if [ "${DRY_RUN}" = "true" ]; then
+            echo "DRY RUN: base '$BASE' -> sha '$NEW_SHA'."
+            if [ -n "$pr_json" ]; then
+              echo "DRY RUN: would update existing PR #$(jq -r '.number' <<<"$pr_json")."
+            else
+              echo "DRY RUN: would create draft PR from '$HEAD_BRANCH'."
+            fi
+            exit 0
+          fi
+
+          if [ -n "$pr_json" ]; then
+            number=$(jq -r '.number' <<<"$pr_json")
+            head=$(jq -r '.headRefName' <<<"$pr_json")
+            cross=$(jq -r '.isCrossRepository' <<<"$pr_json")
+
+            if [ "$cross" = "true" ]; then
+              echo "::warning::PR #$number is from a fork; updating metadata only."
+              # shellcheck disable=SC2016  # Backticks are markdown literals, not shell expansions.
+              printf '\n\n> Note: the SHA could not be pushed automatically (PR is from a fork). Please set `gutenberg.sha` to `%s`.\n' "$NEW_SHA" >> pr_body.md
+              gh pr edit "$number" --repo "$REPO" --title "$PR_TITLE" --body-file pr_body.md
+              exit 0
+            fi
+
+            git fetch origin "$head"
+            git checkout -B "$head" "origin/$head"
+          else
+            number=""
+            git checkout -B "$HEAD_BRANCH" "origin/$BASE"
+          fi
+
+          jq --tab --arg sha "$NEW_SHA" '.gutenberg.sha = $sha' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+          if git diff --quiet -- package.json; then
+            echo "package.json already at $NEW_SHA; no commit needed."
+          else
+            git add package.json
+            git commit -m "$COMMIT_MSG"
+          fi
+
+          if [ -n "$number" ]; then
+            git push origin "HEAD:$head"
+            gh pr edit "$number" --repo "$REPO" --title "$PR_TITLE" --body-file pr_body.md
+          else
+            git push --force origin "HEAD:$HEAD_BRANCH"
+            gh pr create --repo "$REPO" --draft --base "$BASE" --head "$HEAD_BRANCH" \
+              --title "$PR_TITLE" --body-file pr_body.md --label "Gutenberg Sync"
+          fi
