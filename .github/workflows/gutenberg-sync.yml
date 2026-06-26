@@ -124,6 +124,8 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.access-token }}
         run: |
+          set -euo pipefail
+
           release=$(gh api repos/WordPress/gutenberg/releases/latest)
           TAG=$(jq -r '.tag_name' <<<"$release")
           RELEASE_URL=$(jq -r '.html_url' <<<"$release")
