@@ -13,11 +13,16 @@ on:
         description: 'Branch to update: "trunk" or an X.Y branch name (e.g. "6.8").'
         required: true
         type: string
-        default: trunk
+        default: 'trunk'
 
 # Disable permissions for all available scopes by default.
 # Any needed permissions are configured at the job level.
 permissions: {}
+
+# The target branch and the bot-managed PR head branch, derived from the input.
+env:
+  BASE_BRANCH: ${{ inputs.branch }}
+  HEAD_BRANCH: gutenberg-sync/${{ inputs.branch }}
 
 # Serialize runs for the same target branch; allow different branches in parallel.
 concurrency:
@@ -36,24 +41,6 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Determine target branch
-        env:
-          INPUT_BRANCH: ${{ inputs.branch }}
-        run: |
-          set -euo pipefail
-          if [ "${INPUT_BRANCH}" = "trunk" ]; then
-            base="trunk"
-          elif printf '%s' "${INPUT_BRANCH}" | grep -Eq '^[0-9]+\.[0-9]+$'; then
-            base="${INPUT_BRANCH}"
-          else
-            echo "::error::Invalid branch '${INPUT_BRANCH}'. Use 'trunk' or an X.Y branch name (e.g. 6.8)." >&2
-            exit 1
-          fi
-          {
-            echo "BASE_BRANCH=${base}"
-            echo "HEAD_BRANCH=gutenberg-sync/${base}"
-          } >> "$GITHUB_ENV"
-
       - name: Generate installation token
         id: generate_token
         env:
