@@ -97,7 +97,7 @@ jobs:
           {
             echo "TAG=${TAG}"
             echo "RELEASE_URL=${RELEASE_URL}"
-            echo "PR_TITLE=Gutenberg Sync: Update trunk to ${TAG}"
+            echo "PR_TITLE=Bump \`gutenberg.sha\` to version ${TAG}"
           } >> "$GITHUB_ENV"
 
       - name: Checkout Gutenberg at the release (trunk only)
@@ -143,7 +143,7 @@ jobs:
           OLD_SHA=$(jq -r '.gutenberg.sha' package.json)
           {
             echo "OLD_SHA=${OLD_SHA}"
-            echo "PR_TITLE=Gutenberg Sync: Update ${BASE_BRANCH} to latest wp/${BASE_BRANCH}"
+            echo "PR_TITLE=WP ${BASE_BRANCH}: bump \`gutenberg.sha\` to the latest from \`wp/${BASE_BRANCH}\`"
             if [ "${NEW_SHA}" != "${OLD_SHA}" ]; then echo "PROCEED=true"; else echo "PROCEED=false"; fi
           } >> "$GITHUB_ENV"
 
@@ -360,15 +360,17 @@ jobs:
           {
             echo "## Gutenberg Sync"
             echo ""
-            echo "Pushed \`${HEAD_BRANCH}\` to \`${FORK_OWNER}\`. [Open a pull request](${compare_url}) against \`${UPSTREAM_REPO}\`, then copy the title and body below into it."
+            echo "Pushed \`${HEAD_BRANCH}\` to \`${FORK_OWNER}\`."
             echo ""
-            echo "### Title"
+            echo "[Open a pull request](${compare_url}) against \`${UPSTREAM_REPO}\`, then copy the title and body below into it."
+            echo ""
+            echo "### PR Title"
             echo ""
             echo '```'
             echo "${PR_TITLE}"
             echo '```'
             echo ""
-            echo "### Body"
+            echo "### PR Body"
             echo ""
             # A four-backtick fence so a body containing triple-backtick code blocks copies intact.
             echo '````markdown'
