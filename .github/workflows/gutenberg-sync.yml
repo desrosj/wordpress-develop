@@ -1,23 +1,14 @@
-# Prepares a branch that updates the bundled Gutenberg commit reference
-# (package.json -> gutenberg.sha) for one branch:
-#   - "trunk": the commit for Gutenberg's latest public (non-prerelease) release.
-#   - an X.Y branch: the head of Gutenberg's matching wp/X.Y branch.
+# Creates a pull request that updates `gutenberg.sha` to the newest appropriate value.
 #
-# WordPress/wordpress-develop does not accept pushed branches, so this workflow
-# runs from a FORK: it checks out the target branch from upstream, pushes a
-# gutenberg-sync/<branch> branch to the fork it runs in, and writes the pull
-# request title and body to the job summary. Open the pull request manually
-# using the compare link in the summary, then copy the title and body into it.
-# Each run targets one branch.
+# - "trunk": the commit of Gutenberg's latest public (non-prerelease) release.
+# - Numbered version branches (X.Y): the head of the matching wp/X.Y branch in the Gutenberg repository.
 #
-# The work is split across three jobs: "research" resolves the SHAs and the
-# changelog (read-only), "create-update-branch" pushes the branch to the fork
-# (the only job that needs write access), and "build-pr-body" assembles the
-# pull request body. Resolved values flow downstream through job outputs; the
-# changelog and commit list are passed as artifacts.
+# Because the wordpress.org mirror script deletes all branches that are not present in SVN, the HEAD branch for a pull
+# request cannot be pushed to WordPress/wordpress-develop.
 #
-# The "Gutenberg Sync" label is applied separately by gutenberg-sync-label.yml
-# when a gutenberg-sync/* pull request is opened.
+# This workflow is intended to be run in forks so that the mirror script does not close out the pull request created.
+#
+# A pull request title and body are also generated and added as a job summary to make that process easier.
 name: Gutenberg Sync
 
 on:

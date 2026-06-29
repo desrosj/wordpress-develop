@@ -1,18 +1,8 @@
-# Applies the "Gutenberg Sync" label to pull requests opened from a
-# gutenberg-sync/* branch (the branch name the Gutenberg Sync workflow creates).
-#
-# Labeling lives here rather than in gutenberg-sync.yml because that workflow
-# runs from a fork, whose GITHUB_TOKEN cannot label a pull request on upstream.
-# This workflow runs on upstream in response to the pull request being opened,
-# where its GITHUB_TOKEN has permission to label it. It only reads the branch
-# name and never checks out the pull request's code, so pull_request_target is
-# safe here.
-name: Label Gutenberg Sync PRs
+# Manages labels for pull requests.
+name: Label Management
 
 on:
-  # This workflow only reads the head branch name and labels the PR; it never
-  # checks out or runs the pull request's code, so pull_request_target is safe.
-  pull_request_target: # zizmor: ignore[dangerous-triggers]
+  pull_request_target:
     types:
       - opened
       - reopened
@@ -22,8 +12,9 @@ on:
 permissions: {}
 
 jobs:
-  label:
-    name: Apply the Gutenberg Sync label
+  # Adds a label to pull requests updating the pinned `gutenberg.sha` hash value.
+  label-gutenberg-sync-prs:
+    name: Label Gutenberg sync PRs
     runs-on: ubuntu-24.04
     if: ${{ github.repository == 'WordPress/wordpress-develop' && startsWith( github.head_ref, 'gutenberg-sync/' ) }}
     timeout-minutes: 5
@@ -33,6 +24,5 @@ jobs:
       - name: Add the Gutenberg Sync label
         env:
           GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "Gutenberg Sync"
+        run: gh pr edit "$PR_NUMBER" --repo WordPress/wordpress-develop --add-label "Gutenberg Sync"
