@@ -3,7 +3,19 @@
 #   - "trunk": the commit for Gutenberg's latest public (non-prerelease) release.
 #   - an X.Y branch: the head of Gutenberg's matching wp/X.Y branch.
 #
-# Runs only on manual dispatch; each run targets exactly one branch.
+# The WordPress/wordpress-develop repository does not accept pushed branches, so
+# this workflow is designed to run from a FORK. It checks out the target branch
+# from upstream (WordPress/wordpress-develop), pushes a gutenberg-sync/<branch>
+# branch to the fork it runs in, and opens a pull request from that fork branch
+# back to upstream. Each run targets exactly one branch.
+#
+# Authentication:
+#   - GITHUB_TOKEN (built in) pushes the branch to the fork.
+#   - GUTENBERG_SYNC_TOKEN (optional secret) is a personal access token used to
+#     open/update the pull request on upstream and apply the "Gutenberg Sync"
+#     label. It needs permission to create PRs and label them on upstream (i.e.
+#     a committer's token). Without it, the branch is still pushed and the run
+#     prints a link to open the pull request manually.
 name: Gutenberg Sync
 
 on:
@@ -19,8 +31,10 @@ on:
 # Any needed permissions are configured at the job level.
 permissions: {}
 
-# The target branch and the bot-managed PR head branch, derived from the input.
 env:
+  # Where pull requests are opened and the target branch is read from.
+  UPSTREAM_REPO: WordPress/wordpress-develop
+  # The target branch and the bot-managed PR head branch, derived from the input.
   BASE_BRANCH: ${{ inputs.branch }}
   HEAD_BRANCH: gutenberg-sync/${{ inputs.branch }}
 
@@ -36,56 +50,32 @@ jobs:
   sync:
     name: Sync ${{ inputs.branch }}
     runs-on: ubuntu-24.04
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
+    # Runs from a fork; the canonical repository does not accept pushed branches.
+    if: ${{ github.repository != 'WordPress/wordpress-develop' }}
     timeout-minutes: 10
     permissions:
-      contents: read
+      # Push the gutenberg-sync/<branch> branch to the fork this workflow runs in.
+      contents: write
     steps:
-      - name: Generate installation token
-        id: generate_token
-        env:
-          GH_APP_ID: ${{ vars.GH_PR_BUILT_FILES_APP_ID }}
-          GH_APP_PRIVATE_KEY: ${{ secrets.GH_PR_BUILT_FILES_PRIVATE_KEY }}
-        run: |
-          JWT=$(python3 - <<'EOF'
-          import jwt, time, os
-          payload = {
-              "iat": int(time.time()),
-              "exp": int(time.time()) + 600,  # 10-minute expiration
-              "iss": int(os.environ["GH_APP_ID"]),
-          }
-          print(jwt.encode(payload, os.environ["GH_APP_PRIVATE_KEY"], algorithm="RS256"))
-          EOF
-          )
-          INSTALLATION_ID=$(curl -s -X GET -H "Authorization: Bearer $JWT" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/app/installations | jq -r '.[0].id')
-          ACCESS_TOKEN=$(curl -s -X POST -H "Authorization: Bearer $JWT" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/app/installations/$INSTALLATION_ID/access_tokens" | jq -r '.token')
-          echo "::add-mask::$ACCESS_TOKEN"
-          echo "access-token=$ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout target branch
+      - name: Checkout the upstream target branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          repository: WordPress/wordpress-develop
           ref: ${{ env.BASE_BRANCH }}
           fetch-depth: 0
-          token: ${{ steps.generate_token.outputs.access-token }}
+          token: ${{ github.token }}
           persist-credentials: true
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
 
       - name: Configure git author
-        env:
-          GH_APP_ID: ${{ vars.GH_PR_BUILT_FILES_APP_ID }}
         run: |
-          git config user.name "wordpress-develop-pr-bot[bot]"
-          git config user.email "${GH_APP_ID}+wordpress-develop-pr-bot[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Resolve release SHA
         if: ${{ inputs.branch == 'trunk' }}
         env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.access-token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
@@ -121,7 +111,7 @@ jobs:
       - name: Resolve wp/X.Y head
         if: ${{ inputs.branch != 'trunk' }}
         env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.access-token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
@@ -178,66 +168,63 @@ jobs:
             cat changelog.md
           } > pr_body.md
 
-      - name: Look up existing pull request
+      - name: Push the sync branch to the fork
         if: ${{ env.PROCEED == 'true' }}
         env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.access-token }}
-          REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          pr_json=$(gh pr list --repo "$REPO" --state open --base "$BASE_BRANCH" \
-            --label "Gutenberg Sync" --json number,headRefName,isCrossRepository \
-            --jq '.[0] // empty')
-
-          if [ -n "$pr_json" ]; then
-            {
-              echo "PR_NUMBER=$(jq -r '.number' <<<"$pr_json")"
-              echo "PR_HEAD=$(jq -r '.headRefName' <<<"$pr_json")"
-              echo "PR_CROSS=$(jq -r '.isCrossRepository' <<<"$pr_json")"
-            } >> "$GITHUB_ENV"
-          else
-            echo "PR_NUMBER=" >> "$GITHUB_ENV"
-          fi
-
-      - name: Create or update the draft pull request
-        if: ${{ env.PROCEED == 'true' }}
-        env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.access-token }}
-          REPO: ${{ github.repository }}
+          FORK_REPO: ${{ github.repository }}
           COMMIT_MSG: 'Build/Test Tools: Update the bundled Gutenberg commit reference.'
         run: |
           set -euo pipefail
 
-          if [ -n "${PR_NUMBER}" ]; then
-            if [ "${PR_CROSS}" = "true" ]; then
-              echo "::warning::PR #${PR_NUMBER} is from a fork; updating metadata only."
-              # shellcheck disable=SC2016  # Backticks are markdown literals, not shell expansions.
-              printf '\n\n> Note: the SHA could not be pushed automatically (PR is from a fork). Please set `gutenberg.sha` to `%s`.\n' "$NEW_SHA" >> pr_body.md
-              gh pr edit "${PR_NUMBER}" --repo "$REPO" --title "$PR_TITLE" --body-file pr_body.md
-              exit 0
-            fi
-
-            git fetch origin "${PR_HEAD}"
-            git checkout -B "${PR_HEAD}" "origin/${PR_HEAD}"
-          else
-            git checkout -B "${HEAD_BRANCH}" "origin/${BASE_BRANCH}"
-          fi
-
+          # Build the head branch from the upstream target branch plus the bump.
+          git checkout -B "${HEAD_BRANCH}"
           jq --tab --arg sha "$NEW_SHA" '.gutenberg.sha = $sha' package.json > package.json.tmp
           mv package.json.tmp package.json
+          git add package.json
+          git commit -m "$COMMIT_MSG"
 
-          if git diff --quiet -- package.json; then
-            echo "package.json already at $NEW_SHA; no commit needed."
-          else
-            git add package.json
-            git commit -m "$COMMIT_MSG"
+          # Push to the fork this workflow runs in (origin points at upstream).
+          git remote add fork "https://github.com/${FORK_REPO}.git"
+          git push --force fork "HEAD:${HEAD_BRANCH}"
+
+      - name: Open or update the upstream pull request
+        if: ${{ env.PROCEED == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GUTENBERG_SYNC_TOKEN || github.token }}
+          HAS_PAT: ${{ secrets.GUTENBERG_SYNC_TOKEN != '' }}
+          FORK_OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+
+          compare_url="https://github.com/${UPSTREAM_REPO}/compare/${BASE_BRANCH}...${FORK_OWNER}:${HEAD_BRANCH}?expand=1"
+
+          # Without a PAT, the GITHUB_TOKEN cannot open a PR on upstream. The branch
+          # is already pushed, so surface a link to open the PR manually.
+          if [ "${HAS_PAT}" != "true" ]; then
+            echo "::notice::Branch '${HEAD_BRANCH}' pushed to ${FORK_OWNER}. Set the GUTENBERG_SYNC_TOKEN secret to open PRs automatically, or open it here: ${compare_url}"
+            {
+              echo "### Gutenberg Sync"
+              echo ""
+              echo "Pushed \`${HEAD_BRANCH}\` to your fork."
+              echo ""
+              echo "[Open the pull request](${compare_url})"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
 
-          if [ -n "${PR_NUMBER}" ]; then
-            git push origin "HEAD:${PR_HEAD}"
-            gh pr edit "${PR_NUMBER}" --repo "$REPO" --title "$PR_TITLE" --body-file pr_body.md
+          prs=$(gh pr list --repo "$UPSTREAM_REPO" --state open --base "$BASE_BRANCH" \
+            --label "Gutenberg Sync" --json number,headRefName,headRepositoryOwner)
+          ours=$(jq -r --arg o "$FORK_OWNER" --arg h "$HEAD_BRANCH" \
+            '[.[] | select(.headRepositoryOwner.login == $o and .headRefName == $h)][0].number // empty' <<<"$prs")
+          anyone=$(jq -r '.[0].number // empty' <<<"$prs")
+
+          if [ -n "$ours" ]; then
+            # The force-push above already refreshed the branch; update title/body.
+            gh pr edit "$ours" --repo "$UPSTREAM_REPO" --title "$PR_TITLE" --body-file pr_body.md
+          elif [ -n "$anyone" ]; then
+            echo "::notice::An open 'Gutenberg Sync' PR for ${BASE_BRANCH} already exists (#${anyone}); leaving it as-is."
           else
-            git push --force origin "HEAD:${HEAD_BRANCH}"
-            gh pr create --repo "$REPO" --draft --base "${BASE_BRANCH}" --head "${HEAD_BRANCH}" \
+            gh pr create --repo "$UPSTREAM_REPO" --draft \
+              --base "$BASE_BRANCH" --head "${FORK_OWNER}:${HEAD_BRANCH}" \
               --title "$PR_TITLE" --body-file pr_body.md --label "Gutenberg Sync"
           fi
