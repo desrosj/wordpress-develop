@@ -108,25 +108,25 @@ jobs:
             if [ "${NEW_SHA}" != "${OLD_SHA}" ]; then echo "PROCEED=true"; else echo "PROCEED=false"; fi
           } >> "$GITHUB_ENV"
 
+      - name: Checkout the Gutenberg branch
+        if: ${{ inputs.branch != 'trunk' }}
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: WordPress/gutenberg
+          ref: wp/${{ env.BASE_BRANCH }}
+          path: gutenberg-src
+          fetch-depth: 0
+          token: ${{ github.token }}
+          persist-credentials: false
+          show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
+
       - name: Resolve wp/X.Y head
         if: ${{ inputs.branch != 'trunk' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
-          # Skip gracefully if Gutenberg has not cut wp/<branch> yet (e.g. early in a cycle).
-          if ! gh api "repos/WordPress/gutenberg/git/refs/heads/wp/${BASE_BRANCH}" >/dev/null 2>&1; then
-            echo "::notice::Gutenberg branch wp/${BASE_BRANCH} does not exist; nothing to sync."
-            echo "PROCEED=false" >> "$GITHUB_ENV"
-            exit 0
-          fi
-
-          NEW_SHA=$(gh api "repos/WordPress/gutenberg/commits/wp/${BASE_BRANCH}" --jq '.sha')
+          NEW_SHA=$(git -C gutenberg-src rev-parse HEAD)
           OLD_SHA=$(jq -r '.gutenberg.sha' package.json)
-
-          git clone --filter=tree:0 --no-checkout \
-            https://github.com/WordPress/gutenberg.git gutenberg-src
 
           if ! git -C gutenberg-src cat-file -e "${OLD_SHA}^{commit}" 2>/dev/null; then
             # shellcheck disable=SC2016  # Backticks are markdown literals, not shell expansions.
