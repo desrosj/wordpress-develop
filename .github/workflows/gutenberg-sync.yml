@@ -95,15 +95,11 @@ jobs:
           OLD_SHA=$(jq -r '.gutenberg.sha' package.json)
 
           # Write the (untrusted) release notes to a file rather than env.
-          jq -r '.body // ""' <<<"$release" > release_notes.md
-          {
-            printf 'Release: [%s](%s)\n\n' "$TAG" "$RELEASE_URL"
-            printf '## Changelog\n\n'
-            cat release_notes.md
-          } > changelog.md
+          jq -r '.body // ""' <<<"$release" > changelog_content.md
 
           {
             echo "NEW_SHA=${NEW_SHA}"
+            echo "SOURCE_LINE=Release: [${TAG}](${RELEASE_URL})"
             echo "PR_TITLE=Gutenberg Sync: Update trunk to ${TAG}"
             if [ "${NEW_SHA}" != "${OLD_SHA}" ]; then echo "PROCEED=true"; else echo "PROCEED=false"; fi
           } >> "$GITHUB_ENV"
@@ -130,7 +126,7 @@ jobs:
 
           if ! git -C gutenberg-src cat-file -e "${OLD_SHA}^{commit}" 2>/dev/null; then
             # shellcheck disable=SC2016  # Backticks are markdown literals, not shell expansions.
-            printf -- '_Previous reference `%s` was not found in Gutenberg history; changelog omitted._\n' "${OLD_SHA}" > commit_list.md
+            printf -- '_Previous reference `%s` was not found in Gutenberg history; changelog omitted._\n' "${OLD_SHA}" > changelog_content.md
           else
             git -C gutenberg-src log --reverse --format="- %s" "${OLD_SHA}...${NEW_SHA}" \
               | sed 's|#\([0-9][0-9]*\)|https://github.com/WordPress/gutenberg/pull/\1|g; /github\.com\/WordPress\/gutenberg\/pull/!d' \
@@ -139,34 +135,49 @@ jobs:
             # Cap the changelog so the PR body cannot exceed GitHub's body limit.
             total=$(wc -l < commit_list_full.md)
             if [ "${total}" -gt 300 ]; then
-              head -n 300 commit_list_full.md > commit_list.md
-              printf -- '- _…and %s more commits; see the compare link above._\n' "$(( total - 300 ))" >> commit_list.md
+              head -n 300 commit_list_full.md > changelog_content.md
+              printf -- '- _…and %s more commits; see the compare link above._\n' "$(( total - 300 ))" >> changelog_content.md
             else
-              cp commit_list_full.md commit_list.md
+              cp commit_list_full.md changelog_content.md
             fi
           fi
 
           {
-            printf 'Compare: https://github.com/WordPress/gutenberg/compare/%s...%s\n\n' "$OLD_SHA" "$NEW_SHA"
-            printf '## Changes\n\n'
-            cat commit_list.md
-          } > changelog.md
-
-          {
             echo "NEW_SHA=${NEW_SHA}"
+            echo "SOURCE_LINE=Compare: https://github.com/WordPress/gutenberg/compare/${OLD_SHA}...${NEW_SHA}"
             echo "PR_TITLE=Gutenberg Sync: Update ${BASE_BRANCH} to latest wp/${BASE_BRANCH}"
             if [ "${NEW_SHA}" != "${OLD_SHA}" ]; then echo "PROCEED=true"; else echo "PROCEED=false"; fi
           } >> "$GITHUB_ENV"
+
+      - name: Checkout the pull request body template
+        if: ${{ env.PROCEED == 'true' }}
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          sparse-checkout: .github/workflows/gutenberg-sync-pr-body.md
+          sparse-checkout-cone-mode: false
+          path: sync-workflow
+          persist-credentials: false
+          show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
 
       - name: Build pull request body
         if: ${{ env.PROCEED == 'true' }}
         run: |
           set -euo pipefail
-          # shellcheck disable=SC2016  # Backticks are markdown literals, not shell expansions.
-          {
-            printf 'Updates the bundled Gutenberg commit reference for `%s` to `%s`.\n\n' "$BASE_BRANCH" "$NEW_SHA"
-            cat changelog.md
-          } > pr_body.md
+          # Substitute the scalar placeholders; the changelog file is inserted
+          # verbatim so its (untrusted) contents are never re-substituted.
+          awk -v branch="$BASE_BRANCH" -v sha="$NEW_SHA" -v src="$SOURCE_LINE" '
+            /__CHANGELOG__/ {
+              while ( ( getline line < "changelog_content.md" ) > 0 ) print line
+              close( "changelog_content.md" )
+              next
+            }
+            {
+              gsub( /__BRANCH__/, branch )
+              gsub( /__NEW_SHA__/, sha )
+              gsub( /__SOURCE_LINE__/, src )
+              print
+            }
+          ' sync-workflow/.github/workflows/gutenberg-sync-pr-body.md > pr_body.md
 
       - name: Push the sync branch to the fork
         if: ${{ env.PROCEED == 'true' }}
