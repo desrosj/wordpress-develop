@@ -29,9 +29,9 @@ on:
         type: choice
         # Update this list as Gutenberg cuts new wp/X.Y branches.
         options:
-          - trunk
+          - 'trunk'
           - '7.0'
-        default: trunk
+        default: 'trunk'
 
 # Disable permissions for all available scopes by default.
 # Any needed permissions are configured at the job level.
@@ -109,7 +109,7 @@ jobs:
         with:
           repository: WordPress/gutenberg
           # Trunk targets the release tag; version branches target wp/X.Y.
-          ref: ${{ inputs.branch == 'trunk' && env.TAG || format('wp/{0}', env.BASE_BRANCH) }}
+          ref: ${{ inputs.branch == 'trunk' && env.TAG || format( 'wp/{0}', env.BASE_BRANCH ) }}
           path: gutenberg-src
           fetch-depth: 0
           persist-credentials: false
