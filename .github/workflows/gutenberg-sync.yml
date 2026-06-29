@@ -1,22 +1,16 @@
-# Opens (or updates) a single draft pull request that updates the bundled
-# Gutenberg commit reference (package.json -> gutenberg.sha) for one branch:
+# Resolves the bundled Gutenberg commit reference (package.json -> gutenberg.sha)
+# for one branch, then opens (or updates) a draft pull request via the reusable
+# reusable-gutenberg-sync-pr.yml workflow:
 #   - "trunk": the commit for Gutenberg's latest public (non-prerelease) release.
 #   - an X.Y branch: the head of Gutenberg's matching wp/X.Y branch.
 #
 # WordPress/wordpress-develop does not accept pushed branches, so this workflow
-# runs from a FORK: it checks out the target branch from upstream, pushes a
-# gutenberg-sync/<branch> branch to the fork it runs in, and opens a pull
-# request from that fork branch back to upstream. Each run targets one branch:
-# the "trunk" job or the "version-branch" job runs depending on the input.
+# runs from a FORK. The resolve job builds the pull request body and uploads it
+# as an artifact; the reusable workflow pushes the gutenberg-sync/<branch> branch
+# to the fork and opens the pull request back to upstream.
 #
 # The "Gutenberg Sync" label is applied separately by gutenberg-sync-label.yml
 # when a gutenberg-sync/* pull request is opened.
-#
-# Authentication:
-#   - GITHUB_TOKEN (built in) pushes the branch to the fork.
-#   - GUTENBERG_SYNC_TOKEN (optional secret) is a personal access token used to
-#     open/update the pull request on upstream. Without it, the branch is still
-#     pushed and the run prints a link to open the pull request manually.
 name: Gutenberg Sync
 
 on:
@@ -33,11 +27,8 @@ on:
 permissions: {}
 
 env:
-  # Where pull requests are opened and the target branch is read from.
-  UPSTREAM_REPO: WordPress/wordpress-develop
-  # The target branch and the bot-managed PR head branch, derived from the input.
+  # The target branch, derived from the input.
   BASE_BRANCH: ${{ inputs.branch }}
-  HEAD_BRANCH: gutenberg-sync/${{ inputs.branch }}
 
 # Serialize runs for the same target branch; allow different branches in parallel.
 concurrency:
@@ -45,25 +36,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Syncs trunk to the commit of Gutenberg's latest public (non-prerelease) release.
+  # Resolves trunk against Gutenberg's latest public (non-prerelease) release.
   trunk:
-    name: Sync trunk
+    name: Resolve trunk
     runs-on: ubuntu-24.04
     # Runs from a fork; the canonical repository does not accept pushed branches.
     if: ${{ github.repository != 'WordPress/wordpress-develop' && inputs.branch == 'trunk' }}
     timeout-minutes: 10
     permissions:
-      # Push the gutenberg-sync/<branch> branch to the fork this workflow runs in.
-      contents: write
+      contents: read
+    outputs:
+      new-sha: ${{ steps.resolved.outputs.new-sha }}
+      pr-title: ${{ steps.resolved.outputs.pr-title }}
+      proceed: ${{ steps.resolved.outputs.proceed }}
     steps:
       - name: Checkout the upstream target branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: WordPress/wordpress-develop
           ref: ${{ env.BASE_BRANCH }}
-          fetch-depth: 0
-          token: ${{ github.token }}
-          persist-credentials: true
+          fetch-depth: 1
+          persist-credentials: false
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
 
       - name: Checkout the pull request body template
@@ -74,11 +67,6 @@ jobs:
           path: sync-workflow
           persist-credentials: false
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
-
-      - name: Configure git author
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Copy the pull request body template
         run: |
@@ -138,119 +126,45 @@ jobs:
           OLD_SHA=$(jq -r '.gutenberg.sha' package.json)
           if [ "${NEW_SHA}" != "${OLD_SHA}" ]; then echo "PROCEED=true"; else echo "PROCEED=false"; fi >> "$GITHUB_ENV"
 
-      - name: Create the sync branch
+      - name: Export the resolved values
+        id: resolved
+        run: |
+          {
+            echo "new-sha=${NEW_SHA}"
+            echo "pr-title=${PR_TITLE}"
+            echo "proceed=${PROCEED}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload the pull request body
         if: ${{ env.PROCEED == 'true' }}
-        run: |
-          git checkout -B "${HEAD_BRANCH}"
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: gutenberg-sync-pr-body
+          path: pr_body.md
+          if-no-files-found: error
+          retention-days: 1
 
-      - name: Update the bundled Gutenberg SHA
-        if: ${{ env.PROCEED == 'true' }}
-        run: |
-          set -euo pipefail
-          jq --tab --arg sha "$NEW_SHA" '.gutenberg.sha = $sha' package.json > package.json.tmp
-          mv package.json.tmp package.json
-
-      - name: Stage the change
-        if: ${{ env.PROCEED == 'true' }}
-        run: |
-          git add package.json
-
-      - name: Commit the change
-        if: ${{ env.PROCEED == 'true' }}
-        run: |
-          git commit -m "Build/Test Tools: Update the bundled Gutenberg commit reference."
-
-      - name: Add the fork remote
-        if: ${{ env.PROCEED == 'true' }}
-        env:
-          FORK_REPO: ${{ github.repository }}
-        run: |
-          git remote add fork "https://github.com/${FORK_REPO}.git"
-
-      - name: Push to the fork
-        if: ${{ env.PROCEED == 'true' }}
-        run: |
-          git push --force fork "HEAD:${HEAD_BRANCH}"
-
-      - name: Look up the existing pull request
-        if: ${{ env.PROCEED == 'true' }}
-        env:
-          GH_TOKEN: ${{ secrets.GUTENBERG_SYNC_TOKEN || github.token }}
-          HAS_PAT: ${{ secrets.GUTENBERG_SYNC_TOKEN != '' }}
-          FORK_OWNER: ${{ github.repository_owner }}
-        run: |
-          set -euo pipefail
-
-          # Without a PAT, the GITHUB_TOKEN cannot open a PR on upstream. The branch
-          # is already pushed, so surface a link to open the PR manually.
-          if [ "${HAS_PAT}" != "true" ]; then
-            compare_url="https://github.com/${UPSTREAM_REPO}/compare/${BASE_BRANCH}...${FORK_OWNER}:${HEAD_BRANCH}?expand=1"
-            echo "::notice::Branch '${HEAD_BRANCH}' pushed to ${FORK_OWNER}. Set the GUTENBERG_SYNC_TOKEN secret to open PRs automatically, or open it here: ${compare_url}"
-            {
-              echo "### Gutenberg Sync"
-              echo ""
-              echo "Pushed \`${HEAD_BRANCH}\` to your fork."
-              echo ""
-              echo "[Open the pull request](${compare_url})"
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "PR_ACTION=manual" >> "$GITHUB_ENV"
-            exit 0
-          fi
-
-          # Identify an existing open PR for this base by the sync head branch name.
-          prs=$(gh pr list --repo "$UPSTREAM_REPO" --state open \
-            --base "$BASE_BRANCH" --head "$HEAD_BRANCH" \
-            --json number,headRepositoryOwner)
-          ours=$(jq -r --arg o "$FORK_OWNER" \
-            '[.[] | select(.headRepositoryOwner.login == $o)][0].number // empty' <<<"$prs")
-          others=$(jq -r --arg o "$FORK_OWNER" \
-            '[.[] | select(.headRepositoryOwner.login != $o)][0].number // empty' <<<"$prs")
-
-          if [ -n "$ours" ]; then
-            { echo "PR_NUMBER=${ours}"; echo "PR_ACTION=update"; } >> "$GITHUB_ENV"
-          elif [ -n "$others" ]; then
-            echo "::notice::An open ${HEAD_BRANCH} PR for ${BASE_BRANCH} already exists (#${others}); leaving it as-is."
-            echo "PR_ACTION=skip" >> "$GITHUB_ENV"
-          else
-            echo "PR_ACTION=create" >> "$GITHUB_ENV"
-          fi
-
-      - name: Update the existing pull request
-        if: ${{ env.PROCEED == 'true' && env.PR_ACTION == 'update' }}
-        env:
-          GH_TOKEN: ${{ secrets.GUTENBERG_SYNC_TOKEN || github.token }}
-        run: |
-          gh pr edit "$PR_NUMBER" --repo "$UPSTREAM_REPO" --title "$PR_TITLE" --body-file pr_body.md
-
-      - name: Open a new pull request
-        if: ${{ env.PROCEED == 'true' && env.PR_ACTION == 'create' }}
-        env:
-          GH_TOKEN: ${{ secrets.GUTENBERG_SYNC_TOKEN || github.token }}
-          FORK_OWNER: ${{ github.repository_owner }}
-        run: |
-          gh pr create --repo "$UPSTREAM_REPO" --draft \
-            --base "$BASE_BRANCH" --head "${FORK_OWNER}:${HEAD_BRANCH}" \
-            --title "$PR_TITLE" --body-file pr_body.md
-
-  # Syncs a version branch to the head of Gutenberg's matching wp/X.Y branch.
+  # Resolves a version branch against the head of Gutenberg's matching wp/X.Y branch.
   version-branch:
-    name: Sync ${{ inputs.branch }}
+    name: Resolve ${{ inputs.branch }}
     runs-on: ubuntu-24.04
     # Runs from a fork; the canonical repository does not accept pushed branches.
     if: ${{ github.repository != 'WordPress/wordpress-develop' && inputs.branch != 'trunk' }}
     timeout-minutes: 10
     permissions:
-      # Push the gutenberg-sync/<branch> branch to the fork this workflow runs in.
-      contents: write
+      contents: read
+    outputs:
+      new-sha: ${{ steps.resolved.outputs.new-sha }}
+      pr-title: ${{ steps.resolved.outputs.pr-title }}
+      proceed: ${{ steps.resolved.outputs.proceed }}
     steps:
       - name: Checkout the upstream target branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: WordPress/wordpress-develop
           ref: ${{ env.BASE_BRANCH }}
-          fetch-depth: 0
-          token: ${{ github.token }}
-          persist-credentials: true
+          fetch-depth: 1
+          persist-credentials: false
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
 
       - name: Checkout the pull request body template
@@ -269,14 +183,8 @@ jobs:
           ref: wp/${{ env.BASE_BRANCH }}
           path: gutenberg-src
           fetch-depth: 0
-          token: ${{ github.token }}
           persist-credentials: false
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
-
-      - name: Configure git author
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Copy the pull request body template
         run: |
@@ -334,96 +242,39 @@ jobs:
           awk '/__CHANGELOG__/ { while ( ( getline line < "changelog_content.md" ) > 0 ) print line; close( "changelog_content.md" ); next } 1' pr_body.md > pr_body.tmp
           mv pr_body.tmp pr_body.md
 
-      - name: Create the sync branch
+      - name: Export the resolved values
+        id: resolved
+        run: |
+          {
+            echo "new-sha=${NEW_SHA}"
+            echo "pr-title=${PR_TITLE}"
+            echo "proceed=${PROCEED}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload the pull request body
         if: ${{ env.PROCEED == 'true' }}
-        run: |
-          git checkout -B "${HEAD_BRANCH}"
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: gutenberg-sync-pr-body
+          path: pr_body.md
+          if-no-files-found: error
+          retention-days: 1
 
-      - name: Update the bundled Gutenberg SHA
-        if: ${{ env.PROCEED == 'true' }}
-        run: |
-          set -euo pipefail
-          jq --tab --arg sha "$NEW_SHA" '.gutenberg.sha = $sha' package.json > package.json.tmp
-          mv package.json.tmp package.json
-
-      - name: Stage the change
-        if: ${{ env.PROCEED == 'true' }}
-        run: |
-          git add package.json
-
-      - name: Commit the change
-        if: ${{ env.PROCEED == 'true' }}
-        run: |
-          git commit -m "Build/Test Tools: Update the bundled Gutenberg commit reference."
-
-      - name: Add the fork remote
-        if: ${{ env.PROCEED == 'true' }}
-        env:
-          FORK_REPO: ${{ github.repository }}
-        run: |
-          git remote add fork "https://github.com/${FORK_REPO}.git"
-
-      - name: Push to the fork
-        if: ${{ env.PROCEED == 'true' }}
-        run: |
-          git push --force fork "HEAD:${HEAD_BRANCH}"
-
-      - name: Look up the existing pull request
-        if: ${{ env.PROCEED == 'true' }}
-        env:
-          GH_TOKEN: ${{ secrets.GUTENBERG_SYNC_TOKEN || github.token }}
-          HAS_PAT: ${{ secrets.GUTENBERG_SYNC_TOKEN != '' }}
-          FORK_OWNER: ${{ github.repository_owner }}
-        run: |
-          set -euo pipefail
-
-          # Without a PAT, the GITHUB_TOKEN cannot open a PR on upstream. The branch
-          # is already pushed, so surface a link to open the PR manually.
-          if [ "${HAS_PAT}" != "true" ]; then
-            compare_url="https://github.com/${UPSTREAM_REPO}/compare/${BASE_BRANCH}...${FORK_OWNER}:${HEAD_BRANCH}?expand=1"
-            echo "::notice::Branch '${HEAD_BRANCH}' pushed to ${FORK_OWNER}. Set the GUTENBERG_SYNC_TOKEN secret to open PRs automatically, or open it here: ${compare_url}"
-            {
-              echo "### Gutenberg Sync"
-              echo ""
-              echo "Pushed \`${HEAD_BRANCH}\` to your fork."
-              echo ""
-              echo "[Open the pull request](${compare_url})"
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "PR_ACTION=manual" >> "$GITHUB_ENV"
-            exit 0
-          fi
-
-          # Identify an existing open PR for this base by the sync head branch name.
-          prs=$(gh pr list --repo "$UPSTREAM_REPO" --state open \
-            --base "$BASE_BRANCH" --head "$HEAD_BRANCH" \
-            --json number,headRepositoryOwner)
-          ours=$(jq -r --arg o "$FORK_OWNER" \
-            '[.[] | select(.headRepositoryOwner.login == $o)][0].number // empty' <<<"$prs")
-          others=$(jq -r --arg o "$FORK_OWNER" \
-            '[.[] | select(.headRepositoryOwner.login != $o)][0].number // empty' <<<"$prs")
-
-          if [ -n "$ours" ]; then
-            { echo "PR_NUMBER=${ours}"; echo "PR_ACTION=update"; } >> "$GITHUB_ENV"
-          elif [ -n "$others" ]; then
-            echo "::notice::An open ${HEAD_BRANCH} PR for ${BASE_BRANCH} already exists (#${others}); leaving it as-is."
-            echo "PR_ACTION=skip" >> "$GITHUB_ENV"
-          else
-            echo "PR_ACTION=create" >> "$GITHUB_ENV"
-          fi
-
-      - name: Update the existing pull request
-        if: ${{ env.PROCEED == 'true' && env.PR_ACTION == 'update' }}
-        env:
-          GH_TOKEN: ${{ secrets.GUTENBERG_SYNC_TOKEN || github.token }}
-        run: |
-          gh pr edit "$PR_NUMBER" --repo "$UPSTREAM_REPO" --title "$PR_TITLE" --body-file pr_body.md
-
-      - name: Open a new pull request
-        if: ${{ env.PROCEED == 'true' && env.PR_ACTION == 'create' }}
-        env:
-          GH_TOKEN: ${{ secrets.GUTENBERG_SYNC_TOKEN || github.token }}
-          FORK_OWNER: ${{ github.repository_owner }}
-        run: |
-          gh pr create --repo "$UPSTREAM_REPO" --draft \
-            --base "$BASE_BRANCH" --head "${FORK_OWNER}:${HEAD_BRANCH}" \
-            --title "$PR_TITLE" --body-file pr_body.md
+  # Pushes the branch to the fork and opens (or updates) the pull request.
+  open-pull-request:
+    name: Open pull request
+    needs: [ trunk, version-branch ]
+    if: >-
+      ${{ !cancelled() &&
+          ( ( needs.trunk.result == 'success' && needs.trunk.outputs.proceed == 'true' ) ||
+            ( needs.version-branch.result == 'success' && needs.version-branch.outputs.proceed == 'true' ) ) }}
+    permissions:
+      contents: write
+    uses: ./.github/workflows/reusable-gutenberg-sync-pr.yml
+    with:
+      base-branch: ${{ inputs.branch }}
+      new-sha: ${{ needs.trunk.outputs.new-sha || needs.version-branch.outputs.new-sha }}
+      pr-title: ${{ needs.trunk.outputs.pr-title || needs.version-branch.outputs.pr-title }}
+      body-artifact: gutenberg-sync-pr-body
+    secrets:
+      GUTENBERG_SYNC_TOKEN: ${{ secrets.GUTENBERG_SYNC_TOKEN }}
