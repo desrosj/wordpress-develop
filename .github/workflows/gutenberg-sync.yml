@@ -46,10 +46,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Resolves the new and current SHAs and builds the changelog. Read-only.
-  # Trunk-specific and version-specific work is gated on inputs.branch.
+  # Resolves the new and current SHAs and builds the changelog.
   research:
-    name: Resolve ${{ inputs.branch }}
+    name: Determine context
     runs-on: ubuntu-24.04
     # Runs from a fork; the canonical repository does not accept pushed branches.
     if: ${{ github.repository != 'WordPress/wordpress-develop' }}
@@ -63,6 +62,7 @@ jobs:
       tag: ${{ steps.export.outputs.tag }}
       release-url: ${{ steps.export.outputs.release-url }}
       proceed: ${{ steps.export.outputs.proceed }}
+
     steps:
       - name: Checkout the upstream target branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -187,21 +187,70 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  # Assembles the pull request body and writes it to the job summary. Read-only.
+  # Pushes the gutenberg-sync/<branch> branch to the fork. The only job with write access.
+  create-update-branch:
+    name: Update pinned hash value and push
+    runs-on: ubuntu-24.04
+    needs: [ 'research' ]
+    if: ${{ needs.research.outputs.proceed == 'true' }}
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout the upstream target branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: WordPress/wordpress-develop
+          ref: ${{ env.BASE_BRANCH }}
+          fetch-depth: 0
+          token: ${{ github.token }}
+          persist-credentials: true
+          show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
+
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create a sync branch
+        run: |
+          git checkout -B "${HEAD_BRANCH}"
+
+      - name: Update the pinned hash value in a temporary file
+        run: jq --tab --arg sha "$NEW_SHA" '.gutenberg.sha = $sha' package.json > package.json.tmp
+        env:
+          NEW_SHA: ${{ needs.research.outputs.new-sha }}
+
+      - name: Move temporary file
+        run: mv package.json.tmp package.json
+
+      - name: Stage changes
+        run: |
+          git add package.json
+
+      - name: Commit changes
+        run: |
+          git commit -m "Build/Test Tools: Update the bundled Gutenberg commit reference."
+
+      - name: Configure fork as a remote
+        env:
+          FORK_REPO: ${{ github.repository }}
+        run: |
+          git remote add fork "https://github.com/${FORK_REPO}.git"
+
+      - name: Push changes to fork
+        run: |
+          git push --force fork "HEAD:${HEAD_BRANCH}"
+
+  # Assembles the pull request body and writes it to the job summary.
   build-pr-body:
     name: Build pull request body
     runs-on: ubuntu-24.04
-    needs: [ research ]
+    needs: [ 'research', 'create-update-branch' ]
     if: ${{ needs.research.outputs.proceed == 'true' }}
     timeout-minutes: 10
     permissions:
       contents: read
-    env:
-      NEW_SHA: ${{ needs.research.outputs.new-sha }}
-      OLD_SHA: ${{ needs.research.outputs.old-sha }}
-      TAG: ${{ needs.research.outputs.tag }}
-      RELEASE_URL: ${{ needs.research.outputs.release-url }}
-      PR_TITLE: ${{ needs.research.outputs.pr-title }}
     steps:
       - name: Checkout the pull request body template
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -233,19 +282,24 @@ jobs:
         if: ${{ inputs.branch == 'trunk' }}
         run: |
           sed -i "s|__SOURCE_LINE__|Release: [${TAG}](${RELEASE_URL})|g" pr_body.md
+        env:
+          TAG: ${{ needs.research.outputs.tag }}
+          RELEASE_URL: ${{ needs.research.outputs.release-url }}
+
 
       - name: Add the compare link to the body (version branches)
         if: ${{ inputs.branch != 'trunk' }}
         run: |
           sed -i "s|__SOURCE_LINE__|Compare: https://github.com/WordPress/gutenberg/compare/${OLD_SHA}...${NEW_SHA}|g" pr_body.md
+        env:
+          NEW_SHA: ${{ needs.research.outputs.new-sha }}
+          OLD_SHA: ${{ needs.research.outputs.old-sha }}
 
       - name: Add the new SHA to the body
         run: |
           sed -i "s|__NEW_SHA__|${NEW_SHA}|g" pr_body.md
 
       - name: Output pull request details
-        env:
-          FORK_OWNER: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
           compare_url="https://github.com/${UPSTREAM_REPO}/compare/${BASE_BRANCH}...${FORK_OWNER}:${HEAD_BRANCH}?expand=1"
@@ -267,58 +321,6 @@ jobs:
             cat pr_body.md
             echo '````'
           } >> "$GITHUB_STEP_SUMMARY"
-
-  # Pushes the gutenberg-sync/<branch> branch to the fork. The only job with write access.
-  create-update-branch:
-    name: Update pinned hash value and push
-    runs-on: ubuntu-24.04
-    needs: [ research ]
-    if: ${{ needs.research.outputs.proceed == 'true' }}
-    timeout-minutes: 10
-    permissions:
-      contents: write
-    env:
-      NEW_SHA: ${{ needs.research.outputs.new-sha }}
-    steps:
-      - name: Checkout the upstream target branch
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          repository: WordPress/wordpress-develop
-          ref: ${{ env.BASE_BRANCH }}
-          fetch-depth: 0
-          token: ${{ github.token }}
-          persist-credentials: true
-          show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
-
-      - name: Configure git author
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Create a sync branch
-        run: |
-          git checkout -B "${HEAD_BRANCH}"
-
-      - name: Update the pinned hash value
-        run: |
-          set -euo pipefail
-          jq --tab --arg sha "$NEW_SHA" '.gutenberg.sha = $sha' package.json > package.json.tmp
-          mv package.json.tmp package.json
-
-      - name: Stage changes
-        run: |
-          git add package.json
-
-      - name: Commit changes
-        run: |
-          git commit -m "Build/Test Tools: Update the bundled Gutenberg commit reference."
-
-      - name: Configure fork as a remote
         env:
-          FORK_REPO: ${{ github.repository }}
-        run: |
-          git remote add fork "https://github.com/${FORK_REPO}.git"
-
-      - name: Push changes to fork
-        run: |
-          git push --force fork "HEAD:${HEAD_BRANCH}"
+          FORK_OWNER: ${{ github.repository_owner }}
+          PR_TITLE: ${{ needs.research.outputs.pr-title }}
