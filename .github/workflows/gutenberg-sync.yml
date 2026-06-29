@@ -24,10 +24,14 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to update: "trunk" or an X.Y branch name (e.g. "6.8").'
+        description: 'Branch to update.'
         required: true
-        type: string
-        default: 'trunk'
+        type: choice
+        # Update this list as Gutenberg cuts new wp/X.Y branches.
+        options:
+          - trunk
+          - '7.0'
+        default: trunk
 
 # Disable permissions for all available scopes by default.
 # Any needed permissions are configured at the job level.
@@ -100,23 +104,12 @@ jobs:
             echo "PR_TITLE=Bump \`gutenberg.sha\` to version ${TAG}"
           } >> "$GITHUB_ENV"
 
-      - name: Checkout Gutenberg at the release (trunk only)
-        if: ${{ inputs.branch == 'trunk' }}
+      - name: Checkout the Gutenberg repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: WordPress/gutenberg
-          ref: ${{ env.TAG }}
-          path: gutenberg-src
-          fetch-depth: 0
-          persist-credentials: false
-          show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
-
-      - name: Checkout the target branch in Gutenberg (version branches)
-        if: ${{ inputs.branch != 'trunk' }}
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          repository: WordPress/gutenberg
-          ref: wp/${{ env.BASE_BRANCH }}
+          # Trunk targets the release tag; version branches target wp/X.Y.
+          ref: ${{ inputs.branch == 'trunk' && env.TAG || format('wp/{0}', env.BASE_BRANCH) }}
           path: gutenberg-src
           fetch-depth: 0
           persist-credentials: false
