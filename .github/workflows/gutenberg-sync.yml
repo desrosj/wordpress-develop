@@ -10,6 +10,12 @@
 # using the compare link in the summary, then copy the title and body into it.
 # Each run targets one branch.
 #
+# The work is split across three jobs: "research" resolves the SHAs and changelog
+# (read-only), "build-pr-body" assembles the pull request body, and
+# "create-update-branch" pushes the branch to the fork (the only job that needs
+# write access). Resolved values flow downstream through job outputs; the
+# changelog is passed as an artifact.
+#
 # The "Gutenberg Sync" label is applied separately by gutenberg-sync-label.yml
 # when a gutenberg-sync/* pull request is opened.
 name: Gutenberg Sync
@@ -40,24 +46,31 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Creates or updates the draft pull request for the requested branch.
-  # Trunk-specific and version-specific work is gated on inputs.branch; every
-  # other step is shared.
+  # Resolves the new and current SHAs and builds the changelog. Read-only.
+  # Trunk-specific and version-specific work is gated on inputs.branch.
   research:
-    name: Sync ${{ inputs.branch }}
+    name: Resolve ${{ inputs.branch }}
     runs-on: ubuntu-24.04
     # Runs from a fork; the canonical repository does not accept pushed branches.
     if: ${{ github.repository != 'WordPress/wordpress-develop' }}
     timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      new-sha: ${{ steps.export.outputs.new-sha }}
+      old-sha: ${{ steps.export.outputs.old-sha }}
+      pr-title: ${{ steps.export.outputs.pr-title }}
+      tag: ${{ steps.export.outputs.tag }}
+      release-url: ${{ steps.export.outputs.release-url }}
+      proceed: ${{ steps.export.outputs.proceed }}
     steps:
       - name: Checkout the upstream target branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: WordPress/wordpress-develop
           ref: ${{ env.BASE_BRANCH }}
-          fetch-depth: 0
-          token: ${{ github.token }}
-          persist-credentials: true
+          fetch-depth: 1
+          persist-credentials: false
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
 
       - name: Checkout the target branch in Gutenberg
@@ -68,7 +81,6 @@ jobs:
           ref: wp/${{ env.BASE_BRANCH }}
           path: gutenberg-src
           fetch-depth: 0
-          token: ${{ github.token }}
           persist-credentials: false
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
 
@@ -88,28 +100,6 @@ jobs:
             echo "RELEASE_URL=${RELEASE_URL}"
             echo "PR_TITLE=Gutenberg Sync: Update trunk to ${TAG}"
           } >> "$GITHUB_ENV"
-
-      - name: Build the changelog
-        if: ${{ inputs.branch != 'trunk' }}
-        run: |
-          set -euo pipefail
-          if ! git -C gutenberg-src cat-file -e "${OLD_SHA}^{commit}" 2>/dev/null; then
-            # shellcheck disable=SC2016  # Backticks are markdown literals, not shell expansions.
-            printf -- '_Previous reference `%s` was not found in Gutenberg history; changelog omitted._\n' "${OLD_SHA}" > changelog_content.md
-          else
-            git -C gutenberg-src log --reverse --format="- %s" "${OLD_SHA}...${NEW_SHA}" \
-              | sed 's|#\([0-9][0-9]*\)|https://github.com/WordPress/gutenberg/pull/\1|g; /github\.com\/WordPress\/gutenberg\/pull/!d' \
-              > commit_list_full.md
-
-            # Cap the changelog so the PR body cannot exceed GitHub's body limit.
-            total=$(wc -l < commit_list_full.md)
-            if [ "${total}" -gt 300 ]; then
-              head -n 300 commit_list_full.md > changelog_content.md
-              printf -- '- _…and %s more commits; see the compare link above._\n' "$(( total - 300 ))" >> changelog_content.md
-            else
-              cp commit_list_full.md changelog_content.md
-            fi
-          fi
 
       - name: Determine the new commit SHA (trunk)
         if: ${{ inputs.branch == 'trunk' }}
@@ -137,7 +127,10 @@ jobs:
         run: |
           set -euo pipefail
           OLD_SHA=$(jq -r '.gutenberg.sha' package.json)
-          if [ "${NEW_SHA}" != "${OLD_SHA}" ]; then echo "PROCEED=true"; else echo "PROCEED=false"; fi >> "$GITHUB_ENV"
+          {
+            echo "OLD_SHA=${OLD_SHA}"
+            if [ "${NEW_SHA}" != "${OLD_SHA}" ]; then echo "PROCEED=true"; else echo "PROCEED=false"; fi
+          } >> "$GITHUB_ENV"
 
       - name: Determine the current SHA (version branches)
         if: ${{ inputs.branch != 'trunk' }}
@@ -150,30 +143,88 @@ jobs:
             if [ "${NEW_SHA}" != "${OLD_SHA}" ]; then echo "PROCEED=true"; else echo "PROCEED=false"; fi
           } >> "$GITHUB_ENV"
 
+      - name: Build the changelog (version branches)
+        if: ${{ inputs.branch != 'trunk' }}
+        run: |
+          set -euo pipefail
+          if ! git -C gutenberg-src cat-file -e "${OLD_SHA}^{commit}" 2>/dev/null; then
+            # shellcheck disable=SC2016  # Backticks are markdown literals, not shell expansions.
+            printf -- '_Previous reference `%s` was not found in Gutenberg history; changelog omitted._\n' "${OLD_SHA}" > changelog_content.md
+          else
+            git -C gutenberg-src log --reverse --format="- %s" "${OLD_SHA}...${NEW_SHA}" \
+              | sed 's|#\([0-9][0-9]*\)|https://github.com/WordPress/gutenberg/pull/\1|g; /github\.com\/WordPress\/gutenberg\/pull/!d' \
+              > commit_list_full.md
+
+            # Cap the changelog so the PR body cannot exceed GitHub's body limit.
+            total=$(wc -l < commit_list_full.md)
+            if [ "${total}" -gt 300 ]; then
+              head -n 300 commit_list_full.md > changelog_content.md
+              printf -- '- _…and %s more commits; see the compare link above._\n' "$(( total - 300 ))" >> changelog_content.md
+            else
+              cp commit_list_full.md changelog_content.md
+            fi
+          fi
+
+      - name: Export the resolved values
+        id: export
+        run: |
+          set -euo pipefail
+          {
+            echo "new-sha=${NEW_SHA:-}"
+            echo "old-sha=${OLD_SHA:-}"
+            echo "pr-title=${PR_TITLE:-}"
+            echo "tag=${TAG:-}"
+            echo "release-url=${RELEASE_URL:-}"
+            echo "proceed=${PROCEED:-false}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload the changelog
+        if: ${{ env.PROCEED == 'true' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: gutenberg-sync-changelog
+          path: changelog_content.md
+          if-no-files-found: error
+          retention-days: 1
+
+  # Assembles the pull request body and writes it to the job summary. Read-only.
   build-pr-body:
     name: Build pull request body
-    runs-on: 'ubuntu-24.04'
-    needs: [ 'research' ]
+    runs-on: ubuntu-24.04
+    needs: [ research ]
+    if: ${{ needs.research.outputs.proceed == 'true' }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      NEW_SHA: ${{ needs.research.outputs.new-sha }}
+      OLD_SHA: ${{ needs.research.outputs.old-sha }}
+      TAG: ${{ needs.research.outputs.tag }}
+      RELEASE_URL: ${{ needs.research.outputs.release-url }}
+      PR_TITLE: ${{ needs.research.outputs.pr-title }}
     steps:
-      - name: Checkout the upstream target branch
+      - name: Checkout the pull request body template
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          repository: WordPress/wordpress-develop
-          ref: ${{ env.BASE_BRANCH }}
-          fetch-depth: 0
-          token: ${{ github.token }}
-          persist-credentials: true
+          sparse-checkout: .github/template-gutenberg-sync-pr-body.md
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
 
+      - name: Download the changelog
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: gutenberg-sync-changelog
+
       - name: Copy the pull request body template
-        run: cp .github/template-gutenberg-sync-pr-body.md sync_pr_body.md
+        run: |
+          cp .github/template-gutenberg-sync-pr-body.md pr_body.md
 
       - name: Add the branch name to the body
         run: |
           sed -i "s|__BRANCH__|${BASE_BRANCH}|g" pr_body.md
 
-      - name: Add release notes to the body (trunk only)
-        if: ${{ inputs.branch == 'trunk' }}
+      - name: Add the changelog to the body
         run: |
           awk '/__CHANGELOG__/ { while ( ( getline line < "changelog_content.md" ) > 0 ) print line; close( "changelog_content.md" ); next } 1' pr_body.md > pr_body.tmp
           mv pr_body.tmp pr_body.md
@@ -183,7 +234,7 @@ jobs:
         run: |
           sed -i "s|__SOURCE_LINE__|Release: [${TAG}](${RELEASE_URL})|g" pr_body.md
 
-      - name: Add the compare link to the body
+      - name: Add the compare link to the body (version branches)
         if: ${{ inputs.branch != 'trunk' }}
         run: |
           sed -i "s|__SOURCE_LINE__|Compare: https://github.com/WordPress/gutenberg/compare/${OLD_SHA}...${NEW_SHA}|g" pr_body.md
@@ -193,7 +244,6 @@ jobs:
           sed -i "s|__NEW_SHA__|${NEW_SHA}|g" pr_body.md
 
       - name: Output pull request details
-        if: ${{ env.PROCEED == 'true' }}
         env:
           FORK_OWNER: ${{ github.repository_owner }}
         run: |
@@ -218,13 +268,17 @@ jobs:
             echo '````'
           } >> "$GITHUB_STEP_SUMMARY"
 
+  # Pushes the gutenberg-sync/<branch> branch to the fork. The only job with write access.
   create-update-branch:
     name: Update pinned hash value and push
-    runs-on: 'ubuntu-24.04'
-    needs: [ 'research' ]
+    runs-on: ubuntu-24.04
+    needs: [ research ]
+    if: ${{ needs.research.outputs.proceed == 'true' }}
+    timeout-minutes: 10
     permissions:
-      content: write
-
+      contents: write
+    env:
+      NEW_SHA: ${{ needs.research.outputs.new-sha }}
     steps:
       - name: Checkout the upstream target branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -242,35 +296,29 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Create a sync branch
-        if: ${{ env.PROCEED == 'true' }}
         run: |
           git checkout -B "${HEAD_BRANCH}"
 
       - name: Update the pinned hash value
-        if: ${{ env.PROCEED == 'true' }}
         run: |
           set -euo pipefail
           jq --tab --arg sha "$NEW_SHA" '.gutenberg.sha = $sha' package.json > package.json.tmp
           mv package.json.tmp package.json
 
       - name: Stage changes
-        if: ${{ env.PROCEED == 'true' }}
         run: |
           git add package.json
 
       - name: Commit changes
-        if: ${{ env.PROCEED == 'true' }}
         run: |
           git commit -m "Build/Test Tools: Update the bundled Gutenberg commit reference."
 
       - name: Configure fork as a remote
-        if: ${{ env.PROCEED == 'true' }}
         env:
           FORK_REPO: ${{ github.repository }}
         run: |
           git remote add fork "https://github.com/${FORK_REPO}.git"
 
       - name: Push changes to fork
-        if: ${{ env.PROCEED == 'true' }}
         run: |
           git push --force fork "HEAD:${HEAD_BRANCH}"
