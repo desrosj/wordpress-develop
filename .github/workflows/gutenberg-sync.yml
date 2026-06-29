@@ -10,11 +10,11 @@
 # using the compare link in the summary, then copy the title and body into it.
 # Each run targets one branch.
 #
-# The work is split across three jobs: "research" resolves the SHAs and changelog
-# (read-only), "build-pr-body" assembles the pull request body, and
-# "create-update-branch" pushes the branch to the fork (the only job that needs
-# write access). Resolved values flow downstream through job outputs; the
-# changelog is passed as an artifact.
+# The work is split across three jobs: "research" resolves the SHAs and the
+# changelog (read-only), "create-update-branch" pushes the branch to the fork
+# (the only job that needs write access), and "build-pr-body" assembles the
+# pull request body. Resolved values flow downstream through job outputs; the
+# changelog and commit list are passed as artifacts.
 #
 # The "Gutenberg Sync" label is applied separately by gutenberg-sync-label.yml
 # when a gutenberg-sync/* pull request is opened.
@@ -46,7 +46,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Resolves the new and current SHAs and builds the changelog.
+  # Resolves the new and current SHAs, the commit list, and (for trunk) the
+  # release changelog.
   research:
     name: Determine context
     runs-on: ubuntu-24.04
@@ -73,7 +74,44 @@ jobs:
           persist-credentials: false
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
 
-      - name: Checkout the target branch in Gutenberg
+      - name: Retrieve the latest release details (trunk only)
+        if: ${{ inputs.branch == 'trunk' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          release=$(gh api repos/WordPress/gutenberg/releases/latest)
+          TAG=$(jq -r '.tag_name' <<<"$release")
+          RELEASE_URL=$(jq -r '.html_url' <<<"$release")
+          jq -r '.body // ""' <<<"$release" > release_body.md
+
+          # Keep only the "## Changelog" section: everything from that heading to
+          # the next top-level heading. This drops the heading itself and the
+          # trailing "## First-time contributors"/"## Contributors" sections.
+          awk '
+            /^## Changelog[[:space:]]*$/ { in_changelog = 1; next }
+            /^## / && in_changelog { in_changelog = 0 }
+            in_changelog { print }
+          ' release_body.md > release_changelog.md
+
+          {
+            echo "TAG=${TAG}"
+            echo "RELEASE_URL=${RELEASE_URL}"
+            echo "PR_TITLE=Gutenberg Sync: Update trunk to ${TAG}"
+          } >> "$GITHUB_ENV"
+
+      - name: Checkout Gutenberg at the release (trunk only)
+        if: ${{ inputs.branch == 'trunk' }}
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: WordPress/gutenberg
+          ref: ${{ env.TAG }}
+          path: gutenberg-src
+          fetch-depth: 0
+          persist-credentials: false
+          show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
+
+      - name: Checkout the target branch in Gutenberg (version branches)
         if: ${{ inputs.branch != 'trunk' }}
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -84,41 +122,7 @@ jobs:
           persist-credentials: false
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
 
-      - name: Retrieve the latest release details (trunk only)
-        if: ${{ inputs.branch == 'trunk' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          release=$(gh api repos/WordPress/gutenberg/releases/latest)
-          TAG=$(jq -r '.tag_name' <<<"$release")
-          RELEASE_URL=$(jq -r '.html_url' <<<"$release")
-          # The (untrusted) release notes are written to a file for later insertion.
-          jq -r '.body // ""' <<<"$release" > changelog_content.md
-          {
-            echo "TAG=${TAG}"
-            echo "RELEASE_URL=${RELEASE_URL}"
-            echo "PR_TITLE=Gutenberg Sync: Update trunk to ${TAG}"
-          } >> "$GITHUB_ENV"
-
-      - name: Determine the new commit SHA (trunk)
-        if: ${{ inputs.branch == 'trunk' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          ref=$(gh api "repos/WordPress/gutenberg/git/refs/tags/${TAG}")
-          obj_type=$(jq -r '.object.type' <<<"$ref")
-          obj_sha=$(jq -r '.object.sha' <<<"$ref")
-          if [ "$obj_type" = "tag" ]; then
-            NEW_SHA=$(gh api "repos/WordPress/gutenberg/git/tags/${obj_sha}" --jq '.object.sha')
-          else
-            NEW_SHA="$obj_sha"
-          fi
-          echo "NEW_SHA=${NEW_SHA}" >> "$GITHUB_ENV"
-
-      - name: Determine the new commit SHA (version branches)
-        if: ${{ inputs.branch != 'trunk' }}
+      - name: Determine the new commit SHA
         run: |
           echo "NEW_SHA=$(git -C gutenberg-src rev-parse HEAD)" >> "$GITHUB_ENV"
 
@@ -143,25 +147,24 @@ jobs:
             if [ "${NEW_SHA}" != "${OLD_SHA}" ]; then echo "PROCEED=true"; else echo "PROCEED=false"; fi
           } >> "$GITHUB_ENV"
 
-      - name: Build the changelog (version branches)
-        if: ${{ inputs.branch != 'trunk' }}
+      - name: Build the list of changes
         run: |
           set -euo pipefail
           if ! git -C gutenberg-src cat-file -e "${OLD_SHA}^{commit}" 2>/dev/null; then
             # shellcheck disable=SC2016  # Backticks are markdown literals, not shell expansions.
-            printf -- '_Previous reference `%s` was not found in Gutenberg history; changelog omitted._\n' "${OLD_SHA}" > changelog_content.md
+            printf -- '_Previous reference `%s` was not found in Gutenberg history; the list of changes was omitted._\n' "${OLD_SHA}" > commit_list.md
           else
-            git -C gutenberg-src log --reverse --format="- %s" "${OLD_SHA}...${NEW_SHA}" \
+            git -C gutenberg-src log --reverse --format="- %s" "${OLD_SHA}..${NEW_SHA}" \
               | sed 's|#\([0-9][0-9]*\)|https://github.com/WordPress/gutenberg/pull/\1|g; /github\.com\/WordPress\/gutenberg\/pull/!d' \
               > commit_list_full.md
 
-            # Cap the changelog so the PR body cannot exceed GitHub's body limit.
+            # Cap the list so the PR body cannot exceed GitHub's body limit.
             total=$(wc -l < commit_list_full.md)
             if [ "${total}" -gt 300 ]; then
-              head -n 300 commit_list_full.md > changelog_content.md
-              printf -- '- _…and %s more commits; see the compare link above._\n' "$(( total - 300 ))" >> changelog_content.md
+              head -n 300 commit_list_full.md > commit_list.md
+              printf -- '- _…and %s more commits._\n' "$(( total - 300 ))" >> commit_list.md
             else
-              cp commit_list_full.md changelog_content.md
+              cp commit_list_full.md commit_list.md
             fi
           fi
 
@@ -178,12 +181,21 @@ jobs:
             echo "proceed=${PROCEED:-false}"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Upload the changelog
+      - name: Upload the list of changes
         if: ${{ env.PROCEED == 'true' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
+          name: gutenberg-sync-commit-list
+          path: commit_list.md
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload the release changelog (trunk only)
+        if: ${{ env.PROCEED == 'true' && inputs.branch == 'trunk' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
           name: gutenberg-sync-changelog
-          path: changelog_content.md
+          path: release_changelog.md
           if-no-files-found: error
           retention-days: 1
 
@@ -260,7 +272,13 @@ jobs:
           persist-credentials: false
           show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
 
-      - name: Download the changelog
+      - name: Download the list of changes
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: gutenberg-sync-commit-list
+
+      - name: Download the release changelog (trunk only)
+        if: ${{ inputs.branch == 'trunk' }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: gutenberg-sync-changelog
@@ -273,33 +291,56 @@ jobs:
         run: |
           sed -i "s|__BRANCH__|${BASE_BRANCH}|g" pr_body.md
 
-      - name: Add the changelog to the body
+      - name: Add the new SHA to the body
+        env:
+          NEW_SHA: ${{ needs.research.outputs.new-sha }}
         run: |
-          awk '/__CHANGELOG__/ { while ( ( getline line < "changelog_content.md" ) > 0 ) print line; close( "changelog_content.md" ); next } 1' pr_body.md > pr_body.tmp
+          sed -i "s|__NEW_SHA__|${NEW_SHA}|g" pr_body.md
+
+      - name: Add the list of changes to the body
+        run: |
+          awk '/__COMMIT_LIST__/ { while ( ( getline line < "commit_list.md" ) > 0 ) print line; close( "commit_list.md" ); next } 1' pr_body.md > pr_body.tmp
           mv pr_body.tmp pr_body.md
 
       - name: Add the release link to the body (trunk only)
         if: ${{ inputs.branch == 'trunk' }}
-        run: |
-          sed -i "s|__SOURCE_LINE__|Release: [${TAG}](${RELEASE_URL})|g" pr_body.md
         env:
           TAG: ${{ needs.research.outputs.tag }}
           RELEASE_URL: ${{ needs.research.outputs.release-url }}
-
+        run: |
+          sed -i "s|__SOURCE_LINE__|Release: [${TAG}](${RELEASE_URL})|g" pr_body.md
 
       - name: Add the compare link to the body (version branches)
         if: ${{ inputs.branch != 'trunk' }}
-        run: |
-          sed -i "s|__SOURCE_LINE__|Compare: https://github.com/WordPress/gutenberg/compare/${OLD_SHA}...${NEW_SHA}|g" pr_body.md
         env:
           NEW_SHA: ${{ needs.research.outputs.new-sha }}
           OLD_SHA: ${{ needs.research.outputs.old-sha }}
-
-      - name: Add the new SHA to the body
         run: |
-          sed -i "s|__NEW_SHA__|${NEW_SHA}|g" pr_body.md
+          sed -i "s|__SOURCE_LINE__|Compare: https://github.com/WordPress/gutenberg/compare/${OLD_SHA}...${NEW_SHA}|g" pr_body.md
+
+      - name: Add the changelog to the body (trunk only)
+        if: ${{ inputs.branch == 'trunk' }}
+        run: |
+          {
+            echo "<details>"
+            echo "<summary>Changelog</summary>"
+            echo ""
+            cat release_changelog.md
+            echo ""
+            echo "</details>"
+          } > changelog_block.md
+          awk '/__CHANGELOG__/ { while ( ( getline line < "changelog_block.md" ) > 0 ) print line; close( "changelog_block.md" ); next } 1' pr_body.md > pr_body.tmp
+          mv pr_body.tmp pr_body.md
+
+      - name: Remove the changelog placeholder (version branches)
+        if: ${{ inputs.branch != 'trunk' }}
+        run: |
+          sed -i '/__CHANGELOG__/d' pr_body.md
 
       - name: Output pull request details
+        env:
+          FORK_OWNER: ${{ github.repository_owner }}
+          PR_TITLE: ${{ needs.research.outputs.pr-title }}
         run: |
           set -euo pipefail
           compare_url="https://github.com/${UPSTREAM_REPO}/compare/${BASE_BRANCH}...${FORK_OWNER}:${HEAD_BRANCH}?expand=1"
@@ -321,6 +362,3 @@ jobs:
             cat pr_body.md
             echo '````'
           } >> "$GITHUB_STEP_SUMMARY"
-        env:
-          FORK_OWNER: ${{ github.repository_owner }}
-          PR_TITLE: ${{ needs.research.outputs.pr-title }}
