@@ -297,6 +297,12 @@ jobs:
         run: |
           sed -i "s|__NEW_SHA__|${NEW_SHA}|g" pr_body.md
 
+      - name: Add the old SHA to the body
+        env:
+          OLD_SHA: ${{ needs.research.outputs.old-sha }}
+        run: |
+          sed -i "s|__OLD_SHA__|${OLD_SHA}|g" pr_body.md
+
       - name: Add the list of changes to the body
         run: |
           awk '/__COMMIT_LIST__/ { while ( ( getline line < "commit_list.md" ) > 0 ) print line; close( "commit_list.md" ); next } 1' pr_body.md > pr_body.tmp
@@ -321,21 +327,28 @@ jobs:
       - name: Add the changelog to the body (trunk only)
         if: ${{ inputs.branch == 'trunk' }}
         run: |
-          {
-            echo "<details>"
-            echo "<summary>Changelog</summary>"
-            echo ""
-            cat release_changelog.md
-            echo ""
-            echo "</details>"
-          } > changelog_block.md
-          awk '/__CHANGELOG__/ { while ( ( getline line < "changelog_block.md" ) > 0 ) print line; close( "changelog_block.md" ); next } 1' pr_body.md > pr_body.tmp
+          awk '/__CHANGELOG__/ { while ( ( getline line < "release_changelog.md" ) > 0 ) print line; close( "release_changelog.md" ); next } 1' pr_body.md > pr_body.tmp
           mv pr_body.tmp pr_body.md
 
-      - name: Remove the changelog placeholder (version branches)
+      - name: Remove the changelog section (version branches)
         if: ${{ inputs.branch != 'trunk' }}
         run: |
-          sed -i '/__CHANGELOG__/d' pr_body.md
+          # Version branches have no release changelog, so drop the whole
+          # <details> block that contains the __CHANGELOG__ placeholder.
+          awk '
+            /^<details>$/ { block = $0 ORS; in_block = 1; drop = 0; next }
+            in_block {
+              block = block $0 ORS
+              if ( $0 ~ /__CHANGELOG__/ ) { drop = 1 }
+              if ( $0 == "</details>" ) {
+                if ( ! drop ) { printf "%s", block }
+                in_block = 0
+              }
+              next
+            }
+            { print }
+          ' pr_body.md > pr_body.tmp
+          mv pr_body.tmp pr_body.md
 
       - name: Output pull request details
         env:
