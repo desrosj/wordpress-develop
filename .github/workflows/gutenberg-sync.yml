@@ -1,21 +1,17 @@
-# Opens (or updates) a single draft pull request that updates the bundled
-# Gutenberg commit reference (package.json -> gutenberg.sha) for one branch:
+# Prepares a branch that updates the bundled Gutenberg commit reference
+# (package.json -> gutenberg.sha) for one branch:
 #   - "trunk": the commit for Gutenberg's latest public (non-prerelease) release.
 #   - an X.Y branch: the head of Gutenberg's matching wp/X.Y branch.
 #
 # WordPress/wordpress-develop does not accept pushed branches, so this workflow
 # runs from a FORK: it checks out the target branch from upstream, pushes a
-# gutenberg-sync/<branch> branch to the fork it runs in, and opens a pull
-# request from that fork branch back to upstream. Each run targets one branch.
+# gutenberg-sync/<branch> branch to the fork it runs in, and writes the pull
+# request title and body to the job summary. Open the pull request manually
+# using the compare link in the summary, then copy the title and body into it.
+# Each run targets one branch.
 #
 # The "Gutenberg Sync" label is applied separately by gutenberg-sync-label.yml
 # when a gutenberg-sync/* pull request is opened.
-#
-# Authentication:
-#   - GITHUB_TOKEN (built in) pushes the branch to the fork.
-#   - GUTENBERG_SYNC_TOKEN (optional secret) is a personal access token used to
-#     open/update the pull request on upstream. Without it, the branch is still
-#     pushed and the run prints a link to open the pull request manually.
 name: Gutenberg Sync
 
 on:
@@ -263,64 +259,30 @@ jobs:
         run: |
           git push --force fork "HEAD:${HEAD_BRANCH}"
 
-      # ----- Open or update the upstream pull request -----
+      # ----- Output the pull request details for manual submission -----
 
-      - name: Look up the existing pull request
+      - name: Output the pull request details
         if: ${{ env.PROCEED == 'true' }}
         env:
-          GH_TOKEN: ${{ secrets.GUTENBERG_SYNC_TOKEN || github.token }}
-          HAS_PAT: ${{ secrets.GUTENBERG_SYNC_TOKEN != '' }}
           FORK_OWNER: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
-
-          # Without a PAT, the GITHUB_TOKEN cannot open a PR on upstream. The branch
-          # is already pushed, so surface a link to open the PR manually.
-          if [ "${HAS_PAT}" != "true" ]; then
-            compare_url="https://github.com/${UPSTREAM_REPO}/compare/${BASE_BRANCH}...${FORK_OWNER}:${HEAD_BRANCH}?expand=1"
-            echo "::notice::Branch '${HEAD_BRANCH}' pushed to ${FORK_OWNER}. Set the GUTENBERG_SYNC_TOKEN secret to open PRs automatically, or open it here: ${compare_url}"
-            {
-              echo "### Gutenberg Sync"
-              echo ""
-              echo "Pushed \`${HEAD_BRANCH}\` to your fork."
-              echo ""
-              echo "[Open the pull request](${compare_url})"
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "PR_ACTION=manual" >> "$GITHUB_ENV"
-            exit 0
-          fi
-
-          # Identify an existing open PR for this base by the sync head branch name.
-          prs=$(gh pr list --repo "$UPSTREAM_REPO" --state open \
-            --base "$BASE_BRANCH" --head "$HEAD_BRANCH" \
-            --json number,headRepositoryOwner)
-          ours=$(jq -r --arg o "$FORK_OWNER" \
-            '[.[] | select(.headRepositoryOwner.login == $o)][0].number // empty' <<<"$prs")
-          others=$(jq -r --arg o "$FORK_OWNER" \
-            '[.[] | select(.headRepositoryOwner.login != $o)][0].number // empty' <<<"$prs")
-
-          if [ -n "$ours" ]; then
-            { echo "PR_NUMBER=${ours}"; echo "PR_ACTION=update"; } >> "$GITHUB_ENV"
-          elif [ -n "$others" ]; then
-            echo "::notice::An open ${HEAD_BRANCH} PR for ${BASE_BRANCH} already exists (#${others}); leaving it as-is."
-            echo "PR_ACTION=skip" >> "$GITHUB_ENV"
-          else
-            echo "PR_ACTION=create" >> "$GITHUB_ENV"
-          fi
-
-      - name: Update the existing pull request
-        if: ${{ env.PROCEED == 'true' && env.PR_ACTION == 'update' }}
-        env:
-          GH_TOKEN: ${{ secrets.GUTENBERG_SYNC_TOKEN || github.token }}
-        run: |
-          gh pr edit "$PR_NUMBER" --repo "$UPSTREAM_REPO" --title "$PR_TITLE" --body-file pr_body.md
-
-      - name: Open a new pull request
-        if: ${{ env.PROCEED == 'true' && env.PR_ACTION == 'create' }}
-        env:
-          GH_TOKEN: ${{ secrets.GUTENBERG_SYNC_TOKEN || github.token }}
-          FORK_OWNER: ${{ github.repository_owner }}
-        run: |
-          gh pr create --repo "$UPSTREAM_REPO" --draft \
-            --base "$BASE_BRANCH" --head "${FORK_OWNER}:${HEAD_BRANCH}" \
-            --title "$PR_TITLE" --body-file pr_body.md
+          compare_url="https://github.com/${UPSTREAM_REPO}/compare/${BASE_BRANCH}...${FORK_OWNER}:${HEAD_BRANCH}?expand=1"
+          {
+            echo "## Gutenberg Sync"
+            echo ""
+            echo "Pushed \`${HEAD_BRANCH}\` to \`${FORK_OWNER}\`. [Open a pull request](${compare_url}) against \`${UPSTREAM_REPO}\`, then copy the title and body below into it."
+            echo ""
+            echo "### Title"
+            echo ""
+            echo '```'
+            echo "${PR_TITLE}"
+            echo '```'
+            echo ""
+            echo "### Body"
+            echo ""
+            # A four-backtick fence so a body containing triple-backtick code blocks copies intact.
+            echo '````markdown'
+            cat pr_body.md
+            echo '````'
+          } >> "$GITHUB_STEP_SUMMARY"
