@@ -66,6 +66,7 @@ class Tests_Locale extends WP_UnitTestCase {
 	 */
 	public function test_get_weekday_undefined_index() {
 		$warnings = array();
+		$notices  = array();
 
 		if ( PHP_VERSION_ID >= 80000 ) {
 			// Note: $this->expectWarning() is deprecated and will be removed in PHPUnit 10.
@@ -77,19 +78,26 @@ class Tests_Locale extends WP_UnitTestCase {
 				E_WARNING
 			);
 		} else {
-			$this->expectNotice();
+			// Note: $this->expectNotice() is deprecated and will be removed in PHPUnit 10.
+			set_error_handler(
+				static function ( int $errno, string $errstr ) use ( &$notices ) {
+					$notices[] = compact( 'errno', 'errstr' );
+					return true;
+				},
+				E_NOTICE
+			);
 		}
 
 		try {
 			$this->locale->get_weekday( 7 );
 		} finally {
-			if ( PHP_VERSION_ID >= 80000 ) {
-				restore_error_handler();
-			}
+			restore_error_handler();
 		}
 
 		if ( PHP_VERSION_ID >= 80000 ) {
 			$this->assertCount( 1, $warnings, 'Expected one warning.' );
+		} else {
+			$this->assertCount( 1, $notices, 'Expected one notice.' );
 		}
 	}
 

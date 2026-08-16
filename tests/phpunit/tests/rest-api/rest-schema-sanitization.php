@@ -480,10 +480,25 @@ class WP_Test_REST_Schema_Sanitization extends WP_UnitTestCase {
 			// The undefined index is accessed multiple times per call to rest_sanitize_value_from_schema().
 			$this->assertCount( 16, $warnings, 'Expected sixteen warnings.' );
 		} else {
-			$this->expectNotice(); // For the undefined index.
+			// For the undefined index.
+			// Note: $this->expectNotice() is deprecated and will be removed in PHPUnit 10.
+			$notices = array();
+			set_error_handler(
+				static function ( int $errno, string $errstr ) use ( &$notices ) {
+					$notices[] = compact( 'errno', 'errstr' );
+					return true;
+				},
+				E_NOTICE
+			);
 
-			$this->assertSame( '#abc', rest_sanitize_value_from_schema( '#abc', $schema ) );
-			$this->assertSame( '', rest_sanitize_value_from_schema( '#jkl', $schema ) );
+			try {
+				$this->assertSame( '#abc', rest_sanitize_value_from_schema( '#abc', $schema ) );
+				$this->assertSame( '', rest_sanitize_value_from_schema( '#jkl', $schema ) );
+			} finally {
+				restore_error_handler();
+			}
+
+			$this->assertNotEmpty( $notices, 'Expected at least one notice for the undefined index.' );
 		}
 	}
 

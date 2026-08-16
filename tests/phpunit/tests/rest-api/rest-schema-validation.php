@@ -180,10 +180,25 @@ class WP_Test_REST_Schema_Validation extends WP_UnitTestCase {
 			// The undefined index is accessed multiple times per call to rest_validate_value_from_schema().
 			$this->assertCount( 6, $warnings, 'Expected six warnings.' );
 		} else {
-			$this->expectNotice(); // For the undefined index.
+			// For the undefined index.
+			// Note: $this->expectNotice() is deprecated and will be removed in PHPUnit 10.
+			$notices = array();
+			set_error_handler(
+				static function ( int $errno, string $errstr ) use ( &$notices ) {
+					$notices[] = compact( 'errno', 'errstr' );
+					return true;
+				},
+				E_NOTICE
+			);
 
-			$this->assertTrue( rest_validate_value_from_schema( 'email@example.com', $schema ) );
-			$this->assertWPError( rest_validate_value_from_schema( 'email', $schema ) );
+			try {
+				$this->assertTrue( rest_validate_value_from_schema( 'email@example.com', $schema ) );
+				$this->assertWPError( rest_validate_value_from_schema( 'email', $schema ) );
+			} finally {
+				restore_error_handler();
+			}
+
+			$this->assertNotEmpty( $notices, 'Expected at least one notice for the undefined index.' );
 		}
 	}
 
