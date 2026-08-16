@@ -95,10 +95,24 @@ class Tests_Functions_WpTriggerError extends WP_UnitTestCase {
 	 * @param string $expected_message The expected error message.
 	 */
 	public function test_should_trigger_deprecation( $function_name, $message, $expected_message ) {
-		$this->expectDeprecation();
-		$this->expectDeprecationMessage( $expected_message );
+		// Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		$deprecations = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+				$deprecations[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_DEPRECATED
+		);
 
-		wp_trigger_error( $function_name, $message, E_USER_DEPRECATED );
+		try {
+			wp_trigger_error( $function_name, $message, E_USER_DEPRECATED );
+		} finally {
+			restore_error_handler();
+		}
+
+		$this->assertCount( 1, $deprecations, 'Expected one deprecation notice.' );
+		$this->assertStringContainsString( $expected_message, $deprecations[0]['errstr'] );
 	}
 
 	/**
