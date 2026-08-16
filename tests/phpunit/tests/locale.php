@@ -65,13 +65,32 @@ class Tests_Locale extends WP_UnitTestCase {
 	 * @covers WP_Locale::get_weekday
 	 */
 	public function test_get_weekday_undefined_index() {
+		$warnings = array();
+
 		if ( PHP_VERSION_ID >= 80000 ) {
-			$this->expectWarning();
+			// Note: $this->expectWarning() is deprecated and will be removed in PHPUnit 10.
+			set_error_handler(
+				static function ( int $errno, string $errstr ) use ( &$warnings ) {
+					$warnings[] = compact( 'errno', 'errstr' );
+					return true;
+				},
+				E_WARNING
+			);
 		} else {
 			$this->expectNotice();
 		}
 
-		$this->locale->get_weekday( 7 );
+		try {
+			$this->locale->get_weekday( 7 );
+		} finally {
+			if ( PHP_VERSION_ID >= 80000 ) {
+				restore_error_handler();
+			}
+		}
+
+		if ( PHP_VERSION_ID >= 80000 ) {
+			$this->assertCount( 1, $warnings, 'Expected one warning.' );
+		}
 	}
 
 	/**

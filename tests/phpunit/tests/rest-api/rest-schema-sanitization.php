@@ -454,17 +454,37 @@ class WP_Test_REST_Schema_Sanitization extends WP_UnitTestCase {
 	 * @ticket 50189
 	 */
 	public function test_format_validation_is_applied_if_missing_type() {
-		if ( PHP_VERSION_ID >= 80000 ) {
-			$this->expectWarning(); // For the undefined index.
-		} else {
-			$this->expectNotice(); // For the undefined index.
-		}
-
 		$this->setExpectedIncorrectUsage( 'rest_sanitize_value_from_schema' );
 
 		$schema = array( 'format' => 'hex-color' );
-		$this->assertSame( '#abc', rest_sanitize_value_from_schema( '#abc', $schema ) );
-		$this->assertSame( '', rest_sanitize_value_from_schema( '#jkl', $schema ) );
+
+		if ( PHP_VERSION_ID >= 80000 ) {
+			// For the undefined index.
+			// Note: $this->expectWarning() is deprecated and will be removed in PHPUnit 10.
+			$warnings = array();
+			set_error_handler(
+				static function ( int $errno, string $errstr ) use ( &$warnings ) {
+					$warnings[] = compact( 'errno', 'errstr' );
+					return true;
+				},
+				E_WARNING
+			);
+
+			try {
+				$this->assertSame( '#abc', rest_sanitize_value_from_schema( '#abc', $schema ) );
+				$this->assertSame( '', rest_sanitize_value_from_schema( '#jkl', $schema ) );
+			} finally {
+				restore_error_handler();
+			}
+
+			// The undefined index is accessed multiple times per call to rest_sanitize_value_from_schema().
+			$this->assertCount( 16, $warnings, 'Expected sixteen warnings.' );
+		} else {
+			$this->expectNotice(); // For the undefined index.
+
+			$this->assertSame( '#abc', rest_sanitize_value_from_schema( '#abc', $schema ) );
+			$this->assertSame( '', rest_sanitize_value_from_schema( '#jkl', $schema ) );
+		}
 	}
 
 	/**
