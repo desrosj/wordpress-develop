@@ -162,7 +162,26 @@ jobs:
               per_page: 100,
             } );
 
-            const cancelledJobs = jobs.filter( ( job ) => job.conclusion === 'cancelled' );
+            // How long a job actually ran before being cancelled. `created_at` isn't used here because it includes
+            // time spent queued before a runner picked the job up, which doesn't count against `timeout-minutes`.
+            // A job cancelled before it ever started running (`started_at` unset) sorts last, not first -- it can't
+            // be the one that timed out.
+            function jobDurationMs( job ) {
+              if ( ! job.started_at || ! job.completed_at ) {
+                return 0;
+              }
+
+              return new Date( job.completed_at ) - new Date( job.started_at );
+            }
+
+            // The job that actually hit its own `timeout-minutes` ran for close to that long before being killed,
+            // while a job cancelled for another reason (e.g. a fail-fast cascade) more often gets cut short earlier.
+            // Checking the longest-running cancelled jobs first makes it more likely the loop below finds a match --
+            // and short-circuits -- well before it has to check every cancelled job. This is a fast path only: every
+            // cancelled job is still checked if none of the earlier ones match, so it can't cause a false negative.
+            const cancelledJobs = jobs
+              .filter( ( job ) => job.conclusion === 'cancelled' )
+              .sort( ( a, b ) => jobDurationMs( b ) - jobDurationMs( a ) );
 
             for ( const job of cancelledJobs ) {
               const annotations = await github.paginate( github.rest.checks.listAnnotations, {
