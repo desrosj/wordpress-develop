@@ -156,6 +156,8 @@ jobs:
               per_page: 100,
             } );
 
+            console.log( jobs );
+
             return jobs.some( ( job ) => job.conclusion === 'timed_out' ) ? 'true' : 'false';
 
       - name: Get the commit message
