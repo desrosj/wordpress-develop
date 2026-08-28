@@ -142,43 +142,21 @@ jobs:
           retry-exempt-status-codes: 418
           result-encoding: string
           script: |
-            const MAX_ATTEMPTS = 3;
-
-            const fetchJobs = () => github.paginate( github.rest.actions.listJobsForWorkflowRunAttempt, {
+            // Octokit's `paginate()` normalizes this endpoint's `{ total_count, jobs: [ ... ] }` response body by
+            // replacing `response.data` with the `jobs` array itself, so the array of jobs *is* `response.data` --
+            // there's no `.jobs` property left to read off of it. A custom map function that reads `response.data.jobs`
+            // (as this step previously did) therefore always receives `undefined`, which `github.paginate()` then
+            // merges into the results as a literal `undefined` entry, crashing `.some()` below when it's reached.
+            // Omitting a map function lets `paginate()` use the already-normalized array directly instead.
+            const jobs = await github.paginate( github.rest.actions.listJobsForWorkflowRunAttempt, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               run_id: `${context.runId}`,
               attempt_number: Number( process.env.GITHUB_RUN_ATTEMPT ),
               per_page: 100,
-            }, ( response ) => response.data.jobs || [] );
+            } );
 
-            let jobs = [];
-
-            // This step only runs once every job this workflow run depends on has reached a terminal state,
-            // but the REST API's view of job data can briefly lag behind that. When it does, `github.paginate()`
-            // can merge in an empty/undefined entry for a page whose response is missing its `jobs` array,
-            // silently dropping every job on that page (including, potentially, the one that timed out) rather
-            // than throwing. So instead of trusting the first response, poll until every job in the list has a
-            // recorded conclusion (i.e. none are still `null`/in progress) and no entries are missing, retrying
-            // a few times with an exponential backoff to let that lag catch up.
-            for ( let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++ ) {
-              jobs = await fetchJobs();
-
-              const incomplete = jobs.some( ( job ) => ! job || job.conclusion === null );
-
-              if ( ! incomplete ) {
-                break;
-              }
-
-              if ( attempt < MAX_ATTEMPTS ) {
-                await new Promise( ( resolve ) => setTimeout( resolve, 1000 * 2 ** ( attempt - 1 ) ) );
-              }
-            }
-
-            // Fall back to only the entries that are actually present, in case retries were exhausted while the
-            // job list was still incomplete. This avoids a crash, at the cost of potentially under-reporting a
-            // timeout if the missing/incomplete job was the one that timed out.
-            return jobs.some( ( job ) => job && job.conclusion === 'timed_out' ) ? 'true' : 'false';
+            return jobs.some( ( job ) => job.conclusion === 'timed_out' ) ? 'true' : 'false';
 
       - name: Get the commit message
         id: current-commit-message
