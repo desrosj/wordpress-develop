@@ -142,8 +142,7 @@ jobs:
           retry-exempt-status-codes: 418
           result-encoding: string
           script: |
-            const MAX_ATTEMPTS = 5;
-            const RETRY_DELAY_MS = 3000;
+            const MAX_ATTEMPTS = 3;
 
             const fetchJobs = () => github.paginate( github.rest.actions.listJobsForWorkflowRunAttempt, {
               owner: context.repo.owner,
@@ -161,7 +160,7 @@ jobs:
             // silently dropping every job on that page (including, potentially, the one that timed out) rather
             // than throwing. So instead of trusting the first response, poll until every job in the list has a
             // recorded conclusion (i.e. none are still `null`/in progress) and no entries are missing, retrying
-            // a few times with a short delay to let that lag catch up.
+            // a few times with an exponential backoff to let that lag catch up.
             for ( let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++ ) {
               jobs = await fetchJobs();
 
@@ -172,7 +171,7 @@ jobs:
               }
 
               if ( attempt < MAX_ATTEMPTS ) {
-                await new Promise( ( resolve ) => setTimeout( resolve, RETRY_DELAY_MS ) );
+                await new Promise( ( resolve ) => setTimeout( resolve, 1000 * 2 ** ( attempt - 1 ) ) );
               }
             }
 
