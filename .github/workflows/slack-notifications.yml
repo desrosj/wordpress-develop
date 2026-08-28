@@ -53,6 +53,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       actions: read
+      checks: read
       contents: read
     timeout-minutes: 5
     if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event.workflow_run.event != 'pull_request' }}
@@ -132,7 +133,13 @@ jobs:
         env:
           CALLING_STATUS: ${{ inputs.calling_status }}
 
-      # The REST API exposes a distinct `timed_out` job conclusion that is unavailable through workflow contexts.
+      # Despite `timed_out` being a documented possible value for a job's `conclusion`, GitHub Actions does not
+      # actually use it: a job that hits its own `timeout-minutes` is reported exactly like any other cancelled
+      # job (e.g. one cancelled because a sibling job failed and fail-fast cancelled it), with `conclusion: 'cancelled'`
+      # in both cases. Confirmed by directly forcing a job timeout and inspecting the API response: `conclusion` came
+      # back `'cancelled'`, while the job's check-run annotations still recorded "The job has exceeded the maximum
+      # execution time of ...". That annotation is the only reliable signal, so cancelled jobs' annotations are
+      # checked below (in batches, via GraphQL -- see the step for why).
       - name: Determine whether the workflow timed out
         id: timeout-check
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -142,14 +149,56 @@ jobs:
           retry-exempt-status-codes: 418
           result-encoding: string
           script: |
+            // Octokit's `paginate()` normalizes this endpoint's `{ total_count, jobs: [ ... ] }` response body by
+            // replacing `response.data` with the `jobs` array itself, so the array of jobs *is* `response.data` --
+            // there's no `.jobs` property left to read off of it. A custom map function that reads `response.data.jobs`
+            // would therefore always receive `undefined`, which `github.paginate()` then merges into the results as a
+            // literal `undefined` entry. Omitting a map function lets `paginate()` use the normalized array directly.
             const jobs = await github.paginate( github.rest.actions.listJobsForWorkflowRunAttempt, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               run_id: `${context.runId}`,
               attempt_number: Number( process.env.GITHUB_RUN_ATTEMPT ),
-            }, ( response ) => response.data.jobs );
+              per_page: 100,
+            } );
 
-            return jobs.some( ( job ) => job.conclusion === 'timed_out' ) ? 'true' : 'false';
+            const cancelledJobs = jobs.filter( ( job ) => job.conclusion === 'cancelled' );
+
+            // The REST annotations endpoint is scoped to one check run per request, so checking N cancelled jobs
+            // costs N requests. GraphQL's `CheckRun.annotations` field lets multiple check runs be looked up (and
+            // their annotations fetched) in a single request via the root `nodes( ids: [ID!]! )` field, using the
+            // `node_id` already present on each job from the REST call above. `nodes` accepts at most 100 IDs per
+            // request, so cancelled jobs are checked in batches of 100 rather than one request per job.
+            const BATCH_SIZE = 100;
+
+            for ( let i = 0; i < cancelledJobs.length; i += BATCH_SIZE ) {
+              const batch = cancelledJobs.slice( i, i + BATCH_SIZE );
+
+              const { nodes } = await github.graphql(
+                `query( $ids: [ID!]! ) {
+                  nodes( ids: $ids ) {
+                    ... on CheckRun {
+                      annotations( first: 10 ) {
+                        nodes {
+                          message
+                        }
+                      }
+                    }
+                  }
+                }`,
+                { ids: batch.map( ( job ) => job.node_id ) }
+              );
+
+              const timedOut = nodes.some( ( node ) => node && node.annotations.nodes.some(
+                ( annotation ) => /exceeded the maximum execution time/i.test( annotation.message )
+              ) );
+
+              if ( timedOut ) {
+                return 'true';
+              }
+            }
+
+            return 'false';
 
       - name: Get the commit message
         id: current-commit-message
@@ -183,6 +232,35 @@ jobs:
         env:
           COMMIT_MSG_RAW: ${{ ( github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' ) && steps.current-commit-message.outputs.result || github.event.head_commit.message }}
 
+  # Alerts when the "Prepare notifications" job itself fails.
+  #
+  # None of the jobs below can post a meaningful notification without the outputs `prepare` produces, so each of
+  # them only runs when `prepare` succeeds (this is the default behavior for a job with a `needs` dependency, and
+  # is why none of the conditions below reference `failure()` or `cancelled()`, which would otherwise bypass it).
+  # That means a failure in `prepare` would otherwise go unnoticed, so this job posts a distinct alert whenever
+  # that happens, so a broken notification pipeline doesn't fail silently.
+  notify-prepare-failure:
+    name: Notify of a failure preparing notifications
+    permissions: {}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    needs: [ prepare ]
+    if: ${{ failure() }}
+
+    steps:
+      - name: Post a notification that Slack notifications could not be prepared
+        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
+        with:
+          webhook-type: webhook-trigger
+          webhook: ${{ secrets.SLACK_GHA_FAILURE_WEBHOOK }}
+          payload: |
+            {
+              "workflow_name": "${{ github.workflow }}",
+              "ref_name": "${{ github.ref_name }}",
+              "run_url": "https://github.com/WordPress/wordpress-develop/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}",
+              "commit_message": "⚠️ The \"Prepare notifications\" job failed, so no Slack notification could be sent for this workflow run. Check the run for details."
+            }
+
   # Posts notifications when a workflow fails.
   failure:
     name: Failure notifications
@@ -190,7 +268,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     needs: [ prepare ]
-    if: ${{ needs.prepare.outputs.previous_conclusion != 'first-failure' && inputs.calling_status == 'failure' || failure() }}
+    if: ${{ needs.prepare.outputs.previous_conclusion != 'first-failure' && inputs.calling_status == 'failure' }}
 
     steps:
       - name: Post failure notifications to Slack
@@ -240,7 +318,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     needs: [ prepare ]
-    if: ${{ ( inputs.calling_status == 'cancelled' && github.run_attempt == 2 && needs.prepare.outputs.timed_out != 'true' ) || cancelled() }}
+    if: ${{ inputs.calling_status == 'cancelled' && github.run_attempt == 2 && needs.prepare.outputs.timed_out != 'true' }}
 
     steps:
       - name: Post cancelled notifications to Slack
