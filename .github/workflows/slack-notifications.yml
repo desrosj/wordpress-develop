@@ -53,9 +53,10 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       actions: read
+      checks: read
       contents: read
     timeout-minutes: 5
-    if: ${{ always() }}
+    if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event.workflow_run.event != 'pull_request' }}
     outputs:
       previous_conclusion: ${{ steps.previous-attempt-result.outputs.result }}
       timed_out: ${{ steps.timeout-check.outputs.result }}
@@ -132,7 +133,13 @@ jobs:
         env:
           CALLING_STATUS: ${{ inputs.calling_status }}
 
-      # The REST API exposes a distinct `timed_out` job conclusion that is unavailable through workflow contexts.
+      # Despite `timed_out` being a documented possible value for a job's `conclusion`, GitHub Actions does not
+      # actually use it: a job that hits its own `timeout-minutes` is reported exactly like any other cancelled
+      # job (e.g. one cancelled because a sibling job failed and fail-fast cancelled it), with `conclusion: 'cancelled'`
+      # in both cases. Confirmed by directly forcing a job timeout and inspecting the API response: `conclusion` came
+      # back `'cancelled'`, while the job's check-run annotations still recorded "The job has exceeded the maximum
+      # execution time of ...". That annotation is the only reliable signal, so cancelled jobs are checked individually
+      # for it below.
       - name: Determine whether the workflow timed out
         id: timeout-check
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -145,9 +152,8 @@ jobs:
             // Octokit's `paginate()` normalizes this endpoint's `{ total_count, jobs: [ ... ] }` response body by
             // replacing `response.data` with the `jobs` array itself, so the array of jobs *is* `response.data` --
             // there's no `.jobs` property left to read off of it. A custom map function that reads `response.data.jobs`
-            // (as this step previously did) therefore always receives `undefined`, which `github.paginate()` then
-            // merges into the results as a literal `undefined` entry, crashing `.some()` below when it's reached.
-            // Omitting a map function lets `paginate()` use the already-normalized array directly instead.
+            // would therefore always receive `undefined`, which `github.paginate()` then merges into the results as a
+            // literal `undefined` entry. Omitting a map function lets `paginate()` use the normalized array directly.
             const jobs = await github.paginate( github.rest.actions.listJobsForWorkflowRunAttempt, {
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -156,9 +162,24 @@ jobs:
               per_page: 100,
             } );
 
-            console.log( jobs );
+            const cancelledJobs = jobs.filter( ( job ) => job.conclusion === 'cancelled' );
 
-            return jobs.some( ( job ) => job.conclusion === 'timed_out' ) ? 'true' : 'false';
+            for ( const job of cancelledJobs ) {
+              const annotations = await github.paginate( github.rest.checks.listAnnotations, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                check_run_id: job.id,
+                per_page: 100,
+              } );
+
+              const timedOut = annotations.some( ( annotation ) => /exceeded the maximum execution time/i.test( annotation.message ) );
+
+              if ( timedOut ) {
+                return 'true';
+              }
+            }
+
+            return 'false';
 
       - name: Get the commit message
         id: current-commit-message
