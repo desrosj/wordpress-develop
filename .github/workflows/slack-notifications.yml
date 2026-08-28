@@ -138,8 +138,8 @@ jobs:
       # job (e.g. one cancelled because a sibling job failed and fail-fast cancelled it), with `conclusion: 'cancelled'`
       # in both cases. Confirmed by directly forcing a job timeout and inspecting the API response: `conclusion` came
       # back `'cancelled'`, while the job's check-run annotations still recorded "The job has exceeded the maximum
-      # execution time of ...". That annotation is the only reliable signal, so cancelled jobs are checked individually
-      # for it below.
+      # execution time of ...". That annotation is the only reliable signal, so cancelled jobs' annotations are
+      # checked below (in batches, via GraphQL -- see the step for why).
       - name: Determine whether the workflow timed out
         id: timeout-check
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -162,33 +162,36 @@ jobs:
               per_page: 100,
             } );
 
-            // The job that actually hit its own `timeout-minutes` ran for close to that long before being killed,
-            // while a job cancelled for another reason (e.g. a fail-fast cascade) more often gets cut short earlier.
-            // Checking the longest-running cancelled jobs first makes it more likely the loop below finds a match --
-            // and short-circuits -- well before it has to check every cancelled job. This is a fast path only: every
-            // cancelled job is still checked if none of the earlier ones match, so it can't cause a false negative.
-            //
-            // Duration is `completed_at - started_at`, not `created_at`, since queue time before a runner picks up
-            // the job doesn't count against `timeout-minutes`. A job cancelled before it ever started running (no
-            // `started_at`) gets a duration of 0, sorting it last -- it can't be the one that timed out.
-            const cancelledJobs = jobs
-              .filter( ( job ) => job.conclusion === 'cancelled' )
-              .sort( ( a, b ) => {
-                const durationA = a.started_at && a.completed_at ? new Date( a.completed_at ) - new Date( a.started_at ) : 0;
-                const durationB = b.started_at && b.completed_at ? new Date( b.completed_at ) - new Date( b.started_at ) : 0;
+            const cancelledJobs = jobs.filter( ( job ) => job.conclusion === 'cancelled' );
 
-                return durationB - durationA;
-              } );
+            // The REST annotations endpoint is scoped to one check run per request, so checking N cancelled jobs
+            // costs N requests. GraphQL's `CheckRun.annotations` field lets multiple check runs be looked up (and
+            // their annotations fetched) in a single request via the root `nodes( ids: [ID!]! )` field, using the
+            // `node_id` already present on each job from the REST call above. `nodes` accepts at most 100 IDs per
+            // request, so cancelled jobs are checked in batches of 100 rather than one request per job.
+            const BATCH_SIZE = 100;
 
-            for ( const job of cancelledJobs ) {
-              const annotations = await github.paginate( github.rest.checks.listAnnotations, {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                check_run_id: job.id,
-                per_page: 100,
-              } );
+            for ( let i = 0; i < cancelledJobs.length; i += BATCH_SIZE ) {
+              const batch = cancelledJobs.slice( i, i + BATCH_SIZE );
 
-              const timedOut = annotations.some( ( annotation ) => /exceeded the maximum execution time/i.test( annotation.message ) );
+              const { nodes } = await github.graphql(
+                `query( $ids: [ID!]! ) {
+                  nodes( ids: $ids ) {
+                    ... on CheckRun {
+                      annotations( first: 10 ) {
+                        nodes {
+                          message
+                        }
+                      }
+                    }
+                  }
+                }`,
+                { ids: batch.map( ( job ) => job.node_id ) }
+              );
+
+              const timedOut = nodes.some( ( node ) => node && node.annotations.nodes.some(
+                ( annotation ) => /exceeded the maximum execution time/i.test( annotation.message )
+              ) );
 
               if ( timedOut ) {
                 return 'true';
