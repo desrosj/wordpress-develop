@@ -142,16 +142,43 @@ jobs:
           retry-exempt-status-codes: 418
           result-encoding: string
           script: |
-            const jobs = await github.paginate( github.rest.actions.listJobsForWorkflowRunAttempt, {
+            const MAX_ATTEMPTS = 5;
+            const RETRY_DELAY_MS = 3000;
+
+            const fetchJobs = () => github.paginate( github.rest.actions.listJobsForWorkflowRunAttempt, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               run_id: `${context.runId}`,
               attempt_number: Number( process.env.GITHUB_RUN_ATTEMPT ),
-            }, ( response ) => response.data.jobs );
+              per_page: 100,
+            }, ( response ) => response.data.jobs || [] );
 
-            // `github.paginate()` can merge in an empty/undefined entry when a page's response is missing
-            // a `jobs` array (this has been observed while jobs are still being cancelled), so entries must
-            // be checked for truthiness before they're accessed to avoid an unhandled error in this step.
+            let jobs = [];
+
+            // This step only runs once every job this workflow run depends on has reached a terminal state,
+            // but the REST API's view of job data can briefly lag behind that. When it does, `github.paginate()`
+            // can merge in an empty/undefined entry for a page whose response is missing its `jobs` array,
+            // silently dropping every job on that page (including, potentially, the one that timed out) rather
+            // than throwing. So instead of trusting the first response, poll until every job in the list has a
+            // recorded conclusion (i.e. none are still `null`/in progress) and no entries are missing, retrying
+            // a few times with a short delay to let that lag catch up.
+            for ( let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++ ) {
+              jobs = await fetchJobs();
+
+              const incomplete = jobs.some( ( job ) => ! job || job.conclusion === null );
+
+              if ( ! incomplete ) {
+                break;
+              }
+
+              if ( attempt < MAX_ATTEMPTS ) {
+                await new Promise( ( resolve ) => setTimeout( resolve, RETRY_DELAY_MS ) );
+              }
+            }
+
+            // Fall back to only the entries that are actually present, in case retries were exhausted while the
+            // job list was still incomplete. This avoids a crash, at the cost of potentially under-reporting a
+            // timeout if the missing/incomplete job was the one that timed out.
             return jobs.some( ( job ) => job && job.conclusion === 'timed_out' ) ? 'true' : 'false';
 
       - name: Get the commit message
