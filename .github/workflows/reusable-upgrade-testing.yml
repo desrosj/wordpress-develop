@@ -82,7 +82,7 @@ jobs:
         with:
           php-version: '${{ inputs.php }}'
           coverage: none
-          tools: wp-cli
+          tools: ${{ contains( fromJSON('["5.4", "5.5"]'), inputs.php ) && 'wp-cli:2.4.0' || 'wp-cli' }}
 
       - name: Download WordPress ${{ inputs.wp }}
         run: wp core download --version="${WP_VERSION}"

@@ -9,20 +9,24 @@ on:
       - trunk
     # Always test the workflow after it's updated.
     paths:
+      - '.version-support-*.json'
       - '.github/workflows/upgrade-testing.yml'
       - '.github/workflows/reusable-upgrade-testing.yml'
+      - '.github/workflows/reusable-support-json-reader-v1.yml'
   pull_request:
     # This workflow is only meant to run from trunk. Pull requests changing this file with different BASE branches should be ignored.
     branches:
       - trunk
     # Always test the workflow when changes are suggested.
     paths:
+      - '.version-support-*.json'
       - '.github/workflows/upgrade-testing.yml'
       - '.github/workflows/reusable-upgrade-testing.yml'
+      - '.github/workflows/reusable-support-json-reader-v1.yml'
   workflow_dispatch:
     inputs:
       new-version:
-        description: 'The version to test installing. Accepts major and minor versions, "latest", or "nightly". Major releases must not end with ".0".'
+        description: 'The version to test upgrading to. Accepts major and minor versions, "latest", or "nightly". Major releases must not end with ".0".'
         type: string
         default: 'latest'
 
@@ -36,6 +40,10 @@ concurrency:
 # Disable permissions for all available scopes by default.
 # Any needed permissions should be configured at the job level.
 permissions: {}
+
+env:
+  CURRENTLY_SUPPORTED_BRANCH: '6.9'
+  OLDEST_SECURITY_BRANCH: '4.7'
 
 # Because the number of jobs spawned can quickly balloon out of control, the following methodology is applied when
 # building out the matrix below:
@@ -57,11 +65,174 @@ permissions: {}
 #    - 5.6.x Docker containers are available and work, but 5.6 only accounts for ~2.3% of installs as of 12/6/2024.defaults:
 #    - 5.7.x accounts for ~20% of installs, so this is used below instead.
 jobs:
+  # Determines whether an older branch is being tested.
+  #
+  # When an older version is specified, a reduced matrix tailored to that branch is run.
+  determine-workflow-type:
+    name: Determine workflow type
+    runs-on: 'ubuntu-24.04'
+    timeout-minutes: 5
+    outputs:
+      testing-old-branch: ${{ steps.old-branch-check.outputs.testing-old-branch }}
+    steps:
+      - name: Determine if an older branch is being tested
+        id: old-branch-check
+        env:
+          NEW_VERSION: ${{ inputs.new-version }}
+          CURRENTLY_SUPPORTED_BRANCH: ${{ env.CURRENTLY_SUPPORTED_BRANCH }}
+        run: |
+          case "$NEW_VERSION" in
+            "" | "latest" | "nightly" | "$CURRENTLY_SUPPORTED_BRANCH" | "$CURRENTLY_SUPPORTED_BRANCH".*)
+              echo "testing-old-branch=false" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "testing-old-branch=true" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+  # Determines the PHP and database versions to test based on the WordPress version when testing old branches.
+  build-test-matrix:
+    name: Build Test Matrix
+    uses: ./.github/workflows/reusable-support-json-reader-v1.yml
+    permissions:
+      contents: read
+    secrets: inherit
+    needs: [ determine-workflow-type ]
+    if: ${{ needs.determine-workflow-type.outputs.testing-old-branch == 'true' }}
+    with:
+      wp-version: ${{ inputs.new-version }}
+
+  # Determines the lists of WordPress versions to upgrade from when testing an older branch.
+  #
+  # Produces two lists:
+  # - recent-from-versions: the preceding branch and the target branch itself. These are tested
+  #   against the full PHP and database version matrix.
+  # - older-from-versions: all branches from OLDEST_SECURITY_BRANCH up to, but not including,
+  #   the preceding branch. These are tested against a reduced PHP matrix.
+  #
+  # Also computes reduced-php-versions from the target branch's supported PHP versions, keeping
+  # only the oldest and newest version of each major (e.g. 7.0 and 7.4 from a 7.x range).
+  #
+  # WordPress branches are versioned as X.Y, where Y increments from 0 to 9 before X
+  # increments and Y resets to 0.
+  #
+  # Only runs when testing an older branch.
+  determine-from-versions:
+    name: Determine FROM WordPress versions
+    runs-on: 'ubuntu-24.04'
+    timeout-minutes: 5
+    needs: [ determine-workflow-type, build-test-matrix ]
+    outputs:
+      recent-from-versions: ${{ steps.from-versions.outputs.recent-from-versions }}
+      older-from-versions: ${{ steps.from-versions.outputs.older-from-versions }}
+      has-older-versions: ${{ steps.from-versions.outputs.has-older-versions }}
+      reduced-php-versions: ${{ steps.from-versions.outputs.reduced-php-versions }}
+
+    steps:
+      - name: Determine the FROM WordPress versions
+        id: from-versions
+        env:
+          OLDEST_SECURITY_BRANCH: ${{ env.OLDEST_SECURITY_BRANCH }}
+          MAJOR_WP_VERSION: ${{ needs.build-test-matrix.outputs.major-wp-version }}
+          PHP_VERSIONS: ${{ needs.build-test-matrix.outputs.php-versions }}
+        run: |
+          OLDEST_MAJOR=$(echo "$OLDEST_SECURITY_BRANCH" | cut -d'.' -f1)
+          OLDEST_MINOR=$(echo "$OLDEST_SECURITY_BRANCH" | cut -d'.' -f2)
+
+          # Converts the target branch key (e.g. "5-0") to X.Y format.
+          TARGET=$(echo "$MAJOR_WP_VERSION" | tr '-' '.')
+          TARGET_MAJOR=$(echo "$TARGET" | cut -d'.' -f1)
+          TARGET_MINOR=$(echo "$TARGET" | cut -d'.' -f2)
+
+          # Determine the branch immediately preceding the target.
+          # Y decrements, rolling over from 0 to 9 and decrementing X.
+          if [ "$TARGET_MINOR" -eq 0 ]; then
+            PREV_MAJOR=$((TARGET_MAJOR - 1))
+            PREV_MINOR=9
+          else
+            PREV_MAJOR=$TARGET_MAJOR
+            PREV_MINOR=$((TARGET_MINOR - 1))
+          fi
+
+          # Clamp the preceding branch to OLDEST_SECURITY_BRANCH.
+          if [ "$PREV_MAJOR" -lt "$OLDEST_MAJOR" ] || \
+             { [ "$PREV_MAJOR" -eq "$OLDEST_MAJOR" ] && [ "$PREV_MINOR" -lt "$OLDEST_MINOR" ]; }; then
+            PREV_MAJOR=$OLDEST_MAJOR
+            PREV_MINOR=$OLDEST_MINOR
+          fi
+
+          # "recent" FROM versions: the preceding branch and the target branch. These are tested
+          # against the full PHP and database version matrix.
+          RECENT_VERSIONS="\"${PREV_MAJOR}.${PREV_MINOR}\""
+          if [ "$PREV_MAJOR" != "$TARGET_MAJOR" ] || [ "$PREV_MINOR" != "$TARGET_MINOR" ]; then
+            RECENT_VERSIONS="${RECENT_VERSIONS},\"${TARGET_MAJOR}.${TARGET_MINOR}\""
+          fi
+          echo "recent-from-versions=[${RECENT_VERSIONS}]" >> "$GITHUB_OUTPUT"
+
+          # "older" FROM versions: all branches from OLDEST_SECURITY_BRANCH up to, but not
+          # including, the preceding branch. Y increments 0–9, then X increments and Y resets to 0.
+          OLDER_VERSIONS=""
+          CURRENT_MAJOR=$OLDEST_MAJOR
+          CURRENT_MINOR=$OLDEST_MINOR
+
+          while true; do
+            if [ "$CURRENT_MAJOR" -gt "$PREV_MAJOR" ] || \
+               { [ "$CURRENT_MAJOR" -eq "$PREV_MAJOR" ] && [ "$CURRENT_MINOR" -ge "$PREV_MINOR" ]; }; then
+              break
+            fi
+
+            if [ -n "$OLDER_VERSIONS" ]; then
+              OLDER_VERSIONS="${OLDER_VERSIONS},"
+            fi
+            OLDER_VERSIONS="${OLDER_VERSIONS}\"${CURRENT_MAJOR}.${CURRENT_MINOR}\""
+
+            if [ "$CURRENT_MINOR" -eq 9 ]; then
+              CURRENT_MAJOR=$((CURRENT_MAJOR + 1))
+              CURRENT_MINOR=0
+            else
+              CURRENT_MINOR=$((CURRENT_MINOR + 1))
+            fi
+          done
+
+          echo "older-from-versions=[${OLDER_VERSIONS}]" >> "$GITHUB_OUTPUT"
+          echo "has-older-versions=$( [ -n "$OLDER_VERSIONS" ] && echo 'true' || echo 'false' )" >> "$GITHUB_OUTPUT"
+
+          # Reduced PHP versions: the oldest and newest version of each major PHP version,
+          # for use when testing older FROM branches.
+          declare -A OLDEST_PHP
+          declare -A NEWEST_PHP
+
+          for version in $(echo "$PHP_VERSIONS" | tr -d '[]"' | tr ',' ' '); do
+            MAJOR=$(echo "$version" | cut -d'.' -f1)
+            if [ -z "${OLDEST_PHP[$MAJOR]}" ]; then
+              OLDEST_PHP[$MAJOR]=$version
+            fi
+            NEWEST_PHP[$MAJOR]=$version
+          done
+
+          REDUCED_PHP=""
+          for MAJOR in $(printf '%s\n' "${!OLDEST_PHP[@]}" | sort -n); do
+            OLDEST=${OLDEST_PHP[$MAJOR]}
+            NEWEST=${NEWEST_PHP[$MAJOR]}
+            if [ -n "$REDUCED_PHP" ]; then
+              REDUCED_PHP="${REDUCED_PHP},"
+            fi
+            REDUCED_PHP="${REDUCED_PHP}\"${OLDEST}\""
+            if [ "$OLDEST" != "$NEWEST" ]; then
+              REDUCED_PHP="${REDUCED_PHP},\"${NEWEST}\""
+            fi
+          done
+
+          echo "reduced-php-versions=[${REDUCED_PHP}]" >> "$GITHUB_OUTPUT"
+
   # Tests the full list of PHP/MySQL combinations for the two most recent versions of WordPress.
+  #
+  # Only runs when testing the currently supported branch or latest/nightly.
   upgrade-tests-recent-releases:
     name: ${{ matrix.wp }} to ${{ inputs.new-version && inputs.new-version || 'latest' }}
     uses: ./.github/workflows/reusable-upgrade-testing.yml
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
+    needs: [ determine-workflow-type ]
+    if: ${{ needs.determine-workflow-type.outputs.testing-old-branch != 'true' }}
     permissions:
       contents: read
     strategy:
@@ -83,10 +254,13 @@ jobs:
       multisite: ${{ matrix.multisite }}
 
   # Tests 6.x releases where the WordPress database version changed on the oldest and newest supported versions of PHP 7 & 8.
+  #
+  # Only runs when testing the currently supported branch or latest/nightly.
   upgrade-tests-wp-6x-mysql:
     name: ${{ matrix.wp }} to ${{ inputs.new-version && inputs.new-version || 'latest' }}
     uses: ./.github/workflows/reusable-upgrade-testing.yml
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
+    needs: [ determine-workflow-type ]
+    if: ${{ needs.determine-workflow-type.outputs.testing-old-branch != 'true' }}
     permissions:
       contents: read
     strategy:
@@ -108,10 +282,13 @@ jobs:
       multisite: ${{ matrix.multisite }}
 
   # Tests 5.x releases where the WordPress database version changed on the only supported version of PHP 7.
+  #
+  # Only runs when testing the currently supported branch or latest/nightly.
   upgrade-tests-wp-5x-php-7x-mysql:
     name: ${{ matrix.wp }} to ${{ inputs.new-version && inputs.new-version || 'latest' }}
     uses: ./.github/workflows/reusable-upgrade-testing.yml
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
+    needs: [ determine-workflow-type ]
+    if: ${{ needs.determine-workflow-type.outputs.testing-old-branch != 'true' }}
     permissions:
       contents: read
     strategy:
@@ -137,10 +314,13 @@ jobs:
   # WordPress 5.0-5.2 are excluded from PHP 8+ testing because of the following fatal errors:
   # - Use of __autoload().
   # - array/string offset with curly braces.
+  #
+  # Only runs when testing the currently supported branch or latest/nightly.
   upgrade-tests-wp-5x-php-8x-mysql:
     name: ${{ matrix.wp }} to ${{ inputs.new-version && inputs.new-version || 'latest' }}
     uses: ./.github/workflows/reusable-upgrade-testing.yml
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
+    needs: [ determine-workflow-type ]
+    if: ${{ needs.determine-workflow-type.outputs.testing-old-branch != 'true' }}
     permissions:
       contents: read
     strategy:
@@ -167,10 +347,13 @@ jobs:
   # WordPress 4.7 is excluded from PHP 8+ testing because of the following fatal errors:
   # - Use of __autoload().
   # - array/string offset with curly braces.
+  #
+  # Only runs when testing the currently supported branch or latest/nightly.
   upgrade-tests-oldest-wp-mysql:
     name: ${{ matrix.wp }} to ${{ inputs.new-version && inputs.new-version || 'latest' }}
     uses: ./.github/workflows/reusable-upgrade-testing.yml
-    if: ${{ github.repository == 'WordPress/wordpress-develop' }}
+    needs: [ determine-workflow-type ]
+    if: ${{ needs.determine-workflow-type.outputs.testing-old-branch != 'true' }}
     permissions:
       contents: read
     strategy:
@@ -191,13 +374,121 @@ jobs:
       new-version: ${{ inputs.new-version && inputs.new-version || 'latest' }}
       multisite: ${{ matrix.multisite }}
 
+  # Tests the two most recent FROM branches (the target branch and the one immediately before it)
+  # against the full PHP and database version matrix supported by the target branch.
+  #
+  # Only runs when testing an older branch.
+  upgrade-tests-older-branch-recent-mysql:
+    name: WP ${{ matrix.wp }} to ${{ inputs.new-version }} / PHP ${{ matrix.php }} / MySQL ${{ matrix.db-version }}${{ matrix.multisite && ' multisite' || '' }}
+    uses: ./.github/workflows/reusable-upgrade-testing.yml
+    needs: [ build-test-matrix, determine-from-versions ]
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ 'ubuntu-24.04' ]
+        php: ${{ fromJSON( needs.build-test-matrix.outputs.php-versions ) }}
+        db-type: [ 'mysql' ]
+        db-version: ${{ fromJSON( needs.build-test-matrix.outputs.mysql-versions ) }}
+        wp: ${{ fromJSON( needs.determine-from-versions.outputs.recent-from-versions ) }}
+        multisite: [ false, true ]
+        exclude:
+          # There are no local WordPress Docker environment containers for PHP <= 5.3.
+          - php: '5.2'
+          - php: '5.3'
+          # MySQL containers <= 5.5 do not exist or fail to start properly.
+          - db-version: '5.0'
+          - db-version: '5.1'
+          - db-version: '5.5'
+          # The PHP <= 7.3/MySQL 8.4 jobs currently fail due to mysql_native_password being disabled by default. See https://core.trac.wordpress.org/ticket/61218.
+          - php: '7.2'
+            db-version: '8.4'
+          - php: '7.3'
+            db-version: '8.4'
+          # Only test the latest innovation release.
+          - db-version: '9.0'
+          - db-version: '9.1'
+          - db-version: '9.2'
+          - db-version: '9.3'
+          - db-version: '9.4'
+          - db-version: '9.5'
+          # MySQL 9.0+ will not work on PHP 7.2 & 7.3. See https://core.trac.wordpress.org/ticket/61218.
+          - php: '7.2'
+            db-version: '9.6'
+          - php: '7.3'
+            db-version: '9.6'
+    with:
+      os: ${{ matrix.os }}
+      php: ${{ matrix.php }}
+      db-type: ${{ matrix.db-type }}
+      db-version: ${{ matrix.db-version }}
+      wp: ${{ matrix.wp }}
+      new-version: ${{ inputs.new-version }}
+      multisite: ${{ matrix.multisite }}
+
+  # Tests all remaining older FROM branches against a reduced PHP matrix: only the oldest and
+  # newest version of each major PHP version supported by the target branch.
+  #
+  # Only runs when testing an older branch and the target is more than one branch ahead of
+  # OLDEST_SECURITY_BRANCH (i.e. there are older FROM branches beyond the two most recent).
+  upgrade-tests-older-branch-older-mysql:
+    name: WP ${{ matrix.wp }} to ${{ inputs.new-version }} / PHP ${{ matrix.php }} / MySQL ${{ matrix.db-version }}${{ matrix.multisite && ' multisite' || '' }}
+    uses: ./.github/workflows/reusable-upgrade-testing.yml
+    needs: [ build-test-matrix, determine-from-versions ]
+    if: ${{ needs.determine-from-versions.outputs.has-older-versions == 'true' }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ 'ubuntu-24.04' ]
+        php: ${{ fromJSON( needs.determine-from-versions.outputs.reduced-php-versions ) }}
+        db-type: [ 'mysql' ]
+        db-version: ${{ fromJSON( needs.build-test-matrix.outputs.mysql-versions ) }}
+        wp: ${{ fromJSON( needs.determine-from-versions.outputs.older-from-versions ) }}
+        multisite: [ false, true ]
+        exclude:
+          # There are no local WordPress Docker environment containers for PHP <= 5.3.
+          - php: '5.2'
+          - php: '5.3'
+          # MySQL containers <= 5.5 do not exist or fail to start properly.
+          - db-version: '5.0'
+          - db-version: '5.1'
+          - db-version: '5.5'
+          # The PHP <= 7.3/MySQL 8.4 jobs currently fail due to mysql_native_password being disabled by default. See https://core.trac.wordpress.org/ticket/61218.
+          - php: '7.2'
+            db-version: '8.4'
+          - php: '7.3'
+            db-version: '8.4'
+          # Only test the latest innovation release.
+          - db-version: '9.0'
+          - db-version: '9.1'
+          - db-version: '9.2'
+          - db-version: '9.3'
+          - db-version: '9.4'
+          - db-version: '9.5'
+          # MySQL 9.0+ will not work on PHP 7.2 & 7.3. See https://core.trac.wordpress.org/ticket/61218.
+          - php: '7.2'
+            db-version: '9.6'
+          - php: '7.3'
+            db-version: '9.6'
+    with:
+      os: ${{ matrix.os }}
+      php: ${{ matrix.php }}
+      db-type: ${{ matrix.db-type }}
+      db-version: ${{ matrix.db-version }}
+      wp: ${{ matrix.wp }}
+      new-version: ${{ inputs.new-version }}
+      multisite: ${{ matrix.multisite }}
+
   slack-notifications:
     name: Slack Notifications
     uses: ./.github/workflows/slack-notifications.yml
     permissions:
       actions: read
       contents: read
-    needs: [ upgrade-tests-recent-releases, upgrade-tests-wp-6x-mysql, upgrade-tests-wp-5x-php-7x-mysql, upgrade-tests-wp-5x-php-8x-mysql, upgrade-tests-oldest-wp-mysql ]
+    needs: [ upgrade-tests-recent-releases, upgrade-tests-wp-6x-mysql, upgrade-tests-wp-5x-php-7x-mysql, upgrade-tests-wp-5x-php-8x-mysql, upgrade-tests-oldest-wp-mysql, upgrade-tests-older-branch-recent-mysql, upgrade-tests-older-branch-older-mysql ]
     if: ${{ github.repository == 'WordPress/wordpress-develop' && github.event_name != 'pull_request' && always() }}
     with:
       calling_status: ${{ contains( needs.*.result, 'cancelled' ) && 'cancelled' || contains( needs.*.result, 'failure' ) && 'failure' || 'success' }}
@@ -210,7 +501,7 @@ jobs:
 
   failed-workflow:
     name: Failed workflow tasks
-    runs-on: ubuntu-24.04
+    runs-on: 'ubuntu-24.04'
     permissions:
       actions: write
     needs: [ slack-notifications ]
