@@ -395,13 +395,29 @@ class Tests_Admin_WpListTable extends WP_UnitTestCase {
 	 * @covers WP_List_Table::__get()
 	 */
 	public function test_should_throw_deprecation_when_getting_dynamic_property() {
-		$this->expectDeprecation();
-		$this->expectDeprecationMessage(
+		// Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		$deprecations = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+				$deprecations[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_DEPRECATED
+		);
+
+		try {
+			$this->assertNull( $this->list_table->undeclared_property, 'Getting a dynamic property should return null from WP_List_Table::__get()' );
+		} finally {
+			restore_error_handler();
+		}
+
+		$this->assertCount( 1, $deprecations, 'Expected one deprecation notice.' );
+		$this->assertStringContainsString(
 			'WP_List_Table::__get(): ' .
 			'The property `undeclared_property` is not declared. Getting a dynamic property is ' .
-			'deprecated since version 6.4.0! Instead, declare the property on the class.'
+			'deprecated since version 6.4.0! Instead, declare the property on the class.',
+			$deprecations[0]['errstr']
 		);
-		$this->assertNull( $this->list_table->undeclared_property, 'Getting a dynamic property should return null from WP_List_Table::__get()' );
 	}
 
 	/**
@@ -425,13 +441,29 @@ class Tests_Admin_WpListTable extends WP_UnitTestCase {
 	 * @covers WP_List_Table::__set()
 	 */
 	public function test_should_throw_deprecation_when_setting_dynamic_property() {
-		$this->expectDeprecation();
-		$this->expectDeprecationMessage(
+		// Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		$deprecations = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+				$deprecations[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_DEPRECATED
+		);
+
+		try {
+			$this->list_table->undeclared_property = 'some value';
+		} finally {
+			restore_error_handler();
+		}
+
+		$this->assertCount( 1, $deprecations, 'Expected one deprecation notice.' );
+		$this->assertStringContainsString(
 			'WP_List_Table::__set(): ' .
 			'The property `undeclared_property` is not declared. Setting a dynamic property is ' .
-			'deprecated since version 6.4.0! Instead, declare the property on the class.'
+			'deprecated since version 6.4.0! Instead, declare the property on the class.',
+			$deprecations[0]['errstr']
 		);
-		$this->list_table->undeclared_property = 'some value';
 	}
 
 	/**
@@ -458,13 +490,29 @@ class Tests_Admin_WpListTable extends WP_UnitTestCase {
 	 * @covers WP_List_Table::__isset()
 	 */
 	public function test_should_throw_deprecation_when_isset_of_dynamic_property() {
-		$this->expectDeprecation();
-		$this->expectDeprecationMessage(
+		// Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		$deprecations = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+				$deprecations[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_DEPRECATED
+		);
+
+		try {
+			$this->assertFalse( isset( $this->list_table->undeclared_property ), 'Checking a dynamic property should return false from WP_List_Table::__isset()' );
+		} finally {
+			restore_error_handler();
+		}
+
+		$this->assertCount( 1, $deprecations, 'Expected one deprecation notice.' );
+		$this->assertStringContainsString(
 			'WP_List_Table::__isset(): ' .
 			'The property `undeclared_property` is not declared. Checking `isset()` on a dynamic property ' .
-			'is deprecated since version 6.4.0! Instead, declare the property on the class.'
+			'is deprecated since version 6.4.0! Instead, declare the property on the class.',
+			$deprecations[0]['errstr']
 		);
-		$this->assertFalse( isset( $this->list_table->undeclared_property ), 'Checking a dynamic property should return false from WP_List_Table::__isset()' );
 	}
 
 	/**
@@ -486,13 +534,29 @@ class Tests_Admin_WpListTable extends WP_UnitTestCase {
 	 * @covers WP_List_Table::__unset()
 	 */
 	public function test_should_throw_deprecation_when_unset_of_dynamic_property() {
-		$this->expectDeprecation();
-		$this->expectDeprecationMessage(
+		// Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		$deprecations = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+				$deprecations[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_DEPRECATED
+		);
+
+		try {
+			unset( $this->list_table->undeclared_property );
+		} finally {
+			restore_error_handler();
+		}
+
+		$this->assertCount( 1, $deprecations, 'Expected one deprecation notice.' );
+		$this->assertStringContainsString(
 			'WP_List_Table::__unset(): ' .
 			'A property `undeclared_property` is not declared. Unsetting a dynamic property is ' .
-			'deprecated since version 6.4.0! Instead, declare the property on the class.'
+			'deprecated since version 6.4.0! Instead, declare the property on the class.',
+			$deprecations[0]['errstr']
 		);
-		unset( $this->list_table->undeclared_property );
 	}
 
 	/**

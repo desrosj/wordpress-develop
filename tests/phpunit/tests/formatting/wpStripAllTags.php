@@ -53,9 +53,26 @@ class Tests_Formatting_wpStripAllTags extends WP_UnitTestCase {
 	 */
 	public function test_wp_strip_all_tags_should_return_empty_string_and_trigger_an_error_for_non_string_arg( $non_string ) {
 		$type = gettype( $non_string );
-		$this->expectError();
-		$this->expectErrorMessage( "Warning: wp_strip_all_tags expects parameter #1 (\$text) to be a string, $type given." );
+
+		// Note: $this->expectError() is deprecated and will be removed in PHPUnit 10.
+		$warnings = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$warnings ) {
+				$warnings[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_WARNING
+		);
+
 		$this->assertSame( '', wp_strip_all_tags( $non_string ) );
+
+		restore_error_handler();
+
+		$this->assertCount( 1, $warnings, 'Expected one warning.' );
+		$this->assertSame(
+			"Warning: wp_strip_all_tags expects parameter #1 (\$text) to be a string, $type given.",
+			$warnings[0]['errstr']
+		);
 	}
 
 	/**

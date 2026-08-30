@@ -2256,13 +2256,29 @@ class Tests_User_Query extends WP_UnitTestCase {
 	public function test_should_throw_deprecation_when_getting_dynamic_property() {
 		$user_query = new WP_User_Query();
 
-		$this->expectDeprecation();
-		$this->expectDeprecationMessage(
+		// Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		$deprecations = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+				$deprecations[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_DEPRECATED
+		);
+
+		try {
+			$this->assertNull( $user_query->undefined_property, 'Getting a dynamic property should return null from WP_User_Query::__get()' );
+		} finally {
+			restore_error_handler();
+		}
+
+		$this->assertCount( 1, $deprecations, 'Expected one deprecation notice.' );
+		$this->assertStringContainsString(
 			'WP_User_Query::__get(): ' .
 			'The property `undefined_property` is not declared. Getting a dynamic property is ' .
-			'deprecated since version 6.4.0! Instead, declare the property on the class.'
+			'deprecated since version 6.4.0! Instead, declare the property on the class.',
+			$deprecations[0]['errstr']
 		);
-		$this->assertNull( $user_query->undefined_property, 'Getting a dynamic property should return null from WP_User_Query::__get()' );
 	}
 
 	/**
@@ -2289,13 +2305,29 @@ class Tests_User_Query extends WP_UnitTestCase {
 	public function test_should_throw_deprecation_when_setting_dynamic_property() {
 		$user_query = new WP_User_Query();
 
-		$this->expectDeprecation();
-		$this->expectDeprecationMessage(
+		// Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		$deprecations = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+				$deprecations[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_DEPRECATED
+		);
+
+		try {
+			$user_query->undefined_property = 'some value';
+		} finally {
+			restore_error_handler();
+		}
+
+		$this->assertCount( 1, $deprecations, 'Expected one deprecation notice.' );
+		$this->assertStringContainsString(
 			'WP_User_Query::__set(): ' .
 			'The property `undefined_property` is not declared. Setting a dynamic property is ' .
-			'deprecated since version 6.4.0! Instead, declare the property on the class.'
+			'deprecated since version 6.4.0! Instead, declare the property on the class.',
+			$deprecations[0]['errstr']
 		);
-		$user_query->undefined_property = 'some value';
 	}
 
 	/**
@@ -2326,13 +2358,29 @@ class Tests_User_Query extends WP_UnitTestCase {
 	public function test_should_throw_deprecation_when_isset_of_dynamic_property() {
 		$user_query = new WP_User_Query();
 
-		$this->expectDeprecation();
-		$this->expectDeprecationMessage(
+		// Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		$deprecations = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+				$deprecations[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_DEPRECATED
+		);
+
+		try {
+			$this->assertFalse( isset( $user_query->undefined_property ), 'Checking a dynamic property should return false from WP_User_Query::__isset()' );
+		} finally {
+			restore_error_handler();
+		}
+
+		$this->assertCount( 1, $deprecations, 'Expected one deprecation notice.' );
+		$this->assertStringContainsString(
 			'WP_User_Query::__isset(): ' .
 			'The property `undefined_property` is not declared. Checking `isset()` on a dynamic property ' .
-			'is deprecated since version 6.4.0! Instead, declare the property on the class.'
+			'is deprecated since version 6.4.0! Instead, declare the property on the class.',
+			$deprecations[0]['errstr']
 		);
-		$this->assertFalse( isset( $user_query->undefined_property ), 'Checking a dynamic property should return false from WP_User_Query::__isset()' );
 	}
 
 	/**
@@ -2358,13 +2406,29 @@ class Tests_User_Query extends WP_UnitTestCase {
 	public function test_should_throw_deprecation_when_unset_of_dynamic_property() {
 		$user_query = new WP_User_Query();
 
-		$this->expectDeprecation();
-		$this->expectDeprecationMessage(
+		// Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		$deprecations = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+				$deprecations[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_DEPRECATED
+		);
+
+		try {
+			unset( $user_query->undefined_property );
+		} finally {
+			restore_error_handler();
+		}
+
+		$this->assertCount( 1, $deprecations, 'Expected one deprecation notice.' );
+		$this->assertStringContainsString(
 			'WP_User_Query::__unset(): ' .
 			'A property `undefined_property` is not declared. Unsetting a dynamic property is ' .
-			'deprecated since version 6.4.0! Instead, declare the property on the class.'
+			'deprecated since version 6.4.0! Instead, declare the property on the class.',
+			$deprecations[0]['errstr']
 		);
-		unset( $user_query->undefined_property );
 	}
 
 	/**
