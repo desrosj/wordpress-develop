@@ -77,7 +77,7 @@ jobs:
       php: '8.3'
       multisite: ${{ matrix.multisite }}
       coverage-report: ${{ matrix.coverage-report }}
-      gutenberg-artifact: ${{ needs.prepare-gutenberg.result != 'skipped' }}
+      gutenberg-cache: ${{ needs.prepare-gutenberg.result != 'skipped' }}
       gutenberg-sha: ${{ needs.prepare-gutenberg.outputs.gutenberg-sha }}
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

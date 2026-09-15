@@ -18,8 +18,6 @@ on:
         required: false
         type: 'string'
         default: ''
-      # Also composes the Gutenberg build name, under the producer's constraint: a valid
-      # artifact name, so no slashes and none of : < > | * ? "
       ref:
         description: 'The branch, tag, or SHA to check out. Defaults to the ref that triggered the calling workflow.'
         required: false
@@ -84,8 +82,8 @@ on:
         required: false
         type: boolean
         default: false
-      gutenberg-artifact:
-        description: 'Whether the Gutenberg-sourced assets are sourced from zip artifact.'
+      gutenberg-cache:
+        description: 'Whether to restore the Gutenberg build prepared by the calling workflow from the Actions cache. Requires `gutenberg-sha`.'
         required: false
         type: boolean
         default: false
@@ -133,7 +131,7 @@ jobs:
   # - Sets environment variables.
   # - Checks out the repository.
   # - Unpacks the caller-provided overlay artifact over the checkout, if any.
-  # - Downloads the prepared Gutenberg build provided by the calling workflow.
+  # - Restores the Gutenberg build prepared by the calling workflow from the Actions cache.
   # - Sets up Node.js.
   # - Sets up PHP.
   # - Installs Composer dependencies.
@@ -167,19 +165,6 @@ jobs:
           echo 'Testing another repository needs an explicit ref.' >&2
           exit 1
 
-      # `ref` also composes the Gutenberg artifact name, so reject what that name cannot carry
-      # here rather than at a download step the job only reaches minutes later.
-      - name: Require a ref the artifact name accepts
-        if: ${{ inputs.ref != '' }}
-        env:
-          REF: ${{ inputs.ref }}
-        run: |
-          invalid='[/:<>|*?"\]'
-          if [[ "$REF" =~ $invalid ]]; then
-            echo "A ref that names an artifact cannot contain / : < > | * ? \" \\ - received: $REF" >&2
-            exit 1
-          fi
-
       - name: Configure environment variables
         run: |
           echo "PHP_FPM_UID=$(id -u)" >> "$GITHUB_ENV"
@@ -204,16 +189,21 @@ jobs:
           digest-mismatch: error
 
       # Only WordPress 7.0+ include Gutenberg-maintained assets from a built zip file.
-      - name: Download prepared Gutenberg build
-        if: ${{ inputs.gutenberg-artifact }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      #
+      # A miss is not an error. The build below checks the restored build against
+      # `GUTENBERG_EXPECTED_SHA` and downloads the correct one when anything is missing or
+      # stale. An evicted entry, a cache scope the producer's entry does not reach, or a runner
+      # the entry was not stored for therefore costs this job a download, not the run.
+      - name: Restore the prepared Gutenberg build
+        if: ${{ inputs.gutenberg-cache && inputs.gutenberg-sha != '' }}
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
-          # Every branch in a run shares one artifact namespace, so the producer names each
-          # build after the ref it came from. Compose the same name here rather than taking
-          # it as an input: the two sides already agree on `ref`.
-          name: gutenberg-build${{ inputs.ref && format( '-{0}', inputs.ref ) || '' }}
+          # The producer stores the build under the SHA it verified, so compose the same key
+          # here rather than taking it as an input: the two sides already agree on the SHA.
+          # No `restore-keys`: a partial match would restore a Gutenberg build the build step
+          # would only have to replace.
           path: gutenberg
-          digest-mismatch: error
+          key: gutenberg-build-${{ inputs.gutenberg-sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0

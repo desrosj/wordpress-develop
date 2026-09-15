@@ -1,6 +1,6 @@
 ##
-# A reusable workflow that downloads and verifies the Gutenberg build once per
-# calling workflow run.
+# A reusable workflow that resolves, downloads, and verifies the Gutenberg build once per
+# calling workflow run, then stores it in the Actions cache for the jobs that consume it.
 ##
 name: Prepare Gutenberg build
 
@@ -12,8 +12,6 @@ on:
         required: false
         type: 'string'
         default: ''
-      # Names the uploaded build too, so it must also be a valid artifact name: no slashes,
-      # and none of : < > | * ? " — a `refs/heads/trunk` or `feature/x` value fails the upload.
       ref:
         description: 'The branch, tag, or SHA to check out. Defaults to the commit that started the calling workflow run.'
         required: false
@@ -35,7 +33,7 @@ jobs:
     # Two download attempts of up to six minutes each, where download.js retries internally.
     timeout-minutes: 15
     outputs:
-      gutenberg-sha: ${{ steps.download.outputs.gutenberg-sha }}
+      gutenberg-sha: ${{ steps.verify.outputs.gutenberg-sha }}
     permissions:
       contents: read
 
@@ -46,19 +44,6 @@ jobs:
         run: |
           echo 'Preparing another repository needs an explicit ref.' >&2
           exit 1
-
-      # The upload names the artifact after `ref` and is this job's last step, so an unusable
-      # value would otherwise fail only once the whole download and verify has already run.
-      - name: Require a ref the artifact name accepts
-        if: ${{ inputs.ref != '' }}
-        env:
-          REF: ${{ inputs.ref }}
-        run: |
-          invalid='[/:<>|*?"\]'
-          if [[ "$REF" =~ $invalid ]]; then
-            echo "A ref that names an artifact cannot contain / : < > | * ? \" \\ - received: $REF" >&2
-            exit 1
-          fi
 
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -75,9 +60,47 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
-      - name: Download and verify Gutenberg build
-        id: download
+      # The build published for a given Gutenberg source SHA never changes, so the SHA alone
+      # names the cache entry: every branch and every run that needs the same build shares one
+      # entry instead of downloading (and storing) its own copy.
+      #
+      # `gutenberg.sha` is normally a pinned SHA, but a contributor may temporarily point it at
+      # a mutable tag ("trunk", "release-19.5", "pr-12345") that resolves to a different build
+      # over time. A mutable tag cannot name a cache entry, so no entry is restored for one: the
+      # download below resolves the tag, and the entry is stored under the SHA it resolved to.
+      - name: Determine the Gutenberg build cache key
+        id: cache-key
         run: |
+          pinned_ref="$( node -p "require( './package.json' ).gutenberg?.sha ?? ''" | tr '[:upper:]' '[:lower:]' )"
+
+          if [[ "$pinned_ref" =~ ^[a-f0-9]{40}$ ]]; then
+            echo "key=gutenberg-build-$pinned_ref" >> "$GITHUB_OUTPUT"
+          else
+            echo "\"gutenberg.sha\" is the mutable tag \"$pinned_ref\", which cannot name a cache entry. The build will be downloaded and cached under the SHA it resolves to."
+          fi
+
+      # No `restore-keys`: a partial match would restore a different Gutenberg build that the
+      # verification below would only have to throw away. Either the exact build is cached or
+      # it is downloaded.
+      - name: Restore the cached Gutenberg build
+        id: restore
+        if: ${{ steps.cache-key.outputs.key != '' }}
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: gutenberg
+          key: ${{ steps.cache-key.outputs.key }}
+
+      # A restored entry is only trusted as far as the hash file it carries. When the cache
+      # misses, or hits with nothing usable in it, the build is downloaded as before.
+      - name: Download the Gutenberg build when it is not cached
+        env:
+          CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+        run: |
+          if [[ 'true' == "$CACHE_HIT" && -f gutenberg/.gutenberg-hash ]]; then
+            echo 'Restored the Gutenberg build from the cache. Skipping the download.'
+            exit 0
+          fi
+
           # Branches whose download.js predates the in-script retry stream the blob straight
           # into tar in a single attempt, so an interrupted stream fails the run outright.
           # One retry, not two: where download.js does retry, it already allows three tries of
@@ -89,6 +112,9 @@ jobs:
             node tools/gutenberg/download.js
           fi
 
+      - name: Verify the Gutenberg build
+        id: verify
+        run: |
           gutenberg_sha="$(tr -d '\n' < gutenberg/.gutenberg-hash)"
           if [[ ! "$gutenberg_sha" =~ ^[a-fA-F0-9]{40}$ ]]; then
             echo "Expected a 40-character Gutenberg SHA, received: $gutenberg_sha" >&2
@@ -96,14 +122,12 @@ jobs:
           fi
           echo "gutenberg-sha=$gutenberg_sha" >> "$GITHUB_OUTPUT"
 
-      - name: Upload Gutenberg build
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      # Consuming jobs compose this same key from the `gutenberg-sha` output, so the key is
+      # never passed between them. Cache entries are immutable, so this only runs when the
+      # restore above did not already find the entry.
+      - name: Cache the Gutenberg build
+        if: ${{ steps.restore.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
-          # Every branch in a run shares one artifact namespace, so name the build after the
-          # ref it came from. The PHPUnit consumer composes the same name from its own `ref`,
-          # so the name is never passed between them.
-          name: gutenberg-build${{ inputs.ref && format( '-{0}', inputs.ref ) || '' }}
-          path: gutenberg/
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 7
+          path: gutenberg
+          key: gutenberg-build-${{ steps.verify.outputs.gutenberg-sha }}
