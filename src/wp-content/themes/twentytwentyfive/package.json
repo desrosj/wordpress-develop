@@ -17,8 +17,8 @@
 		"npm": ">=11.16.0"
 	},
 	"devDependencies": {
-		"@wordpress/browserslist-config": "^6.34.0",
-		"postcss": "^8.5.6",
+		"@wordpress/browserslist-config": "^6.55.0",
+		"postcss": "^8.5.28",
 		"postcss-cli": "^11.0.1",
 		"cssnano": "^7.1.2"
 	},
