@@ -35,13 +35,25 @@ class Tests_Filesystem_WpOpcacheInvalidateDirectory extends WP_UnitTestCase {
 	 * @param mixed $dir An invalid directory path.
 	 */
 	public function test_should_trigger_error_with_invalid_dir( $dir ) {
-		$this->expectError();
-		$this->expectErrorMessage(
-			'<code>wp_opcache_invalidate_directory()</code> expects a non-empty string.',
-			'The expected error was not triggered.'
+		// Note: $this->expectError() is deprecated and will be removed in PHPUnit 10.
+		$errors = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$errors ) {
+				$errors[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_NOTICE
 		);
 
 		wp_opcache_invalidate_directory( $dir );
+
+		restore_error_handler();
+
+		$this->assertCount( 1, $errors, 'The expected error was not triggered.' );
+		$this->assertSame(
+			'<code>wp_opcache_invalidate_directory()</code> expects a non-empty string.',
+			$errors[0]['errstr']
+		);
 	}
 
 	/**
