@@ -198,7 +198,7 @@ jobs:
 
       # Uploads the diff file as an artifact.
       - name: Upload diff file as artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ steps.built-file-check.outputs.uncommitted_changes == 'true' }}
         with:
           name: pr-built-file-changes
@@ -274,7 +274,7 @@ jobs:
         working-directory: src/wp-content/themes/${{ matrix.theme }}
 
       - name: Upload theme ZIP as an artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ matrix.theme }}
           path: |
