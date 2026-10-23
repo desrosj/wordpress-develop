@@ -92,8 +92,23 @@ class WP_REST_Block_Directory_Controller_Test extends WP_Test_REST_Controller_Te
 
 		$this->prevent_requests_to_host( 'api.wordpress.org' );
 
-		$this->expectWarning();
-		$response = rest_do_request( $request );
+		// Note: $this->expectWarning() is deprecated and will be removed in PHPUnit 10.
+		$warnings = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$warnings ) {
+				$warnings[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_WARNING
+		);
+
+		try {
+			$response = rest_do_request( $request );
+		} finally {
+			restore_error_handler();
+		}
+
+		$this->assertCount( 1, $warnings, 'Expected one warning.' );
 		$this->assertErrorResponse( 'plugins_api_failed', $response, 500 );
 	}
 

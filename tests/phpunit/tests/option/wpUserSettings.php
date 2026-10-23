@@ -29,8 +29,23 @@ class Tests_Option_wpUserSettings extends WP_UnitTestCase {
 		$this->assertGreaterThan( 0, get_current_user_id() );
 
 		// `Cannot modify header information - headers already sent by...` from setcookie().
-		$this->expectWarning();
+		// Note: $this->expectWarning() is deprecated and will be removed in PHPUnit 10.
+		$warnings = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$warnings ) {
+				$warnings[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_WARNING
+		);
 
-		wp_user_settings();
+		try {
+			wp_user_settings();
+		} finally {
+			restore_error_handler();
+		}
+
+		// wp_user_settings() calls setcookie() twice.
+		$this->assertCount( 2, $warnings, 'Expected two warnings.' );
 	}
 }

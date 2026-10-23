@@ -37,10 +37,24 @@ class Tests_Functions_WpTriggerError extends WP_UnitTestCase {
 	 * @param string $expected_message The expected error message.
 	 */
 	public function test_should_trigger_warning( $function_name, $message, $expected_message ) {
-		$this->expectWarning();
-		$this->expectWarningMessage( $expected_message );
+		// Note: $this->expectWarning() is deprecated and will be removed in PHPUnit 10.
+		$warnings = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$warnings ) {
+				$warnings[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_WARNING
+		);
 
-		wp_trigger_error( $function_name, $message, E_USER_WARNING );
+		try {
+			wp_trigger_error( $function_name, $message, E_USER_WARNING );
+		} finally {
+			restore_error_handler();
+		}
+
+		$this->assertCount( 1, $warnings, 'Expected one warning.' );
+		$this->assertSame( $expected_message, $warnings[0]['errstr'] );
 	}
 
 	/**
@@ -53,10 +67,22 @@ class Tests_Functions_WpTriggerError extends WP_UnitTestCase {
 	 * @param string $expected_message The expected error message.
 	 */
 	public function test_should_trigger_notice( $function_name, $message, $expected_message ) {
-		$this->expectNotice();
-		$this->expectNoticeMessage( $expected_message );
+		// Note: $this->expectNotice() is deprecated and will be removed in PHPUnit 10.
+		$notices = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$notices ) {
+				$notices[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_NOTICE
+		);
 
 		wp_trigger_error( $function_name, $message );
+
+		restore_error_handler();
+
+		$this->assertCount( 1, $notices, 'Expected one notice.' );
+		$this->assertSame( $expected_message, $notices[0]['errstr'] );
 	}
 
 	/**
@@ -69,10 +95,24 @@ class Tests_Functions_WpTriggerError extends WP_UnitTestCase {
 	 * @param string $expected_message The expected error message.
 	 */
 	public function test_should_trigger_deprecation( $function_name, $message, $expected_message ) {
-		$this->expectDeprecation();
-		$this->expectDeprecationMessage( $expected_message );
+		// Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		$deprecations = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+				$deprecations[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_DEPRECATED
+		);
 
-		wp_trigger_error( $function_name, $message, E_USER_DEPRECATED );
+		try {
+			wp_trigger_error( $function_name, $message, E_USER_DEPRECATED );
+		} finally {
+			restore_error_handler();
+		}
+
+		$this->assertCount( 1, $deprecations, 'Expected one deprecation notice.' );
+		$this->assertStringContainsString( $expected_message, $deprecations[0]['errstr'] );
 	}
 
 	/**

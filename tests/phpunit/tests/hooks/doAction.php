@@ -105,14 +105,36 @@ class Tests_Hooks_DoAction extends WP_UnitTestCase {
 		$hook      = new WP_Hook();
 		$hook_name = __FUNCTION__;
 
-		if ( $expected_deprecation && PHP_VERSION_ID >= 80100 ) {
-			$this->expectDeprecation();
-			$this->expectDeprecationMessage( $expected_deprecation );
+		// Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		$deprecations   = array();
+		$expect_warning = $expected_deprecation && PHP_VERSION_ID >= 80100;
+		if ( $expect_warning ) {
+			set_error_handler(
+				static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+					$deprecations[] = compact( 'errno', 'errstr' );
+					return true;
+				},
+				E_DEPRECATED
+			);
 		}
 
-		$hook->add_filter( $hook_name, array( $mock, 'action' ), $priorities[0], 1 );
-		$hook->add_filter( $hook_name, array( $mock, 'action2' ), $priorities[1], 1 );
-		$hook->do_action( array( '' ) );
+		try {
+			// The deprecation notice can be triggered by add_filter() coercing a non-integer priority.
+			$hook->add_filter( $hook_name, array( $mock, 'action' ), $priorities[0], 1 );
+			$hook->add_filter( $hook_name, array( $mock, 'action2' ), $priorities[1], 1 );
+			$hook->do_action( array( '' ) );
+		} finally {
+			if ( $expect_warning ) {
+				restore_error_handler();
+			}
+		}
+
+		if ( $expect_warning ) {
+			$this->assertNotEmpty( $deprecations, 'Expected at least one deprecation notice.' );
+			foreach ( $deprecations as $deprecation ) {
+				$this->assertStringContainsString( $expected_deprecation, $deprecation['errstr'] );
+			}
+		}
 
 		$this->assertSame( 2, $mock->get_call_count(), 'The number of call counts does not match' );
 
