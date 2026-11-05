@@ -11,7 +11,7 @@ permissions: {}
 jobs:
   # Comments on a pull request when the author is a new contributor.
   post-welcome-message:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       issues: write
     timeout-minutes: 5

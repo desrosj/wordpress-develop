@@ -35,14 +35,14 @@ jobs:
   # Spawns upgrade testing from WordPress 6.x versions with MySQL.
   upgrade-tests-wp-6x-mysql:
     name: ${{ matrix.wp }} to ${{ inputs.new-version && inputs.new-version || 'latest' }}
-    uses: WordPress/wordpress-develop/.github/workflows/upgrade-testing-run.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/upgrade-testing-run.yml@update-runners-ubuntu-26.04
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
-        os: [ 'ubuntu-latest' ]
+        os: [ 'ubuntu-26.04' ]
         php: [ '7.0', '7.1', '7.2', '7.3', '7.4', '8.0', '8.1', '8.2', '8.3' ]
         db-type: [ 'mysql' ]
         db-version: [ '5.7', '8.0' ]
@@ -60,12 +60,12 @@ jobs:
   # Spawns upgrade testing from WordPress 5.x versions on PHP 7.x with MySQL.
   upgrade-tests-wp-5x-php-7x-mysql:
     name: ${{ matrix.wp }} to ${{ inputs.new-version && inputs.new-version || 'latest' }}
-    uses: WordPress/wordpress-develop/.github/workflows/upgrade-testing-run.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/upgrade-testing-run.yml@update-runners-ubuntu-26.04
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ 'ubuntu-latest' ]
+        os: [ 'ubuntu-26.04' ]
         php: [ '7.0', '7.1', '7.2', '7.3', '7.4' ]
         db-type: [ 'mysql' ]
         db-version: [ '5.7', '8.0' ]
@@ -87,12 +87,12 @@ jobs:
   # - array/string offset with curly braces.
   upgrade-tests-wp-5x-php-8x-mysql:
     name: ${{ matrix.wp }} to ${{ inputs.new-version && inputs.new-version || 'latest' }}
-    uses: WordPress/wordpress-develop/.github/workflows/upgrade-testing-run.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/upgrade-testing-run.yml@update-runners-ubuntu-26.04
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ 'ubuntu-latest' ]
+        os: [ 'ubuntu-26.04' ]
         php: [ '8.0', '8.1', '8.2', '8.3' ]
         db-type: [ 'mysql' ]
         db-version: [ '5.7', '8.0' ]
@@ -110,12 +110,12 @@ jobs:
   # Spawns upgrade testing from WordPress 4.x versions on PHP 7.x with MySQL.
   upgrade-tests-wp-4x-php-7x-mysql:
     name: ${{ matrix.wp }} to ${{ inputs.new-version && inputs.new-version || 'latest' }}
-    uses: WordPress/wordpress-develop/.github/workflows/upgrade-testing-run.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/upgrade-testing-run.yml@update-runners-ubuntu-26.04
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ 'ubuntu-latest' ]
+        os: [ 'ubuntu-26.04' ]
         php: [ '7.0', '7.1', '7.2', '7.3', '7.4' ]
         db-type: [ 'mysql' ]
         db-version: [ '5.7', '8.0' ]
@@ -137,12 +137,12 @@ jobs:
   # - array/string offset with curly braces.
   upgrade-tests-wp-4x-php-8x-mysql:
     name: ${{ matrix.wp }} to ${{ inputs.new-version && inputs.new-version || 'latest' }}
-    uses: WordPress/wordpress-develop/.github/workflows/upgrade-testing-run.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/upgrade-testing-run.yml@update-runners-ubuntu-26.04
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ 'ubuntu-latest' ]
+        os: [ 'ubuntu-26.04' ]
         php: [ '8.0', '8.1', '8.2', '8.3' ]
         db-type: [ 'mysql' ]
         db-version: [ '5.7', '8.0' ]
@@ -159,7 +159,7 @@ jobs:
 
   slack-notifications:
     name: Slack Notifications
-    uses: WordPress/wordpress-develop/.github/workflows/slack-notifications.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/slack-notifications.yml@update-runners-ubuntu-26.04
     permissions:
       actions: read
       contents: read
@@ -175,7 +175,7 @@ jobs:
 
   failed-workflow:
     name: Failed workflow tasks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       actions: write
     needs: [ slack-notifications ]
