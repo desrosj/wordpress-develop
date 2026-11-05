@@ -42,7 +42,7 @@ jobs:
   # Runs the WordPress Core JavaScript tests.
   test-js:
     name: QUnit Tests
-    uses: WordPress/wordpress-develop/.github/workflows/reusable-javascript-tests.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/reusable-javascript-tests.yml@update-runners-ubuntu-26.04
     permissions:
       contents: read
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
@@ -51,7 +51,7 @@ jobs:
 
   slack-notifications:
     name: Slack Notifications
-    uses: WordPress/wordpress-develop/.github/workflows/slack-notifications.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/slack-notifications.yml@update-runners-ubuntu-26.04
     permissions:
       actions: read
       contents: read
@@ -67,7 +67,7 @@ jobs:
 
   failed-workflow:
     name: Failed workflow tasks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       actions: write
     needs: [ slack-notifications ]
