@@ -43,14 +43,14 @@ jobs:
   # Build WordPress from the current branch ready for the upgrade tests.
   build:
     name: Build
-    uses: WordPress/wordpress-develop/.github/workflows/reusable-build-package.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/reusable-build-package.yml@update-runners-ubuntu-26.04
     permissions:
       contents: read
 
   # Run upgrade tests for the current branch.
   upgrade-tests-develop:
     name: Upgrade from ${{ matrix.wp }}
-    uses: WordPress/wordpress-develop/.github/workflows/reusable-upgrade-testing.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/reusable-upgrade-testing.yml@update-runners-ubuntu-26.04
     if: ${{ github.repository == 'WordPress/wordpress-develop' || ( github.event_name == 'pull_request' && github.actor != 'dependabot[bot]' ) }}
     needs: [ build ]
     permissions:
@@ -58,7 +58,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ 'ubuntu-24.04' ]
+        os: [ 'ubuntu-26.04' ]
         php: [ '7.2', '8.4' ]
         db-type: [ 'mysql' ]
         db-version: [ '5.7', '8.4' ]
@@ -84,7 +84,7 @@ jobs:
 
   slack-notifications:
     name: Slack Notifications
-    uses: WordPress/wordpress-develop/.github/workflows/slack-notifications.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/slack-notifications.yml@update-runners-ubuntu-26.04
     permissions:
       actions: read
       contents: read
@@ -100,7 +100,7 @@ jobs:
 
   failed-workflow:
     name: Failed workflow tasks
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       actions: write
     needs: [ slack-notifications ]

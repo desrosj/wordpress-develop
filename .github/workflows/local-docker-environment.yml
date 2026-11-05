@@ -69,7 +69,7 @@ jobs:
   #
   build-test-matrix:
     name: Build Test Matrix
-    uses: WordPress/wordpress-develop/.github/workflows/reusable-support-json-reader-v1.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/reusable-support-json-reader-v1.yml@update-runners-ubuntu-26.04
     permissions:
       contents: read
     secrets: inherit
@@ -80,14 +80,14 @@ jobs:
   # Tests the local Docker environment.
   environment-tests-mysql:
     name: PHP ${{ matrix.php }}
-    uses: WordPress/wordpress-develop/.github/workflows/reusable-test-local-docker-environment-v1.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/reusable-test-local-docker-environment-v1.yml@update-runners-ubuntu-26.04
     permissions:
       contents: read
     needs: [ build-test-matrix ]
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-24.04 ]
+        os: [ ubuntu-26.04 ]
         memcached: [ false, true ]
         php: ${{ fromJSON( needs.build-test-matrix.outputs.php-versions ) }}
         db-version: ${{ fromJSON( needs.build-test-matrix.outputs.mysql-versions ) }}
@@ -112,7 +112,7 @@ jobs:
 
   slack-notifications:
     name: Slack Notifications
-    uses: WordPress/wordpress-develop/.github/workflows/slack-notifications.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/slack-notifications.yml@update-runners-ubuntu-26.04
     permissions:
       actions: read
       contents: read
@@ -128,7 +128,7 @@ jobs:
 
   failed-workflow:
     name: Failed workflow tasks
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       actions: write
     needs: [ build-test-matrix, environment-tests-mysql, slack-notifications ]

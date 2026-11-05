@@ -45,7 +45,7 @@ permissions: {}
 jobs:
   determine-matrix:
     name: Determine Matrix
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     if: ${{ ( github.repository == 'WordPress/wordpress-develop' || ( github.event_name == 'pull_request' && github.actor != 'dependabot[bot]' ) ) && ! contains( github.event.before, '00000000' ) }}
     permissions:
       actions: read
@@ -87,7 +87,7 @@ jobs:
   # Runs the performance test suite.
   performance:
     name: ${{ matrix.multisite && 'Multisite' || 'Single Site' }} ${{ matrix.memcached && 'Memcached' || 'Default' }}
-    uses: WordPress/wordpress-develop/.github/workflows/reusable-performance-test-v2.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/reusable-performance-test-v2.yml@update-runners-ubuntu-26.04
     needs: [ determine-matrix ]
     permissions:
       contents: read
@@ -105,7 +105,7 @@ jobs:
 
   compare:
     name: ${{ matrix.label }}
-    uses: WordPress/wordpress-develop/.github/workflows/reusable-performance-report-v2.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/reusable-performance-report-v2.yml@update-runners-ubuntu-26.04
     needs: [ determine-matrix, performance ]
     permissions:
       contents: read
@@ -125,7 +125,7 @@ jobs:
 
   slack-notifications:
     name: Slack Notifications
-    uses: WordPress/wordpress-develop/.github/workflows/slack-notifications.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/slack-notifications.yml@update-runners-ubuntu-26.04
     permissions:
       actions: read
       contents: read
@@ -141,7 +141,7 @@ jobs:
 
   failed-workflow:
     name: Failed workflow tasks
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       actions: write
     needs: [ slack-notifications ]
