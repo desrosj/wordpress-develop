@@ -32,7 +32,7 @@ permissions: {}
 jobs:
   lint:
     name: Lint GitHub Action files
-    uses: WordPress/wordpress-develop/.github/workflows/reusable-workflow-lint.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/reusable-workflow-lint.yml@update-runners-ubuntu-26.04
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     permissions:
       security-events: write
@@ -41,7 +41,7 @@ jobs:
 
   slack-notifications:
     name: Slack Notifications
-    uses: WordPress/wordpress-develop/.github/workflows/slack-notifications.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/slack-notifications.yml@update-runners-ubuntu-26.04
     permissions:
       actions: read
       contents: read
@@ -57,7 +57,7 @@ jobs:
 
   failed-workflow:
     name: Failed workflow tasks
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       actions: write
     needs: [ slack-notifications ]

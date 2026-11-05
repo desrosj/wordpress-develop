@@ -43,14 +43,14 @@ jobs:
   # Runs JavaScript type checking.
   typecheck:
     name: JavaScript type checking
-    uses: WordPress/wordpress-develop/.github/workflows/reusable-javascript-type-checking-v1.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/reusable-javascript-type-checking-v1.yml@update-runners-ubuntu-26.04
     permissions:
       contents: read
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
 
   slack-notifications:
     name: Slack Notifications
-    uses: WordPress/wordpress-develop/.github/workflows/slack-notifications.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/slack-notifications.yml@update-runners-ubuntu-26.04
     permissions:
       actions: read
       contents: read
@@ -66,7 +66,7 @@ jobs:
 
   failed-workflow:
     name: Failed workflow tasks
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       actions: write
     needs: [ slack-notifications ]

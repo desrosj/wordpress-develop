@@ -48,19 +48,19 @@ jobs:
   # Tests the WordPress Core build process.
   test-core-build-process:
     name: Core running from ${{ matrix.directory }}
-    uses: WordPress/wordpress-develop/.github/workflows/reusable-test-core-build-process.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/reusable-test-core-build-process.yml@update-runners-ubuntu-26.04
     permissions:
       contents: read
     if: ${{ github.repository == 'WordPress/wordpress-develop' || github.event_name == 'pull_request' }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ 'ubuntu-24.04' ]
+        os: [ 'ubuntu-26.04' ]
         directory: [ 'src', 'build' ]
         test-certificates: [ true ]
         include:
           # Only prepare artifacts for Playground once.
-          - os: 'ubuntu-24.04'
+          - os: 'ubuntu-26.04'
             directory: 'build'
             save-build: true
             prepare-playground: ${{ github.event_name == 'pull_request' && true || '' }}
@@ -83,7 +83,7 @@ jobs:
   # See https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability.
   test-core-build-process-additional-os:
     name: Core running from ${{ matrix.directory }}
-    uses: WordPress/wordpress-develop/.github/workflows/reusable-test-core-build-process.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/reusable-test-core-build-process.yml@update-runners-ubuntu-26.04
     permissions:
       contents: read
     if: ${{ github.repository == 'WordPress/wordpress-develop' }}
@@ -98,7 +98,7 @@ jobs:
 
   slack-notifications:
     name: Slack Notifications
-    uses: WordPress/wordpress-develop/.github/workflows/slack-notifications.yml@trunk
+    uses: desrosj/wordpress-develop/.github/workflows/slack-notifications.yml@update-runners-ubuntu-26.04
     permissions:
       actions: read
       contents: read
@@ -114,7 +114,7 @@ jobs:
 
   failed-workflow:
     name: Failed workflow tasks
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       actions: write
     needs: [ slack-notifications ]
