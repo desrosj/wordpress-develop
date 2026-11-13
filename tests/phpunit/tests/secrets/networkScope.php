@@ -235,4 +235,81 @@ class Tests_Secrets_NetworkScope extends WP_UnitTestCase {
 
 		$this->assertNull( $result, 'A site secret should not be readable from a different blog.' );
 	}
+
+	/**
+	 * Ensure that a network secret stored before a single site is converted to multisite
+	 * can still be read after the conversion.
+	 *
+	 * @ticket 66686
+	 *
+	 * @group multisite
+	 * @group ms-required
+	 *
+	 * @covers ::wp_get_network_secret
+	 */
+	public function test_network_secret_written_before_conversion_is_still_readable(): void {
+		$this->skipWithoutMultisite();
+
+		$this->store_network_secret_as_before_conversion( 'myplugin/pre-conversion', 'network-value' );
+
+		$secret = wp_get_network_secret( 'myplugin/pre-conversion' );
+
+		$this->assertIsSecret( $secret, 'network-value', 'A network secret stored before conversion should still be readable after it.' );
+	}
+
+	/**
+	 * Ensure that a network secret stored before a single site is converted to multisite
+	 * is still listed after the conversion.
+	 *
+	 * @ticket 66686
+	 *
+	 * @group multisite
+	 * @group ms-required
+	 *
+	 * @covers ::wp_list_network_secrets
+	 */
+	public function test_network_secret_written_before_conversion_is_still_listed(): void {
+		$this->skipWithoutMultisite();
+
+		$this->store_network_secret_as_before_conversion( 'myplugin/pre-conversion', 'network-value' );
+
+		$entries = wp_list_network_secrets();
+
+		$this->assertIsArray( $entries, 'wp_list_network_secrets() should return an array.' );
+		$this->assertContains( 'myplugin/pre-conversion', wp_list_pluck( $entries, 'name' ), 'A network secret stored before conversion should still be listed after it.' );
+	}
+
+	/**
+	 * Stores a network secret where a single site leaves it before conversion to multisite.
+	 *
+	 * On a single site, the *_site_option() functions are backed by the options table,
+	 * so the wrapped root key and every network secret record are rows in the main
+	 * site's options. Converting to multisite does not move those rows, and network
+	 * options are read from sitemeta afterwards.
+	 *
+	 * The secret is written through the API and its row then moved, along with the
+	 * root key's, into the main site's options. The record is the same one a single
+	 * site would write: the network master key does not depend on the site, and the
+	 * record's associated data uses site ID 0 for network scope.
+	 *
+	 * @param string $name  The secret's name.
+	 * @param string $value The secret's value.
+	 */
+	private function store_network_secret_as_before_conversion( string $name, string $value ): void {
+		$main_site_id = get_main_site_id();
+		$option_name  = WP_Secrets_Option_Store::NETWORK_PREFIX . $name;
+
+		$this->assertTrue( wp_set_network_secret( $name, $value ), 'Storing the network secret before conversion should succeed.' );
+
+		$record  = get_site_option( $option_name );
+		$wrapped = get_site_option( WP_Secrets_Key_Manager::ROOT_KEY_OPTION );
+
+		$this->assertIsArray( $record, 'The network secret record should exist before it is moved.' );
+		$this->assertIsString( $wrapped, 'The wrapped root key should exist before it is moved.' );
+
+		delete_site_option( $option_name );
+		delete_site_option( WP_Secrets_Key_Manager::ROOT_KEY_OPTION );
+		update_blog_option( $main_site_id, $option_name, $record );
+		update_blog_option( $main_site_id, WP_Secrets_Key_Manager::ROOT_KEY_OPTION, $wrapped );
+	}
 }
