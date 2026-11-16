@@ -1,0 +1,35 @@
+name: 'Build server comparison report'
+description: 'Renders the results of comparing the build directory with WordPress/WordPress as Markdown.'
+
+inputs:
+  comparison-dir:
+    description: 'Directory containing the files created by the Compare Built Files workflow.'
+    required: true
+  output-file:
+    description: 'File to write the Markdown report to. The number of files that differ is written to the same path with a `.count` suffix.'
+    required: true
+  max-length:
+    description: 'Maximum length of the report, in characters.'
+    required: false
+    default: '60000'
+  head-sha:
+    description: 'Commit SHA of the code that was built. Overrides the value from the comparison files.'
+    required: false
+    default: ''
+  run-url:
+    description: 'URL of the workflow run where the complete comparison can be downloaded.'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Render the report
+      shell: bash
+      run: node "${GITHUB_ACTION_PATH}/report.js"
+      env:
+        COMPARISON_DIR: ${{ inputs.comparison-dir }}
+        OUTPUT_FILE: ${{ inputs.output-file }}
+        MAX_LENGTH: ${{ inputs.max-length }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+        RUN_URL: ${{ inputs.run-url }}

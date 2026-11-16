@@ -5,15 +5,18 @@ on:
   pull_request_target:
     types: [ 'opened', 'synchronize', 'reopened', 'edited' ]
   workflow_run:
-    workflows: [ 'Test Build Processes' ]
+    workflows: [ 'Compare Built Files', 'Test Build Processes' ]
     types:
       - completed
 
 # Cancels all previous workflow runs for pull requests that have not completed.
 concurrency:
-  # The concurrency group contains the workflow name and the pull request number for pull requests
-  # or the commit hash for any other events.
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request_target' && github.event.pull_request.number || github.event_name == 'workflow_dispatch' && github.event.number || github.sha }}
+  # The concurrency group contains the workflow name and the pull request number for pull requests, the ID of the
+  # triggering run for workflow_run events, or the commit hash for any other events.
+  #
+  # The commit hash is always the latest commit on the default branch for workflow_run events. Using the run ID instead
+  # prevents completions of unrelated runs from replacing each other while pending.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request_target' && github.event.pull_request.number || github.event_name == 'workflow_dispatch' && github.event.number || github.event_name == 'workflow_run' && github.event.workflow_run.id || github.sha }}
 
 # Disable permissions for all available scopes by default.
 # Any needed permissions should be configured at the job level.
@@ -122,6 +125,7 @@ jobs:
     if: >
       github.repository == 'WordPress/wordpress-develop' &&
       github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.name == 'Test Build Processes' &&
       github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Download artifact
@@ -215,6 +219,148 @@ jobs:
 
             await github.rest.issues.createComment( commentInfo );
             core.notice( `Created Playground comment for pull request: ${ pr.data.html_url }` );
+
+  # Leaves a comment on a pull request when the build script output differs from the WordPress/WordPress repository.
+  #
+  # The comparison artifact is created by an unprivileged pull_request workflow, so its contents are untrusted:
+  # - The pull request number is only used when the pull request's head commit matches the triggering run.
+  # - The report is rendered here by the version of the action on the default branch, which validates and escapes
+  #   every value it reads from the artifact.
+  build-server-comparison:
+    name: Comment on a pull request with build server differences
+    runs-on: ubuntu-26.04
+    permissions:
+      issues: write
+      pull-requests: write
+    timeout-minutes: 5
+    if: >
+      github.repository == 'WordPress/wordpress-develop' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.name == 'Compare Built Files' &&
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Download artifact
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        with:
+          script: |
+            const artifacts = await github.paginate( github.rest.actions.listWorkflowRunArtifacts, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: process.env.RUN_ID,
+            } );
+
+            const matchArtifact = artifacts.find( ( artifact ) => artifact.name === 'build-server-comparison' );
+
+            if ( ! matchArtifact ) {
+              core.setFailed( 'No artifact found!' );
+              return;
+            }
+
+            const download = await github.rest.actions.downloadArtifact( {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: matchArtifact.id,
+              archive_format: 'zip',
+            } );
+
+            const fs = require( 'fs' );
+            fs.writeFileSync( `${ process.env.RUNNER_TEMP }/build-server-comparison.zip`, Buffer.from( download.data ) );
+
+      - name: Unzip the artifact containing the comparison results
+        run: unzip -q "${RUNNER_TEMP}/build-server-comparison.zip" -d "${RUNNER_TEMP}/build-server-comparison"
+
+      - name: Confirm the pull request matches the workflow run
+        id: pr
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        with:
+          script: |
+            const fs = require( 'fs' );
+            const prNumber = fs.readFileSync( `${ process.env.RUNNER_TEMP }/build-server-comparison/NR`, 'utf8' ).trim();
+
+            if ( ! /^[1-9][0-9]*$/.test( prNumber ) ) {
+              core.setFailed( 'The artifact does not contain a valid pull request number.' );
+              return;
+            }
+
+            const pr = await github.rest.pulls.get( {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: Number( prNumber ),
+            } );
+
+            if ( pr.data.state !== 'open' ) {
+              core.info( `Pull request #${ prNumber } has been closed. No comment will be left.` );
+              return;
+            }
+
+            // A different head commit means either the pull request was updated after the run started, in which case
+            // a newer run will comment, or the artifact names another pull request.
+            if ( pr.data.head.sha !== process.env.HEAD_SHA ) {
+              core.info( `The head of pull request #${ prNumber } (${ pr.data.head.sha }) does not match the workflow run (${ process.env.HEAD_SHA }). No comment will be left.` );
+              return;
+            }
+
+            core.setOutput( 'number', prNumber );
+
+      # This job does not check out the repository: `$/` fetches the action from this workflow's commit, which is the
+      # default branch for workflow_run events. Code from the pull request is never run here.
+      - name: Render the comparison report
+        if: ${{ steps.pr.outputs.number }}
+        uses: $/.github/actions/build-server-comparison-report
+        with:
+          comparison-dir: ${{ runner.temp }}/build-server-comparison
+          output-file: ${{ runner.temp }}/build-server-comparison.md
+          # GitHub limits comments to 65,536 characters. Room is left for the text added below.
+          max-length: 64000
+          head-sha: ${{ github.event.workflow_run.head_sha }}
+          run-url: ${{ github.event.workflow_run.html_url }}
+
+      - name: Leave a comment with any differences
+        if: ${{ steps.pr.outputs.number }}
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        with:
+          script: |
+            const fs = require( 'fs' );
+            const MARKER = '<!-- build-server-comparison -->';
+            const reportFile = `${ process.env.RUNNER_TEMP }/build-server-comparison.md`;
+            const report = fs.readFileSync( reportFile, 'utf8' );
+            const fileCount = Number( fs.readFileSync( `${ reportFile }.count`, 'utf8' ) );
+
+            const commentInfo = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number( process.env.PR_NUMBER ),
+            };
+
+            const comments = await github.paginate( github.rest.issues.listComments, commentInfo );
+            const existing = comments.find( ( comment ) => comment.user.type === 'Bot' && comment.body.includes( MARKER ) );
+
+            // Only comment when there are differences, but keep an existing comment up to date.
+            if ( fileCount === 0 && ! existing ) {
+              core.info( 'The build directory is identical to WordPress/WordPress. No comment will be left.' );
+              return;
+            }
+
+            const { owner, repo } = context.repo;
+            const sha = process.env.HEAD_SHA;
+            commentInfo.body = `${ MARKER }\n${ report }\n`;
+            commentInfo.body += `_Last updated for [\`${ sha.slice( 0, 7 ) }\`](https://github.com/${ owner }/${ repo }/commit/${ sha })._\n\n`;
+            commentInfo.body += '**Review these differences carefully for any unexpected results.** They show how the files in the WordPress/WordPress repository would change if this pull request were committed, along with any differences between the build script and the build server.\n';
+
+            if ( existing ) {
+              await github.rest.issues.updateComment( { owner, repo, comment_id: existing.id, body: commentInfo.body } );
+              core.notice( `Updated build server comparison comment: ${ existing.html_url }` );
+            } else {
+              const { data } = await github.rest.issues.createComment( commentInfo );
+              core.notice( `Created build server comparison comment: ${ data.html_url }` );
+            }
 
   # Manages comments reminding contributors to include a Trac ticket link when opening a pull request.
   trac-ticket-check:

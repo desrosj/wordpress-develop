@@ -1,0 +1,335 @@
+##
+# A reusable workflow that compares the results of the build script with the WordPress/WordPress repository.
+#
+# WordPress/WordPress contains the files produced by the build server for every commit made to SVN. Comparing the
+# `build` directory against the WordPress/WordPress commit that was built from the same SVN revision highlights any
+# differences between what the build script produces and what is actually distributed.
+#
+# For pull requests, the comparison is made against the WordPress/WordPress commit built from the SVN revision of the
+# pull request's base. Any differences are either caused by the pull request, or indicate that the build script and the
+# build server do not produce identical results.
+##
+name: Compare Built Files (reusable)
+
+on:
+  workflow_call:
+
+env:
+  PUPPETEER_SKIP_DOWNLOAD: true
+  NODE_OPTIONS: --max-old-space-size=4096
+
+# Disable permissions for all available scopes by default.
+# Any needed permissions should be configured at the job level.
+permissions: {}
+
+jobs:
+  # Compares the build directory with the corresponding commit in WordPress/WordPress.
+  #
+  # Performs the following steps:
+  # - Checks out the repository.
+  # - Sets up Node.js.
+  # - Logs debug information about the GitHub Action runner.
+  # - Installs npm dependencies.
+  # - Builds WordPress to run from the build directory.
+  # - Reports any version-controlled files that were modified or deleted while building.
+  # - Determines the SVN revision the build is based on.
+  # - Finds the WordPress/WordPress commit built from that SVN revision.
+  # - Compares the build directory with that commit.
+  # - Saves metadata about the comparison.
+  # - Renders a report of the differences and adds it to the job summary.
+  # - Saves the pull request number to a text file.
+  # - Uploads the comparison results as an artifact.
+  compare-built-files:
+    name: Compare built files to WordPress/WordPress
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    timeout-minutes: 20
+
+    steps:
+      # A shallow history is fetched so that the most recent commit with an SVN revision can be found. For pull
+      # requests, the history of both the merge commit's parents is included.
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 50
+          show-progress: ${{ runner.debug == '1' && 'true' || 'false' }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: '.nvmrc'
+          package-manager-cache: false
+
+      - name: Set up npm
+        uses: $/.github/actions/setup-npm
+
+      - name: Log debug information
+        run: |
+          npm --version
+          node --version
+          git --version
+
+      - name: Install npm Dependencies
+        run: npm ci
+
+      - name: Build WordPress to run from the build directory
+        run: npm run build
+
+      # Other workflows fail when the build script modifies version-controlled files. This is only reported here so
+      # that the comparison can still be reviewed.
+      - name: Check for modified version-controlled files
+        id: tracked-files
+        run: |
+          if git diff --quiet; then
+            echo "modified=" >> "$GITHUB_OUTPUT"
+          else
+            git diff --stat
+            echo "::warning::The build script modified version-controlled files. Results of the comparison may be inaccurate."
+            {
+              echo 'modified<<EOF'
+              git diff --name-only
+              echo 'EOF'
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      # The build server creates one WordPress/WordPress commit for each SVN commit, and records the SVN revision in
+      # the commit message ("Built from https://develop.svn.wordpress.org/trunk@12345"). The same revision is recorded
+      # in the `git-svn-id` line of the corresponding commit in this repository.
+      #
+      # For pull requests, `HEAD` is a merge commit and its first parent is the tip of the base branch.
+      - name: Determine the SVN revision of the build
+        id: svn
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" == 'pull_request' ]; then
+            SOURCE_REF='HEAD^1'
+          else
+            SOURCE_REF='HEAD'
+          fi
+
+          SVN_COMMIT="$( git log -1 --format='%H' --grep='^git-svn-id: https://develop\.svn\.wordpress\.org/' "$SOURCE_REF" || true )"
+
+          if [ -z "$SVN_COMMIT" ]; then
+            echo "::error::No commit with an SVN revision was found in the last 50 commits of ${SOURCE_REF}."
+            exit 1
+          fi
+
+          SVN_ID="$( git log -1 --format='%B' "$SVN_COMMIT" | sed -n 's|^git-svn-id: https://develop\.svn\.wordpress\.org/\([^@]*\)@\([0-9]*\) .*$|\1 \2|p' | tail -n 1 )"
+          SVN_PATH="${SVN_ID% *}"
+          SVN_REVISION="${SVN_ID#* }"
+
+          # trunk is mirrored to the master branch, and branches/X.Y to the X.Y-branch branch.
+          case "$SVN_PATH" in
+            trunk)
+              BUILD_SERVER_BRANCH='master'
+              ;;
+            branches/*)
+              BUILD_SERVER_BRANCH="${SVN_PATH#branches/}-branch"
+              ;;
+            *)
+              echo "::error::Unrecognized SVN path: ${SVN_PATH}"
+              exit 1
+              ;;
+          esac
+
+          echo "Source commit: $( git rev-parse "$SOURCE_REF" )"
+          echo "Most recent commit with an SVN revision: ${SVN_COMMIT} (${SVN_PATH}@${SVN_REVISION})"
+
+          {
+            echo "svn-path=${SVN_PATH}"
+            echo "svn-revision=${SVN_REVISION}"
+            echo "build-server-branch=${BUILD_SERVER_BRANCH}"
+          } >> "$GITHUB_OUTPUT"
+
+      # Only commit metadata is downloaded here, which is fast and small.
+      #
+      # The build server usually finishes a few minutes after a commit is made. For push events, the matching commit
+      # may not exist yet, so the history is fetched again a few times before falling back to the closest earlier
+      # revision.
+      - name: Find the matching WordPress/WordPress commit
+        id: build-server
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SVN_PATH: ${{ steps.svn.outputs.svn-path }}
+          SVN_REVISION: ${{ steps.svn.outputs.svn-revision }}
+          BUILD_SERVER_BRANCH: ${{ steps.svn.outputs.build-server-branch }}
+        run: |
+          HISTORY_DIR="${RUNNER_TEMP}/build-server-history"
+          git clone --quiet --bare --filter=tree:0 --single-branch --branch "$BUILD_SERVER_BRANCH" \
+            https://github.com/WordPress/WordPress.git "$HISTORY_DIR"
+
+          ESCAPED_PATH="${SVN_PATH//./\\.}"
+          find_exact_match() {
+            git -C "$HISTORY_DIR" log -1 --format='%H' \
+              --grep="^Built from https://develop\.svn\.wordpress\.org/${ESCAPED_PATH}@${SVN_REVISION}$" \
+              "$BUILD_SERVER_BRANCH"
+          }
+
+          MATCH="$( find_exact_match )"
+
+          if [ -z "$MATCH" ] && [ "$EVENT_NAME" == 'push' ]; then
+            for attempt in 1 2 3 4 5 6 7 8 9 10; do
+              echo "No build found for ${SVN_PATH}@${SVN_REVISION} yet. Checking again in 30 seconds (attempt ${attempt})."
+              sleep 30
+              git -C "$HISTORY_DIR" fetch --quiet origin "+refs/heads/${BUILD_SERVER_BRANCH}:refs/heads/${BUILD_SERVER_BRANCH}"
+              MATCH="$( find_exact_match )"
+              [ -n "$MATCH" ] && break
+            done
+          fi
+
+          EXACT_MATCH='true'
+          if [ -z "$MATCH" ]; then
+            EXACT_MATCH='false'
+
+            # Fall back to the most recent build of an earlier revision.
+            MATCH="$(
+              git -C "$HISTORY_DIR" log --format='@@commit %H%n%B' "$BUILD_SERVER_BRANCH" \
+                --grep="^Built from https://develop\.svn\.wordpress\.org/${ESCAPED_PATH}@" |
+              awk -v rev="$SVN_REVISION" '
+                /^@@commit / { sha = $2; next }
+                /^Built from https:\/\/develop\.svn\.wordpress\.org\// {
+                  n = $0; sub( /.*@/, "", n );
+                  if ( n + 0 <= rev + 0 ) { print sha; exit }
+                }
+              '
+            )"
+
+            if [ -z "$MATCH" ]; then
+              echo "::error::No WordPress/WordPress commit was found for ${SVN_PATH}@${SVN_REVISION} or any earlier revision."
+              exit 1
+            fi
+          fi
+
+          BUILT_FROM="$( git -C "$HISTORY_DIR" log -1 --format='%B' "$MATCH" | sed -n 's|^Built from https://develop\.svn\.wordpress\.org/||p' | tail -n 1 )"
+
+          if [ "$EXACT_MATCH" == 'false' ]; then
+            echo "::warning::No WordPress/WordPress commit was found for ${SVN_PATH}@${SVN_REVISION}. Comparing against ${BUILT_FROM} instead."
+          fi
+
+          echo "WordPress/WordPress commit: ${MATCH} (built from ${BUILT_FROM})"
+
+          {
+            echo "sha=${MATCH}"
+            echo "built-from=${BUILT_FROM}"
+            echo "exact-match=${EXACT_MATCH}"
+          } >> "$GITHUB_OUTPUT"
+
+      # The WordPress/WordPress commit is fetched into an empty repository, and the build directory is staged on top
+      # of it. This produces a regular Git diff with paths relative to the root of WordPress.
+      #
+      # The diff is from WordPress/WordPress to the build directory: added files exist only in the build directory,
+      # and deleted files exist only in WordPress/WordPress.
+      - name: Compare the build directory with WordPress/WordPress
+        id: compare
+        env:
+          BUILD_SERVER_SHA: ${{ steps.build-server.outputs.sha }}
+        run: |
+          COMPARE_DIR="${RUNNER_TEMP}/comparison"
+          ARTIFACTS_DIR="${RUNNER_TEMP}/build-server-comparison"
+          mkdir -p "$ARTIFACTS_DIR"
+
+          git init --quiet "$COMPARE_DIR"
+          git -C "$COMPARE_DIR" fetch --quiet --depth=1 --no-tags https://github.com/WordPress/WordPress.git "$BUILD_SERVER_SHA"
+          git -C "$COMPARE_DIR" update-ref HEAD FETCH_HEAD
+
+          # The build directory is used as the work tree, so nothing is copied. Ignore rules are bypassed so that
+          # every built file is compared.
+          compare_git() {
+            git -C "$COMPARE_DIR" --work-tree="${GITHUB_WORKSPACE}/build" -c core.autocrlf=false -c core.quotePath=false "$@"
+          }
+
+          compare_git add --all --force .
+
+          # The build script appends a timestamp to `$wp_version` (7.0-alpha-20260101.120000), but the build server
+          # appends the SVN revision (7.0-alpha-12345). When the versions are otherwise identical, the staged copy of
+          # version.php uses the line from WordPress/WordPress so that only meaningful changes are reported.
+          VERSION_FILE='wp-includes/version.php'
+          if [ -f "${GITHUB_WORKSPACE}/build/${VERSION_FILE}" ] && compare_git cat-file -e "HEAD:${VERSION_FILE}" 2> /dev/null; then
+            normalize_version() {
+              sed -n "s/^\\\$wp_version = '\(.*\)';\$/\1/p" | head -n 1 | sed -E 's/-([0-9]{5,}|[0-9]{8}\.[0-9]{6})$//'
+            }
+
+            # shellcheck disable=SC2016 # The `$` is literal.
+            SERVER_LINE="$( compare_git show "HEAD:${VERSION_FILE}" | grep -m 1 '^\$wp_version = ' || true )"
+            BUILD_VERSION="$( normalize_version < "${GITHUB_WORKSPACE}/build/${VERSION_FILE}" )"
+            SERVER_VERSION="$( echo "$SERVER_LINE" | normalize_version )"
+
+            if [ -n "$BUILD_VERSION" ] && [ "$BUILD_VERSION" == "$SERVER_VERSION" ]; then
+              BLOB="$(
+                awk -v line="$SERVER_LINE" '/^\$wp_version = / && ! done { print line; done = 1; next } { print }' "${GITHUB_WORKSPACE}/build/${VERSION_FILE}" |
+                compare_git hash-object -w --stdin
+              )"
+              compare_git update-index --cacheinfo "100644,${BLOB},${VERSION_FILE}"
+            fi
+          fi
+
+          DIFF_ARGS=( --cached --no-renames --no-color HEAD )
+
+          compare_git diff "${DIFF_ARGS[@]}" --name-status > "${ARTIFACTS_DIR}/name-status.txt"
+          compare_git diff "${DIFF_ARGS[@]}" --numstat > "${ARTIFACTS_DIR}/numstat.txt"
+          compare_git diff "${DIFF_ARGS[@]}" --src-prefix='WordPress/WordPress/' --dst-prefix='build/' > "${ARTIFACTS_DIR}/changes.diff"
+
+          echo "Files that differ: $( wc -l < "${ARTIFACTS_DIR}/name-status.txt" )"
+          cat "${ARTIFACTS_DIR}/name-status.txt"
+
+          echo "artifacts-dir=${ARTIFACTS_DIR}" >> "$GITHUB_OUTPUT"
+
+      # The metadata is used to render the report here and when commenting on pull requests.
+      - name: Save comparison metadata
+        env:
+          ARTIFACTS_DIR: ${{ steps.compare.outputs.artifacts-dir }}
+          HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          IS_PULL_REQUEST: ${{ github.event_name == 'pull_request' }}
+          SVN_PATH: ${{ steps.svn.outputs.svn-path }}
+          SVN_REVISION: ${{ steps.svn.outputs.svn-revision }}
+          BUILD_SERVER_SHA: ${{ steps.build-server.outputs.sha }}
+          BUILD_SERVER_BRANCH: ${{ steps.svn.outputs.build-server-branch }}
+          BUILT_FROM: ${{ steps.build-server.outputs.built-from }}
+          EXACT_MATCH: ${{ steps.build-server.outputs.exact-match }}
+          MODIFIED_TRACKED_FILES: ${{ steps.tracked-files.outputs.modified }}
+        run: |
+          jq --null-input \
+            --arg headSha "$HEAD_SHA" \
+            --argjson isPullRequest "$IS_PULL_REQUEST" \
+            --arg svnPath "$SVN_PATH" \
+            --arg svnRevision "$SVN_REVISION" \
+            --arg buildServerSha "$BUILD_SERVER_SHA" \
+            --arg buildServerBranch "$BUILD_SERVER_BRANCH" \
+            --arg builtFrom "$BUILT_FROM" \
+            --argjson exactMatch "$EXACT_MATCH" \
+            --arg modifiedTrackedFiles "$MODIFIED_TRACKED_FILES" \
+            '$ARGS.named | .modifiedTrackedFiles |= ( split( "\n" ) | map( select( . != "" ) ) )' \
+            > "${ARTIFACTS_DIR}/metadata.json"
+
+          cat "${ARTIFACTS_DIR}/metadata.json"
+
+      - name: Render the comparison report
+        uses: $/.github/actions/build-server-comparison-report
+        with:
+          comparison-dir: ${{ steps.compare.outputs.artifacts-dir }}
+          output-file: ${{ runner.temp }}/build-server-comparison.md
+          # The job summary is limited to 1 MiB per step.
+          max-length: 900000
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Add the report to the job summary
+        run: cat "${RUNNER_TEMP}/build-server-comparison.md" >> "$GITHUB_STEP_SUMMARY"
+
+      # Save the PR number so the Pull Request Comments workflow knows where to comment.
+      - name: Save PR number
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "${EVENT_NUMBER}" > "${ARTIFACTS_DIR}/NR"
+        env:
+          EVENT_NUMBER: ${{ github.event.number }}
+          ARTIFACTS_DIR: ${{ steps.compare.outputs.artifacts-dir }}
+
+      - name: Upload comparison results as an artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: build-server-comparison
+          path: ${{ steps.compare.outputs.artifacts-dir }}
+          if-no-files-found: error
+          retention-days: 14
