@@ -234,7 +234,7 @@ jobs:
       pull-requests: write
     timeout-minutes: 5
     if: >
-      github.repository == 'WordPress/wordpress-develop' &&
+      github.repository == 'desrosj/wordpress-develop' &&
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.name == 'Compare Built Files' &&
       github.event.workflow_run.conclusion == 'success'
