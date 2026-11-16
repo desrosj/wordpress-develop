@@ -1167,16 +1167,6 @@ class Tests_Admin_IncludesPost extends WP_UnitTestCase {
 	 * @ticket 37406
 	 */
 	public function test_post_exists_should_support_post_type() {
-		if ( PHP_VERSION_ID >= 80100 ) {
-			/*
-			 * For the time being, ignoring PHP 8.1 "null to non-nullable" deprecations coming in
-			 * via hooked in filter functions until a more structural solution to the
-			 * "missing input validation" conundrum has been architected and implemented.
-			 */
-			$this->expectDeprecation();
-			$this->expectDeprecationMessageMatches( '`Passing null to parameter \#[0-9]+ \(\$[^\)]+\) of type [^ ]+ is deprecated`' );
-		}
-
 		$title     = 'Foo Bar';
 		$post_type = 'page';
 		$post_id   = self::factory()->post->create(
@@ -1185,7 +1175,39 @@ class Tests_Admin_IncludesPost extends WP_UnitTestCase {
 				'post_type'  => $post_type,
 			)
 		);
-		$this->assertSame( $post_id, post_exists( $title, null, null, $post_type ) );
+
+		/*
+		 * For the time being, ignoring PHP 8.1 "null to non-nullable" deprecations coming in
+		 * via hooked in filter functions until a more structural solution to the
+		 * "missing input validation" conundrum has been architected and implemented.
+		 *
+		 * Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		 */
+		$deprecations = array();
+		if ( PHP_VERSION_ID >= 80100 ) {
+			set_error_handler(
+				static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+					$deprecations[] = compact( 'errno', 'errstr' );
+					return true;
+				},
+				E_DEPRECATED
+			);
+		}
+
+		try {
+			$this->assertSame( $post_id, post_exists( $title, null, null, $post_type ) );
+		} finally {
+			if ( PHP_VERSION_ID >= 80100 ) {
+				restore_error_handler();
+			}
+		}
+
+		if ( PHP_VERSION_ID >= 80100 ) {
+			$this->assertNotEmpty( $deprecations, 'Expected at least one deprecation notice.' );
+			foreach ( $deprecations as $deprecation ) {
+				$this->assertMatchesRegularExpression( '`Passing null to parameter \#[0-9]+ \(\$[^\)]+\) of type [^ ]+ is deprecated`', $deprecation['errstr'] );
+			}
+		}
 	}
 
 	/**
@@ -1194,16 +1216,6 @@ class Tests_Admin_IncludesPost extends WP_UnitTestCase {
 	 * @ticket 37406
 	 */
 	public function test_post_exists_should_not_match_a_page_for_post() {
-		if ( PHP_VERSION_ID >= 80100 ) {
-			/*
-			 * For the time being, ignoring PHP 8.1 "null to non-nullable" deprecations coming in
-			 * via hooked in filter functions until a more structural solution to the
-			 * "missing input validation" conundrum has been architected and implemented.
-			 */
-			$this->expectDeprecation();
-			$this->expectDeprecationMessageMatches( '`Passing null to parameter \#[0-9]+ \(\$[^\)]+\) of type [^ ]+ is deprecated`' );
-		}
-
 		$title     = 'Foo Bar';
 		$post_type = 'page';
 		$post_id   = self::factory()->post->create(
@@ -1212,7 +1224,39 @@ class Tests_Admin_IncludesPost extends WP_UnitTestCase {
 				'post_type'  => $post_type,
 			)
 		);
-		$this->assertSame( 0, post_exists( $title, null, null, 'post' ) );
+
+		/*
+		 * For the time being, ignoring PHP 8.1 "null to non-nullable" deprecations coming in
+		 * via hooked in filter functions until a more structural solution to the
+		 * "missing input validation" conundrum has been architected and implemented.
+		 *
+		 * Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		 */
+		$deprecations = array();
+		if ( PHP_VERSION_ID >= 80100 ) {
+			set_error_handler(
+				static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+					$deprecations[] = compact( 'errno', 'errstr' );
+					return true;
+				},
+				E_DEPRECATED
+			);
+		}
+
+		try {
+			$this->assertSame( 0, post_exists( $title, null, null, 'post' ) );
+		} finally {
+			if ( PHP_VERSION_ID >= 80100 ) {
+				restore_error_handler();
+			}
+		}
+
+		if ( PHP_VERSION_ID >= 80100 ) {
+			$this->assertNotEmpty( $deprecations, 'Expected at least one deprecation notice.' );
+			foreach ( $deprecations as $deprecation ) {
+				$this->assertMatchesRegularExpression( '`Passing null to parameter \#[0-9]+ \(\$[^\)]+\) of type [^ ]+ is deprecated`', $deprecation['errstr'] );
+			}
+		}
 	}
 
 	/**
@@ -1221,16 +1265,6 @@ class Tests_Admin_IncludesPost extends WP_UnitTestCase {
 	 * @ticket 34012
 	 */
 	public function test_post_exists_should_support_post_status() {
-		if ( PHP_VERSION_ID >= 80100 ) {
-			/*
-			 * For the time being, ignoring PHP 8.1 "null to non-nullable" deprecations coming in
-			 * via hooked in filter functions until a more structural solution to the
-			 * "missing input validation" conundrum has been architected and implemented.
-			 */
-			$this->expectDeprecation();
-			$this->expectDeprecationMessageMatches( '`Passing null to parameter \#[0-9]+ \(\$[^\)]+\) of type [^ ]+ is deprecated`' );
-		}
-
 		$title       = 'Foo Bar';
 		$post_type   = 'post';
 		$post_status = 'publish';
@@ -1241,7 +1275,39 @@ class Tests_Admin_IncludesPost extends WP_UnitTestCase {
 				'post_status' => $post_status,
 			)
 		);
-		$this->assertSame( $post_id, post_exists( $title, null, null, null, $post_status ) );
+
+		/*
+		 * For the time being, ignoring PHP 8.1 "null to non-nullable" deprecations coming in
+		 * via hooked in filter functions until a more structural solution to the
+		 * "missing input validation" conundrum has been architected and implemented.
+		 *
+		 * Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		 */
+		$deprecations = array();
+		if ( PHP_VERSION_ID >= 80100 ) {
+			set_error_handler(
+				static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+					$deprecations[] = compact( 'errno', 'errstr' );
+					return true;
+				},
+				E_DEPRECATED
+			);
+		}
+
+		try {
+			$this->assertSame( $post_id, post_exists( $title, null, null, null, $post_status ) );
+		} finally {
+			if ( PHP_VERSION_ID >= 80100 ) {
+				restore_error_handler();
+			}
+		}
+
+		if ( PHP_VERSION_ID >= 80100 ) {
+			$this->assertNotEmpty( $deprecations, 'Expected at least one deprecation notice.' );
+			foreach ( $deprecations as $deprecation ) {
+				$this->assertMatchesRegularExpression( '`Passing null to parameter \#[0-9]+ \(\$[^\)]+\) of type [^ ]+ is deprecated`', $deprecation['errstr'] );
+			}
+		}
 	}
 
 
@@ -1251,16 +1317,6 @@ class Tests_Admin_IncludesPost extends WP_UnitTestCase {
 	 * @ticket 34012
 	 */
 	public function test_post_exists_should_support_post_type_status_combined() {
-		if ( PHP_VERSION_ID >= 80100 ) {
-			/*
-			 * For the time being, ignoring PHP 8.1 "null to non-nullable" deprecations coming in
-			 * via hooked in filter functions until a more structural solution to the
-			 * "missing input validation" conundrum has been architected and implemented.
-			 */
-			$this->expectDeprecation();
-			$this->expectDeprecationMessageMatches( '`Passing null to parameter \#[0-9]+ \(\$[^\)]+\) of type [^ ]+ is deprecated`' );
-		}
-
 		$title       = 'Foo Bar';
 		$post_type   = 'post';
 		$post_status = 'publish';
@@ -1271,7 +1327,39 @@ class Tests_Admin_IncludesPost extends WP_UnitTestCase {
 				'post_status' => $post_status,
 			)
 		);
-		$this->assertSame( $post_id, post_exists( $title, null, null, $post_type, $post_status ) );
+
+		/*
+		 * For the time being, ignoring PHP 8.1 "null to non-nullable" deprecations coming in
+		 * via hooked in filter functions until a more structural solution to the
+		 * "missing input validation" conundrum has been architected and implemented.
+		 *
+		 * Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		 */
+		$deprecations = array();
+		if ( PHP_VERSION_ID >= 80100 ) {
+			set_error_handler(
+				static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+					$deprecations[] = compact( 'errno', 'errstr' );
+					return true;
+				},
+				E_DEPRECATED
+			);
+		}
+
+		try {
+			$this->assertSame( $post_id, post_exists( $title, null, null, $post_type, $post_status ) );
+		} finally {
+			if ( PHP_VERSION_ID >= 80100 ) {
+				restore_error_handler();
+			}
+		}
+
+		if ( PHP_VERSION_ID >= 80100 ) {
+			$this->assertNotEmpty( $deprecations, 'Expected at least one deprecation notice.' );
+			foreach ( $deprecations as $deprecation ) {
+				$this->assertMatchesRegularExpression( '`Passing null to parameter \#[0-9]+ \(\$[^\)]+\) of type [^ ]+ is deprecated`', $deprecation['errstr'] );
+			}
+		}
 	}
 
 	/**
@@ -1280,16 +1368,6 @@ class Tests_Admin_IncludesPost extends WP_UnitTestCase {
 	 * @ticket 34012
 	 */
 	public function test_post_exists_should_only_match_correct_post_status() {
-		if ( PHP_VERSION_ID >= 80100 ) {
-			/*
-			 * For the time being, ignoring PHP 8.1 "null to non-nullable" deprecations coming in
-			 * via hooked in filter functions until a more structural solution to the
-			 * "missing input validation" conundrum has been architected and implemented.
-			 */
-			$this->expectDeprecation();
-			$this->expectDeprecationMessageMatches( '`Passing null to parameter \#[0-9]+ \(\$[^\)]+\) of type [^ ]+ is deprecated`' );
-		}
-
 		$title       = 'Foo Bar';
 		$post_type   = 'post';
 		$post_status = 'draft';
@@ -1300,7 +1378,39 @@ class Tests_Admin_IncludesPost extends WP_UnitTestCase {
 				'post_status' => $post_status,
 			)
 		);
-		$this->assertSame( 0, post_exists( $title, null, null, null, 'publish' ) );
+
+		/*
+		 * For the time being, ignoring PHP 8.1 "null to non-nullable" deprecations coming in
+		 * via hooked in filter functions until a more structural solution to the
+		 * "missing input validation" conundrum has been architected and implemented.
+		 *
+		 * Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		 */
+		$deprecations = array();
+		if ( PHP_VERSION_ID >= 80100 ) {
+			set_error_handler(
+				static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+					$deprecations[] = compact( 'errno', 'errstr' );
+					return true;
+				},
+				E_DEPRECATED
+			);
+		}
+
+		try {
+			$this->assertSame( 0, post_exists( $title, null, null, null, 'publish' ) );
+		} finally {
+			if ( PHP_VERSION_ID >= 80100 ) {
+				restore_error_handler();
+			}
+		}
+
+		if ( PHP_VERSION_ID >= 80100 ) {
+			$this->assertNotEmpty( $deprecations, 'Expected at least one deprecation notice.' );
+			foreach ( $deprecations as $deprecation ) {
+				$this->assertMatchesRegularExpression( '`Passing null to parameter \#[0-9]+ \(\$[^\)]+\) of type [^ ]+ is deprecated`', $deprecation['errstr'] );
+			}
+		}
 	}
 
 	/**
@@ -1309,16 +1419,6 @@ class Tests_Admin_IncludesPost extends WP_UnitTestCase {
 	 * @ticket 34012
 	 */
 	public function test_post_exists_should_not_match_invalid_post_type_and_status_combined() {
-		if ( PHP_VERSION_ID >= 80100 ) {
-			/*
-			 * For the time being, ignoring PHP 8.1 "null to non-nullable" deprecations coming in
-			 * via hooked in filter functions until a more structural solution to the
-			 * "missing input validation" conundrum has been architected and implemented.
-			 */
-			$this->expectDeprecation();
-			$this->expectDeprecationMessageMatches( '`Passing null to parameter \#[0-9]+ \(\$[^\)]+\) of type [^ ]+ is deprecated`' );
-		}
-
 		$title       = 'Foo Bar';
 		$post_type   = 'post';
 		$post_status = 'publish';
@@ -1330,8 +1430,39 @@ class Tests_Admin_IncludesPost extends WP_UnitTestCase {
 			)
 		);
 
-		$this->assertSame( 0, post_exists( $title, null, null, $post_type, 'draft' ) );
-		$this->assertSame( 0, post_exists( $title, null, null, 'wp_tests', $post_status ) );
+		/*
+		 * For the time being, ignoring PHP 8.1 "null to non-nullable" deprecations coming in
+		 * via hooked in filter functions until a more structural solution to the
+		 * "missing input validation" conundrum has been architected and implemented.
+		 *
+		 * Note: $this->expectDeprecation() is deprecated and will be removed in PHPUnit 10.
+		 */
+		$deprecations = array();
+		if ( PHP_VERSION_ID >= 80100 ) {
+			set_error_handler(
+				static function ( int $errno, string $errstr ) use ( &$deprecations ) {
+					$deprecations[] = compact( 'errno', 'errstr' );
+					return true;
+				},
+				E_DEPRECATED
+			);
+		}
+
+		try {
+			$this->assertSame( 0, post_exists( $title, null, null, $post_type, 'draft' ) );
+			$this->assertSame( 0, post_exists( $title, null, null, 'wp_tests', $post_status ) );
+		} finally {
+			if ( PHP_VERSION_ID >= 80100 ) {
+				restore_error_handler();
+			}
+		}
+
+		if ( PHP_VERSION_ID >= 80100 ) {
+			$this->assertNotEmpty( $deprecations, 'Expected at least one deprecation notice.' );
+			foreach ( $deprecations as $deprecation ) {
+				$this->assertMatchesRegularExpression( '`Passing null to parameter \#[0-9]+ \(\$[^\)]+\) of type [^ ]+ is deprecated`', $deprecation['errstr'] );
+			}
+		}
 	}
 
 	/**

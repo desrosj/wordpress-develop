@@ -20,10 +20,22 @@ class Tests_Functions_CleanDirsizeCache extends WP_UnitTestCase {
 	 * @param string $expected_message Expected notice message.
 	 */
 	public function test_clean_dirsize_cache_with_invalid_inputs( $path, $expected_message ) {
-		$this->expectNotice();
-		$this->expectNoticeMessage( $expected_message );
+		// Note: $this->expectNotice() is deprecated and will be removed in PHPUnit 10.
+		$notices = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$notices ) {
+				$notices[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_NOTICE
+		);
 
 		clean_dirsize_cache( $path );
+
+		restore_error_handler();
+
+		$this->assertCount( 1, $notices, 'Expected one notice.' );
+		$this->assertSame( $expected_message, $notices[0]['errstr'] );
 	}
 
 	/**

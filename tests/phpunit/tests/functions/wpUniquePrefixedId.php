@@ -86,12 +86,26 @@ class Tests_Functions_WpUniquePrefixedId extends WP_UnitTestCase {
 	 * @param array  $expected_ids              Expected unique IDs.
 	 */
 	public function test_should_raise_notice_and_use_empty_string_prefix_when_nonstring_given( $non_string_prefix, $number_of_ids_to_generate, $expected_message, $expected_ids ) {
-		$this->expectNotice();
-		$this->expectNoticeMessage( $expected_message );
+		// Note: $this->expectNotice() is deprecated and will be removed in PHPUnit 10.
+		$notices = array();
+		set_error_handler(
+			static function ( int $errno, string $errstr ) use ( &$notices ) {
+				$notices[] = compact( 'errno', 'errstr' );
+				return true;
+			},
+			E_USER_NOTICE
+		);
 
 		$ids = array();
 		for ( $i = 0; $i < $number_of_ids_to_generate; $i++ ) {
 			$ids[] = wp_unique_prefixed_id( $non_string_prefix );
+		}
+
+		restore_error_handler();
+
+		$this->assertCount( $number_of_ids_to_generate, $notices, 'Expected one notice per generated ID.' );
+		foreach ( $notices as $notice ) {
+			$this->assertSame( $expected_message, $notice['errstr'] );
 		}
 
 		$this->assertSameSets( $ids, array_unique( $ids ), 'IDs are not unique.' );
