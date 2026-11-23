@@ -56,7 +56,7 @@
 		"@wordpress/scripts": "33.0.0",
 		"autoprefixer": "10.6.2",
 		"chokidar": "4.0.3",
-		"dotenv": "17.4.2",
+		"dotenv": "18.0.10",
 		"dotenv-expand": "13.0.0",
 		"grunt": "1.6.3",
 		"grunt-banner": "^0.6.0",
