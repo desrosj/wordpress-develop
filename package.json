@@ -81,7 +81,7 @@
 		"postcss": "8.5.33",
 		"prettier": "npm:wp-prettier@3.0.3",
 		"qunit": "3.0.0",
-		"react-refresh": "0.14.0",
+		"react-refresh": "0.19.0",
 		"sass": "1.108.2",
 		"sinon": "16.1.3",
 		"sinon-test": "~3.1.6",
@@ -89,7 +89,7 @@
 		"typescript": "6.0.3",
 		"update-browserslist-db": "1.4.0",
 		"wait-on": "9.5.1",
-		"webpack": "5.109.2"
+		"webpack": "5.112.2"
 	},
 	"dependencies": {
 		"backbone": "1.6.1",
